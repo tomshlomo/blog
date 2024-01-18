@@ -6,8 +6,11 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Tom Shlomo">
+<meta name="dcterms.date" content="2024-01-20">
+<meta name="description" content="\rho=1 means perfect positive correlation, \rho=-1 means perfect negative correlation, \rho=0 means no correlation. But what does \rho=0.72 mean?">
 
-<title>index</title>
+<title>A practical interpertation of the Pearson correlation coefficient</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,24 +26,22 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-listing/list.min.js"></script>
-<script src="site_libs/quarto-listing/quarto-listing.js"></script>
-<script src="site_libs/quarto-html/quarto.js"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -68,35 +69,6 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script>
-
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: ['listing-date','listing-title','listing-author','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description","listing-categories"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -128,10 +100,10 @@ window.Quarto = {
 };
 </script>
 
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../../styles.css">
 </head>
 
-<body class="nav-fixed">
+<body class="nav-fixed fullcontent">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top quarto-banner">
@@ -144,13 +116,13 @@ window.Quarto = {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./about.html"> 
+    <a class="nav-link" href="../../about.html"> 
 <span class="menu-text">About</span></a>
   </li>  
 </ul>
@@ -161,98 +133,143 @@ window.Quarto = {
     </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">A practical interpertation of the Pearson correlation coefficient</h1>
+                  <div>
+        <div class="description">
+          <span class="math inline">\(\rho=1\)</span> means perfect positive correlation, <span class="math inline">\(\rho=-1\)</span> means perfect negative correlation, <span class="math inline">\(\rho=0\)</span> means no correlation. But what does <span class="math inline">\(\rho=0.72\)</span> mean?
+        </div>
+      </div>
+                          <div class="quarto-categories">
+                <div class="quarto-category">machine learning</div>
+              </div>
+                  </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Tom Shlomo </p>
+            </div>
+    </div>
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">January 20, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(2)</span></div><div class="category" data-category="machine learning">machine learning <span class="quarto-category-count">(2)</span></div><div class="category" data-category="regularization">regularization <span class="quarto-category-count">(1)</span></div></div></div>
+    
 <!-- main -->
-<main class="content quarto-banner-title-block column-page-left" id="quarto-document-content">
+<main class="content quarto-banner-title-block" id="quarto-document-content">
 
 
 
 
 
+<p>My goal is to explain the Pearson correlation coefficient without using the word correlation, which is often used to describe it. \ One way is to just give the definition: the Pearson correlation coefficient of two random variables <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> is <span class="math display">\[
+\rho = \frac{\sigma_{XY}}{\sigma_X \sigma_Y},
+\]</span> where <span class="math inline">\(\sigma_X^2 =\mathrm{E} (X - \mu_X)^2\)</span> is the variance of <span class="math inline">\(X\)</span>, <span class="math inline">\(\sigma_Y^2 =\mathrm{E} (Y - \mu_Y)^2\)</span> is the variance of <span class="math inline">\(Y\)</span>, <span class="math inline">\(\sigma_{XY}=\mathrm{E} (X - \mu_X)(Y - \mu_Y)\)</span> is the covariance of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, <span class="math inline">\(\mu_x = \mathrm{E} X\)</span> is the mean of <span class="math inline">\(X\)</span>, and <span class="math inline">\(\mu_Y = \mathrm{E} Y\)</span> is the mean of <span class="math inline">\(Y\)</span>. \ But this is unsatisfying: why is this definition useful?</p>
+<p>Consider the problem of estimating <span class="math inline">\(Y\)</span> from an observation of <span class="math inline">\(X\)</span>. It turns out that in the optimal linear estimator, <em>the number of standard deviations <span class="math inline">\(Y\)</span> is above it’s mean is <span class="math inline">\(\rho\)</span> times the number of standard deviations <span class="math inline">\(X\)</span> is above it’s mean.</em> <!-- is $\rho$ 
+ the 
+The optimal linear estimat
+A more practical 
+A more practical approach is 
+Here is a more practical approach:
+Suppose you are given an observation of $X$ that is $n$ standard deviations away from it's mean and you want to estimate $Y$ using it.
+Then the optimal (in the mean squared error sense) linear estimation is $n \rho$ standard deviations of $Y$ away from it's mean. --> \ In other words, <span class="math inline">\(\rho\)</span> is the factor by which we shrink (and possibly flip) the deviation from the mean in one variable when we estimate the other. \ So for example, if <span class="math inline">\(\rho=0.72, \mu_x = 4, \sigma_x = 0.5, \mu_y = 100, \sigma_y = 10\)</span> and we observe <span class="math inline">\(X=5\)</span>, the estimate of <span class="math inline">\(Y\)</span> is <span class="math inline">\(100 + 0.72 \cdot 2 \cdot 10 =114.4\)</span></p>
+<p>The proof is very simple. Since we are dealing with linear (actually, affine) estimators, we need to show that the <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> that would minimize <span class="math display">\[
+\text{MSE} := \mathrm{E} \left( \hat{Y} - Y )^2 \right) ^2,
+\]</span> where <span class="math inline">\(\hat{Y} := a (X - \mu_x) + b\)</span>, <!-- $$
+\mathrm{E} \left[ \left(a (x - \mu_x) + b - y \right) ^ 2 \right]
+$$ --> are <span class="math inline">\(\rho \sigma_Y / \sigma_X\)</span> and <span class="math inline">\(\mu_Y\)</span>.</p>
+<p>The MSE is the sum of bias squared and variance. The variance doesn’t depend on <span class="math inline">\(b\)</span>, and the bias is <span class="math inline">\(\mathrm{E} \left[ \hat{Y} - Y \right] = b - \mu_Y\)</span> which doesn’t depend on <span class="math inline">\(a\)</span>. So we already know that <span class="math inline">\(b=\mu_Y\)</span>. To minimize the variance, we simplify <span class="math display">\[
+\begin{align*}
+\mathrm{Var}\left[\hat{Y} - Y\right]
+&amp;= \mathrm{Var}\left[a (X - \mu_X) - Y\right] \\
+&amp;= \mathrm{Var}\left[a \left(X - \mu_X\right) \right]
+    + \mathrm{Var}\left[ Y\right]
+    -2 \mathrm{Cov}\left[a \left(X - \mu_X\right), Y\right] \\
+&amp;= \sigma_x ^ 2 a^2
+   + \sigma_Y ^2
+   -2  \sigma_{XY} a
+\end{align*}
+\]</span> This is just a parabola in <span class="math inline">\(a\)</span>, so the optimal <span class="math inline">\(a\)</span> is <span class="math display">\[
+\frac{2 \sigma_{XY}} {2 \sigma_X ^2}
+=
+\rho \frac{\sigma_Y } {\sigma_X }
+\]</span> (which is what we wanted to show). The optima The optimal <span class="math inline">\(a=\frac{2 \sigma_{XY}} {2 \sigma_X ^ 2}\)</span></p>
+<p><span class="math display">\[
+\begin{align*}
+a
+&amp;= \text{argmin}_{a'} \mathrm{Var}\left[\hat{Y} - Y\right] \\
+&amp;= \text{argmin}_{a'} \mathrm{Var}\left[a (X - \mu_X) - Y\right] \\
+&amp;= \text{argmin}_{a'}
+    \mathrm{Var}\left[a \left(X - \mu_X\right) \right]
+    + \mathrm{Var}\left[ Y\right]
+    -2 \mathrm{Cov}\left[a \left(X - \mu_X\right), Y\right] \\
+&amp;= \text{argmin}_{a'}
+    a^2 \sigma_x ^ 2
+    + \sigma_Y ^2
+    -2 a \sigma_{XY}
+\end{align*}
+\]</span> and the variance do We with expanding the MSE as the sum of the squared bias and variance <span class="math display">\[
+\begin{align*}
+\text{MSE} &amp;=
+\left(\mathrm{E} \left[\hat{Y} - Y \right] \right)^2
++ \mathrm{Var} \left[\hat{Y} - Y \right]
+\\&amp;=
+b ^ 2
++ \mathrm{Var} \left[a (x - \mu_X) - Y \right]
+\end{align*}
+\]</span></p>
+<!-- 
+Suppose the Pearson correlation coefficient is $\rho$, 
+and you wish to estimate $Y$ based on a given observation of $X$
+that is $n$ standard deviations away from the mean.
+The optimal linear estimate is $n \rho$ standard deviations away from the mean.
+
+If the observation of $X$ is $n$
+It turns out that the optimal linear estimation is $\rho$ 
+then the optimal linear estimation of $Y$ given a sample of $X$ is
+then the optimal linear estimation of $Y$ from $X$ is obtained by 
+1. Calculate by how many standard deviations the sampled $X$ is above it's mean.
+2. multiply by $\rho$.
+3. This is by how many standard deviations the estimate of $Y$ is above it's mean. -->
+<p><span class="math display">\[
+\begin{align*}
+\mathrm{E} \left[ \left(a (x - \mu_x) + b - y \right) ^ 2 \right]
+&amp;=
+a ^ 2 \mathrm{E} \left[ \left( x - \mu_x \right) ^ 2 \right]
++
+\mathrm{E} \left[ \left(b - y \right) ^ 2 \right]
++
+a \mathrm{E} \left[ \left(x - \mu_x\right) \left(b - y \right) \right]
+\\&amp;=
+a ^ 2 \sigma_x ^2
++
+\sigma_y ^ 2
++
+a \, \sigma_{xy}
+\end{align*}
+\]</span></p>
 
 
 
-<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
-<div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-categories="machine learning" data-listing-date-sort="1705701600000" data-listing-file-modified-sort="1705479693574" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="4" data-listing-word-count-sort="714">
-<div class="thumbnail">
-<p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a></p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">A practical interpertation of the Pearson correlation coefficient</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a>
-</div>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('machine learning'); return false;">
-machine learning
-</div>
-</div>
-<div class="listing-description">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"><span class="math inline">\(\rho=1\)</span> means perfect positive correlation, <span class="math inline">\(\rho=-1\)</span> means perfect negative correlation, <span class="math inline">\(\rho=0\)</span> means no correlation. But what does <span class="math inline">\(\rho=0.72\)</span> mean?</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">
-<div class="listing-date">
-Jan 20, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="1" data-categories="machine learning,regularization" data-listing-date-sort="1705269600000" data-listing-file-modified-sort="1705384407460" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1965">
-<div class="thumbnail">
-<p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a></p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">Augmentation is Regularization</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a>
-</div>
-<div class="listing-categories">
-<div class="listing-category" onclick="window.quartoListingCategory('machine learning'); return false;">
-machine learning
-</div>
-<div class="listing-category" onclick="window.quartoListingCategory('regularization'); return false;">
-regularization
-</div>
-</div>
-<div class="listing-description">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">On the equivalence of training data augmentation and quadratic regularization for linear models - a very useful (but not well known) result.</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">
-<div class="listing-date">
-Jan 15, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-</div>
-<div class="listing-no-matching d-none">
-No matching items
-</div>
-</div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
