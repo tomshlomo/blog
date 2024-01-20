@@ -6,8 +6,11 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Tom Shlomo">
+<meta name="dcterms.date" content="2024-01-20">
+<meta name="description" content="\rho=1 means perfect positive correlation, \rho=-1 means perfect negative correlation, \rho=0 means no correlation. But what does \rho=0.72 mean?">
 
-<title>index</title>
+<title>A practical interpertation of the Pearson correlation coefficient</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,24 +26,22 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-listing/list.min.js"></script>
-<script src="site_libs/quarto-listing/quarto-listing.js"></script>
-<script src="site_libs/quarto-html/quarto.js"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -68,35 +69,6 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script>
-
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: ['listing-date','listing-title','listing-author','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description","listing-categories"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -128,10 +100,10 @@ window.Quarto = {
 };
 </script>
 
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../../styles.css">
 </head>
 
-<body class="nav-fixed">
+<body class="nav-fixed fullcontent">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top quarto-banner">
@@ -144,13 +116,13 @@ window.Quarto = {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./about.html"> 
+    <a class="nav-link" href="../../about.html"> 
 <span class="menu-text">About</span></a>
   </li>  
 </ul>
@@ -161,85 +133,211 @@ window.Quarto = {
     </nav>
 </header>
 <!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">A practical interpertation of the Pearson correlation coefficient</h1>
+                  <div>
+        <div class="description">
+          <span class="math inline">\(\rho=1\)</span> means perfect positive correlation, <span class="math inline">\(\rho=-1\)</span> means perfect negative correlation, <span class="math inline">\(\rho=0\)</span> means no correlation. But what does <span class="math inline">\(\rho=0.72\)</span> mean?
+        </div>
+      </div>
+                </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Tom Shlomo </p>
+            </div>
+    </div>
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">January 20, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(2)</span></div></div></div>
+    
 <!-- main -->
-<main class="content quarto-banner-title-block column-page-left" id="quarto-document-content">
+<main class="content quarto-banner-title-block" id="quarto-document-content">
 
 
 
 
 
+<p><span class="math display">\[
+\renewcommand{\E}[1]{\operatorname{E}\left[#1\right]}
+\renewcommand{\var}[1]{\operatorname{Var} \left[#1 \right]}
+\renewcommand{\cov}[1]{\operatorname{Cov} \left[#1 \right] }
+\]</span> My goal is to explain the Pearson correlation coefficient without using the word correlation, which is often used to describe it.<br>
+The Pearson correlation coefficient of two random variables <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> is <span class="math display">\[
+\rho := \frac{\sigma_{XY}}{\sigma_X \sigma_Y},
+\]</span> where <span class="math inline">\(\sigma_X, \sigma_Y\)</span> are the standard deviation of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, and <span class="math inline">\(\sigma_{XY}\)</span> is their covariance.</p>
+<p>A motivation for the definition <span class="math inline">\(\rho\)</span> comes from the problem of estimating <span class="math inline">\(Y\)</span> from an observation of <span class="math inline">\(X\)</span>. It turns out that in the optimal (lowest MSE) linear estimation, <em>the number of standard deviations <span class="math inline">\(Y\)</span> is above it’s mean is <span class="math inline">\(\rho\)</span> times the number of standard deviations <span class="math inline">\(X\)</span> is above it’s mean.</em><br>
+For example, consider a population of people where height and weight are correlated with <span class="math inline">\(\rho=0.72\)</span>, heights are distributed with mean <span class="math inline">\(170\)</span>cm and a standard deviation of <span class="math inline">\(10\)</span>cm, weights are distributed with mean <span class="math inline">\(70\)</span>Kg and a standard deviation of <span class="math inline">\(20\)</span>Kg. If you know that the height of a certain person is <span class="math inline">\(190\)</span>cm, a good guess for it’s weight is <span class="math inline">\(70 + 2 \cdot 0.72 \cdot 20 = 98.8\)</span>Kg.</p>
+<p>The proof is very simple. Since we are dealing with linear (actually, affine) estimators, we need to show that the <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> that would minimize <span class="math display">\[
+\text{MSE} := \E{ \left( \hat{Y} - Y \right) ^2},
+\]</span> where <span class="math inline">\(\hat{Y} := a (X - \mu_x) + b\)</span>, are <span class="math inline">\(\rho \sigma_Y / \sigma_X\)</span> and <span class="math inline">\(\mu_Y\)</span>.<br>
+The MSE is the sum of bias squared and variance. The variance doesn’t depend on <span class="math inline">\(b\)</span>, and the bias is <span class="math inline">\(\E{  \hat{Y} - Y } = b - \mu_Y\)</span> which doesn’t depend on <span class="math inline">\(a\)</span>. so <span class="math inline">\(b=\mu_Y\)</span>. To minimize the variance, we simplify <span class="math display">\[
+\begin{align*}
+\var{\hat{Y} - Y}
+&amp;= \var{\hat{Y}} + \var{Y} - 2 \cov{\hat{Y}, Y}
+\\&amp;= \sigma_x ^ 2 a^2
+   + \sigma_Y ^2
+   -2  \sigma_{XY} a
+\end{align*}
+\]</span> This is just a parabola in <span class="math inline">\(a\)</span>, so the optimal <span class="math inline">\(a\)</span> is <span class="math display">\[
+a=\frac{2 \sigma_{XY}} {2 \sigma_X ^2}
+=
+\rho \frac{\sigma_Y } {\sigma_X }
+\]</span> (which is what we wanted to show).</p>
+<p>The estimator is unbiased, so it’s MSE is equal to it’s variance: <span class="math display">\[
+\text{MSE} = \sigma_Y ^2 (1 - \rho ^ 2).
+\]</span> This equation gives another concrete interpretation of <span class="math inline">\(\rho\)</span>: <em>If <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are correlated with coefficient <span class="math inline">\(\rho\)</span>, observing <span class="math inline">\(X\)</span> will decrease the standard deviation of a <span class="math inline">\(Y\)</span> estimate by a factor of at least <span class="math inline">\(\sqrt{1 - \rho^2}\)</span>.</em><br>
+“at least” since the the optimal linear estimator is equal or worse than the optimal estimator.<br>
+In the example above, knowing the height decreases weight estimation standard deviation from 20Kg to <span class="math inline">\(20  (1 - 0.72^2) = 9.6\)</span>Kg.</p>
+<p>Randomly ordered notes:</p>
+<ol type="1">
+<li><p>If <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are jointly Gaussian, the optimal linear estimator is also the optimal estimator.</p></li>
+<li><p>The “mean” in “MSE” is an average over the joint distribution of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, which is different than over the distribution of <span class="math inline">\(Y\)</span> given <span class="math inline">\(X\)</span>, for which our estimator is not the optimal linear estimator (and biased).<br>
+In our example, we estimated the weight to be <span class="math inline">\(98.8\)</span>Kg with variance <span class="math inline">\(9.6^2\)</span>. It doesn’t mean that if we will sample random people with height <span class="math inline">\(190\)</span>cm, we would get a mean weight of <span class="math inline">\(98.8\)</span>Kg and variance smaller than <span class="math inline">\(9.6^2\)</span>. It means that if we sample random people, and estimate their weight from their height using the optimal linear estimator, our error will be zero on average, and with variance <span class="math inline">\(9.6^2\)</span>. If we use the optimal estimator, the <span class="math inline">\(9.6^2\)</span> is an upper bound on the variance.</p></li>
+<li><p>The sentence “<span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are not correlated” now has a concrete meaning: it means that the optimal linear estimator of <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> will be the mean of <span class="math inline">\(Y\)</span>, ignoring <span class="math inline">\(X\)</span> completely.</p></li>
+<li><p>The discussion above is “Bayesian”, in the sense that it assumes you have some knowledge about the distribution of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. In practice we usually get <span class="math inline">\(n\)</span> samples of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> pairs, and we use plug-in estimators to estimate the means, variances, and covariance, which we will then use build our <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> linear estimator.<br>
+Machine learning people would say: we can use the samples to train a linear regression model to predict <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> directly. Sounds better, more “end-to-end”y, but actually it gives exactly the same result (assuming we don’t use <a href="https://en.wikipedia.org/wiki/Bessel%27s_correction">Bessel’s correction</a>).<br>
+Proof:<br>
+We denote by <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> be the vectors of samples of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, by <span class="math inline">\(\mathbf{1}\)</span> a vector of ones, and by <span class="math inline">\(A\)</span> the matrix whose first column is <span class="math inline">\(x\)</span> and the second column is <span class="math inline">\(\mathbf{1}\)</span>. The coefficients of the linear model are given by: <span class="math display">\[
+\begin{align*}
+\begin{bmatrix}
+     \theta_{\text{slope}} \\
+     \theta_{\text{intercept}}
+\end{bmatrix}
+&amp;:=
+\text{argmin}_\theta \| A \theta - y \|^2
+\\&amp;=
+\left( A ^T A \right)^{-1} A^T y
+\\&amp;=
+\begin{bmatrix}
+     \|x\|^2 &amp;&amp; \mathbf{1}^Tx \\
+     \mathbf{1}^T x  &amp;&amp; \mathbf{1}^T \mathbf{1}
+\end{bmatrix}
+^{-1}
+\begin{bmatrix}
+     x^T y \\
+     \mathbf{1} ^T y
+\end{bmatrix}
+\\&amp;=
+\begin{bmatrix}
+     \sigma_X^2 + \mu_X^2 &amp;&amp; \mu_X \\
+     \mu_X  &amp;&amp; 1
+\end{bmatrix}
+^{-1}
+\begin{bmatrix}
+     \sigma_{XY} + \mu_X \mu_Y \\
+     \mu_Y
+\end{bmatrix}
+\\&amp;=
+\frac{1}{\sigma_X ^2}
+\begin{bmatrix}
+     1 &amp;&amp; -\mu_X \\
+     -\mu_X  &amp;&amp; \sigma_X^2 + \mu_X^2
+\end{bmatrix}
+\begin{bmatrix}
+     \sigma_{XY} + \mu_X \mu_Y \\
+     \mu_Y
+\end{bmatrix}
+\\&amp;=
+\frac{1}{\sigma_X ^2}
+\begin{bmatrix}
+     \sigma_{XY} \\
+     -\mu_X \sigma_{XY} + \sigma_X^2 \mu_Y
+\end{bmatrix}
+\\&amp;=
+\begin{bmatrix}
+     a \\
+     -\mu_X a + b
+\end{bmatrix}.
+\end{align*}
+\]</span> Note also that the r2-score of this fit is equal to <span class="math inline">\(\rho^2\)</span>: <span class="math display">\[
+r^2 := 1 - \frac{\text{MSE}}{\sigma_Y^2} = 1 - \frac{\sigma_Y ^2 \left(1-\rho^2\right)}{\sigma_Y ^2} = \rho^2.
+\]</span></p></li>
+</ol>
+<!-- 
+The optima
+The optimal $a=\frac{2 \sigma_{XY}} {2 \sigma_X ^ 2}$
+
+$$
+\begin{align*}
+a 
+&= \text{argmin}_{a'} \var{\hat{Y} - Y\right] \
+&= \text{argmin}_{a'} \var{a (X - \mu_X) - Y\right] \
+&= \text{argmin}_{a'} 
+    \var{a \left(X - \mu_X\right) \right] 
+    + \var{ Y\right] 
+    -2 \mathrm{Cov}\left[a \left(X - \mu_X\right), Y\right] \
+&= \text{argmin}_{a'} 
+    a^2 \sigma_x ^ 2
+    + \sigma_Y ^2
+    -2 a \sigma_{XY}
+\end{align*}
+$$
+and the variance do
+We with expanding the MSE as the sum of the squared bias and variance
+$$
+\begin{align*}
+\text{MSE} &=
+\left(\E{ \left[\hat{Y} - Y \right] \right)^2
++ \mathrm{Var} \left[\hat{Y} - Y \right]
+\&=
+b ^ 2
++ \mathrm{Var} \left[a (x - \mu_X) - Y \right]
+\end{align*}
+$$ -->
+<!-- 
+Suppose the Pearson correlation coefficient is $\rho$, 
+and you wish to estimate $Y$ based on a given observation of $X$
+that is $n$ standard deviations away from the mean.
+The optimal linear estimate is $n \rho$ standard deviations away from the mean.
+
+If the observation of $X$ is $n$
+It turns out that the optimal linear estimation is $\rho$ 
+then the optimal linear estimation of $Y$ given a sample of $X$ is
+then the optimal linear estimation of $Y$ from $X$ is obtained by 
+1. Calculate by how many standard deviations the sampled $X$ is above it's mean.
+2. multiply by $\rho$.
+3. This is by how many standard deviations the estimate of $Y$ is above it's mean. -->
+<!-- $$
+\begin{align*}
+\E{ \left[ \left(a (x - \mu_x) + b - y \right) ^ 2 \right]
+&= 
+a ^ 2 \E{ \left[ \left( x - \mu_x \right) ^ 2 \right]
++
+\E{ \left[ \left(b - y \right) ^ 2 \right]
++
+a \E{ \left[ \left(x - \mu_x\right) \left(b - y \right) \right]
+\&=
+a ^ 2 \sigma_x ^2
++
+\sigma_y ^ 2
++
+a \, \sigma_{xy}
+\end{align*}
+$$ -->
 
 
 
-<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
-<div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-date-sort="1705701600000" data-listing-file-modified-sort="1705765942256" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1322">
-<div class="thumbnail">
-<p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a></p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">A practical interpertation of the Pearson correlation coefficient</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"><span class="math inline">\(\rho=1\)</span> means perfect positive correlation, <span class="math inline">\(\rho=-1\)</span> means perfect negative correlation, <span class="math inline">\(\rho=0\)</span> means no correlation. But what does <span class="math inline">\(\rho=0.72\)</span> mean?</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">
-<div class="listing-date">
-Jan 20, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="1" data-listing-date-sort="1705269600000" data-listing-file-modified-sort="1705765952580" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1965">
-<div class="thumbnail">
-<p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a></p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">Augmentation is Regularization</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">On the equivalence of training data augmentation and quadratic regularization for linear models - a very useful (but not well known) result.</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">
-<div class="listing-date">
-Jan 15, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-</div>
-<div class="listing-no-matching d-none">
-No matching items
-</div>
-</div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {

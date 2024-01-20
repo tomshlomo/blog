@@ -16,5 +16,11 @@
   },
   "posts/jupyter-post/index.qmd": {
     "index.html": "ee435b39"
+  },
+  "posts/pearson_correlation/pearson_correlation.ipynb": {
+    "pearson_correlation.html": "a0c9badf"
+  },
+  "posts/augmentation_is_regularization/augmentation_is_regularization.ipynb": {
+    "augmentation_is_regularization.html": "419ce07c"
   }
 }
