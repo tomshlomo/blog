@@ -1,4 +1,5 @@
 ---
+title: "Tom Shlomo's Blog"
 listing:
   contents: posts
   sort: "date desc"

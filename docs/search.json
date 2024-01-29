@@ -58,7 +58,7 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "",
+    "title": "Tom Shlomo’s Blog",
     "section": "",
     "text": "MUSIC as a sparse decomposition method\n\n\n\n\n\nA unique introduction to the MUSIC algorithm, as a general method to solve the multisnapshot sparse decomposition problem.\n\n\n\n\n\nJan 30, 2024\n\n\nTom Shlomo\n\n\n\n\n\n\n\n\n\n\n\n\nA practical interpertation of the Pearson correlation coefficient\n\n\n\n\n\n\\(\\rho=1\\) means perfect positive correlation, \\(\\rho=-1\\) means perfect negative correlation, \\(\\rho=0\\) means no correlation. But what does \\(\\rho=0.72\\) mean?\n\n\n\n\n\nJan 20, 2024\n\n\nTom Shlomo\n\n\n\n\n\n\n\n\n\n\n\n\nAugmentation is Regularization\n\n\n\n\n\nOn the equivalence of training data augmentation and quadratic regularization for linear models - a very useful (but not well known) result.\n\n\n\n\n\nJan 15, 2024\n\n\nTom Shlomo\n\n\n\n\n\n\nNo matching items"
   },
