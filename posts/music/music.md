@@ -12,7 +12,7 @@ While very useful for this task, MUSIC is actually a more general parameters est
 However, conventional introductions to MUSIC often delve into the intricacies of equations tailored specifically for DOA estimation. These equations, laden with complex exponents or trigonometric identities, not only risk overwhelming readers but also obscure the fundamental insights that form the backbone of the method.
 \
 An assumption most derivations of MUSIC rely on is access to the signals autocorrelation matrix.
-In practice, only it's estimate is available (usually from very few samples),
+In practice, only it's estimate is available (often from very few samples),
 and in many cases the signals are not stationary (e.g. speech) so it is not even well defined.
 Furthermore, most derivations of the algorithm rely on the noise being white, which is often not realistic.
 \
@@ -27,14 +27,14 @@ In matrix notation:
 $$
 y = Ax
 $$
-where $A$ is the (known) dictionary matrix, with columns $a_1, \dots, a_m$, and $x$ contains the (unknown) coefficient for each atom. The set of non-zero indices of $x$, which we also call the support, correspond to the atoms that participate in the linear combination.
+where $A$ is the (known) dictionary matrix, with columns $a_1, \dots, a_m$, and $x$ contains the (unknown) coefficient for each atom. The set of non-zero indices of $x$, which we also call the support, corresponds to the atoms that participate in the linear combination.
 \
-It might be tempting to simply solve for $x$ as both $A$ and $y$ are known, but (at least for the interesting cases) $m > n$ and the system is under determined, that is, there are infinite ways to decompose $y$ as a linear combination of atoms.
+It might be tempting to simply solve for $x$ as both $A$ and $y$ are known, but (at least in the interesting cases) $m > n$ and the system is under determined, that is, there are infinite ways to decompose $y$ as a linear combination of atoms.
 
 In the setting of sparse decompositions, we add an additional prior to the problem: $y$ is composed of at most $k < n$ atoms, which means $x$ is $k$-sparse (has at most $k$ non zeros).
 
 For example, 
-in DOA estimation problems, we can use $y$ to represent a signal recorded by an array of $n$-sensors, $a_i$ the response of the array to a unit wave signal coming from the $i$'th direction, and $x_i$ the amplitude of the wave at coming from the $i$'th direction.
+in DOA estimation problems, we can use $y$ to represent a signal recorded by an array of $n$-sensors, $a_i$ the response of the array to a unit wave coming from the $i$'th direction, and $x_i$ the amplitude of the wave at coming from the $i$'th direction.
 $k$-sparsity of $x$ is equivalent to having at most $k$ waves active simultaneously, and
 decomposing $y$ into it's atoms reveals their directions.
 
@@ -67,7 +67,7 @@ Solving sparse decomposition problems is in general a hard problem.
 It turns out that you can't do much better than enumerating over all $m \choose k$ possibilities for the support, so in practice approximation methods are often used, e.g.
 Matching Pursuit, Orthogonal Matching Pursuit, Basis Pursuit, and LASSO.
 Sometimes, under additional assumptions, they provide some exactness guarantees.
-Although usually not presented as such, MUSIC is also an approximation method for noisy multisnapshot sparse decomposition, with some guarantees  under additional assumptions.
+Although usually not presented as such, MUSIC is also an approximation method for noisy multisnapshot sparse decomposition, with some guarantees under additional assumptions.
 
 ### Solving the noiseless multisnapshot case
 We will start by describing a method that can, under several assumptions, efficiently solve the noiseless joint sparsity problem.
@@ -124,11 +124,11 @@ Specifically, this holds for the dictionary in DOA estimation [^1].
 
 [^1]: With linear, equally spaced array of sensors, if the usual anti-aliasing conditions hold: the spacing between the sensors is smaller than half the wavelength, and no 2 directions lie on the same cone who's axis contains the array.
 
-Assumption 2 is more restrictive. It means that no row of $X_S$ is a linear combination of the other rows.
+Assumption 1 is more restrictive. It means that no row of $X_S$ is a linear combination of the other rows.
 A necessary (but not sufficient) condition is $\left| S \right| \leq p$.
 \
-In the DOA estimation, each rows of $X_S$ contains the samples of a different source. If the sources are uncorrelated (e.g. different speakers) and $\left| S \right| \leq p$, it is very unlikely that one is a linear combination of the others.
-If the sources are correlated, this doesn't hold, and MUSIC can not be applied. This happens, for example, when one source is an echo of another, due to multi-path propagation.
+In DOA estimation, each rows of $X_S$ contains the samples of a different source. If the sources are uncorrelated (e.g. different speakers) and $\left| S \right| \leq p$, it is very unlikely that one is a linear combination of the others.
+If the sources are correlated, this doesn't hold, and MUSIC can not be applied. This happens, for example, when one source is an echo of another due to multi-path propagation.
 
 ### MUSIC
 The method above relies on the equation
@@ -151,10 +151,10 @@ $\left| S \right|$ is assumed known is MUSIC. It can be avoided, sometimes, usin
 :::
 
 Since $AX$ has rank $\left| S \right|$,
-taking a rank $\left| S \right|$ approximation of $Y$ has a denoising effect[^2]. 
+taking a rank $\left| S \right|$ approximation of $Y$ has a denoising effect. 
 Indeed, unlike $\text{Range} \left( Y \right)$, $\text{Range} \left( \tilde{Y} \right)$
 is a good estimate for 
-$\text{Range} \left( A_S \right)$ when $W$ is small,
+$\text{Range} \left( A_S \right)$ when $W$ is small [^2],
 but it is not exact:
 almost surely, none of the atoms would lie exactly in it.
 So the second modification soften the requirement that $a_i \in \text{Range} \left( \tilde{Y} \right)$ to add $i$ to $S$.
@@ -167,9 +167,9 @@ c_i := \frac{\| \text{Proj}_{\text{Range} \left( \tilde{Y} \right)}(a_i) \|^2}
 \text{ add $i$ to $S$}
 $$
 (what "is close" means exactly differs between implementations. 
-When the atoms can be ordered, like in DOA estimation, it is common to use a peak selection algorithm).
+When the atoms can be naturally ordered, like in DOA estimation, it is common to use a peak selection algorithm).
 
-[^2]: $\text{Range} \left( A_S \right)$ is sometimes called the signal subspace, and the subspace orthogonal to it the noise subspace.
+[^2]: This is why $\text{Range} \left( \tilde{Y} \right)$ is sometimes called the signal subspace, and the subspace orthogonal to it the noise subspace.
 
 As we said above, $\tilde{Y}$ is a rank-$\left| S \right|$ approximation to $Y$.
 In MUSIC, we use the best rank-$\left| S \right|$ approximation in the least squares sense,
@@ -180,7 +180,7 @@ $$
 \label{music_final}
 c_i = \frac{\| U^T a_i\|^2}{\| a_i\|^2}.
 $$
-where the columns of $U$ are the first $\left| S \right|$ left singular vectors (which form an orthonormal basis for $\text{Range} \left( \tilde{Y} \right)$).
+where the columns of $U$ are the first $\left| S \right|$ left singular vectors of $Y$ (which form an orthonormal basis for $\text{Range} \left( \tilde{Y} \right)$).
 
 To wrap things up, a few notes to connect the above to the "usual" MUSIC derivation:
 
