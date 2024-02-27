@@ -6,8 +6,11 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Tom Shlomo">
+<meta name="dcterms.date" content="2024-02-27">
+<meta name="description" content="TBD">
 
-<title>Tom Shlomo’s Blog</title>
+<title>Efficient Leave One Out Cross Validation</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,24 +26,22 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-listing/list.min.js"></script>
-<script src="site_libs/quarto-listing/quarto-listing.js"></script>
-<script src="site_libs/quarto-html/quarto.js"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -68,35 +69,6 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script>
-
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: ['listing-date','listing-title','listing-author','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description","listing-categories"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -128,10 +100,10 @@ window.Quarto = {
 };
 </script>
 
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="../../styles.css">
 </head>
 
-<body class="nav-fixed">
+<body class="nav-fixed fullcontent">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top quarto-banner">
@@ -144,7 +116,7 @@ window.Quarto = {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
 </ul>
@@ -174,156 +146,129 @@ window.Quarto = {
 <!-- content -->
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
-    <div class="quarto-title column-page-left">
-      <h1 class="title">Tom Shlomo’s Blog</h1>
-                      </div>
+    <div class="quarto-title column-body">
+      <h1 class="title">Efficient Leave One Out Cross Validation</h1>
+                  <div>
+        <div class="description">
+          TBD
+        </div>
+      </div>
+                </div>
   </div>
     
   
-  <div class="quarto-title-meta column-page-left">
+  <div class="quarto-title-meta">
 
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Tom Shlomo </p>
+            </div>
+    </div>
       
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">February 27, 2024</p>
+      </div>
+    </div>
     
       
     </div>
     
   
-  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        
-    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-default"><div class="category" data-category="">All <span class="quarto-category-count">(4)</span></div></div></div>
+    
 <!-- main -->
-<main class="content quarto-banner-title-block column-page-left" id="quarto-document-content">
+<main class="content quarto-banner-title-block" id="quarto-document-content">
 
 
 
 
 
+<p>Cross-validation is a crucial technique in assessing the performance of machine learning models. K-fold cross-validation, a widely-used method, involves dividing the dataset into K subsets, training the model K times, each time using a different subset as the testing set. This helps us gauge how well our model generalizes to unseen data. However, as K increases so does the computational time. This becomes painfully evident, particularly during hyperparameter tuning, where sluggish fits can be a major bottleneck.</p>
+<p>Leave-one-out cross-validation (LOOCV), a special case of K-fold cross-validation where K equals the number of training samples, can offer accurate evaluation but comes at a hefty computational cost, making it less practical for larger datasets and hyperparameter tuning.</p>
+<p>For linear models like ordinary least squares and ridge regression, a little-known trick exists to efficiently calculate LOOCV scores. scikit-learn even implements this in it’s <code>RidgeCV</code> estimator. Notably, this same trick extends beyond these linear models to any problem involving quadratically regularized least squares regression—a fact not widely recognized.</p>
+<p>Taking it a step further, even for non-least-squares models like logistic and Poisson regression, a similar trick can be employed to approximate LOOCV scores efficiently. Intriguingly, the accuracy of this approximation improves with larger datasets, addressing the need for speedup in precisely those scenarios.</p>
+<p>In this blog post, we derive the formulas for efficient LOOCV calculations and demonstrate these results on a practical example.</p>
+<section id="notation" class="level1">
+<h1>Notation</h1>
+<p>We use <span class="math inline">\(n\)</span> to denote the number of samples in the training dataset.</p>
+<p>The <span class="math inline">\(m\)</span>-dimensional feature vectors are represented as <span class="math inline">\(x_1\)</span> to <span class="math inline">\(x_n\)</span>, forming the rows of matrix <span class="math inline">\(X\)</span>.</p>
+<p>Targets are denoted as <span class="math inline">\(y_1\)</span> to <span class="math inline">\(y_n\)</span>, forming the vector <span class="math inline">\(y\)</span>. The model’s prediction for the <span class="math inline">\(i\)</span>-th training sample is <span class="math inline">\(\hat{y}_i = x_i^T \theta\)</span>, where <span class="math inline">\(\theta\)</span> is the vector of coefficients. <span class="math inline">\(\hat{y} = X \theta\)</span> is the vector containing all predictions.</p>
+<p>We fit <span class="math inline">\(\theta\)</span> to the training data by minimizing the combined loss and regularization terms: <span id="eq-theta-def"><span class="math display">\[
+\theta := \arg\min_{\theta'} f(\theta').
+\tag{1}\]</span></span> where <span class="math display">\[
+f(\theta') := \sum_{i=1}^{n} l(x_i^T \theta'; y_i) + r(\theta').
+\]</span> Here, <span class="math inline">\(l(\hat{y}_i; y_i)\)</span> represents the loss function, quantifying the difference between the prediction <span class="math inline">\(\hat{y}\)</span> and the true target <span class="math inline">\(y_i\)</span>, while <span class="math inline">\(r\)</span> is the regularization function. We will assume <span class="math inline">\(l\)</span> (as a function of <span class="math inline">\(\hat{y}_i\)</span>) and <span class="math inline">\(r\)</span> are strictly convex and twice differentiable. Special cases of this model includes ordinary least squares (<span class="math inline">\(l(\hat{y}_i; y_i) = (\hat{y}_i - y_i)^2\)</span>, <span class="math inline">\(r(\theta') = 0\)</span>), ridge regression (<span class="math inline">\(l(\hat{y}_i; y_i) = (\hat{y}_i - y_i)^2\)</span>, <span class="math inline">\(r(\theta') = 0\)</span>), logistic regression (<span class="math inline">\(l(\hat{y}_i;y_i) = \log \left( 1 + e^{-y_i \hat{y}_i}\right)\)</span> with <span class="math inline">\(y_i \in \{ -1, 1\}\)</span>), and Poisson regression (<span class="math inline">\(l(\hat{y}_i;y_i) = y_i \hat{y}_i - e^{\hat{y}_i}\)</span>).</p>
+<p>To denote the coefficients obtained by excluding the <span class="math inline">\(j\)</span>-th example, we use <span class="math inline">\(\theta^{(j)}\)</span>: <span class="math display">\[
+\theta^{(j)} = \arg\min_{\theta'} f^{(j)} (\theta')
+\]</span> where <span class="math display">\[ f^{(j)}(\theta') := \sum_{i \neq j} l(x_i^T \theta'; y_i) + r(\theta') \]</span> Similarly, <span class="math inline">\(X^{(j)}\)</span> and <span class="math inline">\(y^{(j)}\)</span>, are employed to represent <span class="math inline">\(X\)</span> and <span class="math inline">\(y\)</span> with the <span class="math inline">\(j\)</span>-th row removed, respectively. We denote by <span class="math inline">\(\tilde{y}_j\)</span> the predicted label for sample <span class="math inline">\(j\)</span> when it is left out: <span id="eq-y-tilde-j-def"><span class="math display">\[
+\tilde{y}_j := x_j ^T \theta^{(j)}
+\tag{2}\]</span></span> Our goal is calculating <span class="math inline">\(\tilde{y}_j\)</span>, for all <span class="math inline">\(j\)</span>, efficiently.</p>
+</section>
+<section id="loocv-with-the-sum-of-squares-loss-and-quadratic-regularization" class="level1">
+<h1>LOOCV with the sum of squares loss and quadratic regularization</h1>
+<p>In scenarios where the loss function is the sum of squares loss <span class="math display">\[
+l(\hat{y}_i; y_i) = (\hat{y}_i - y_i)^2,
+\]</span> and the regularizer is quadaratic <span class="math display">\[
+r(\theta') = \theta'^T R \theta'
+\]</span> where <span class="math inline">\(R\)</span> is an <span class="math inline">\(m \times m\)</span> semi-positive definite matrix, the solution to optimization problem <a href="#eq-theta-def" class="quarto-xref">Equation&nbsp;1</a> is obtained by solving the linear equation <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>: <span id="eq-theta-solve"><span class="math display">\[
+A \theta = b.
+\tag{3}\]</span></span> where <span class="math display">\[\begin{align*}
+    A &amp;:= X^T X + R \\
+    b &amp;:= X^T y.
+\end{align*}\]</span></p>
+<p>Similarly, obtaining <span class="math inline">\(\theta^{(j)}\)</span> requires solving <span id="eq-theta-j-solve"><span class="math display">\[
+A^{(j)} \theta^{(j)} = b^{(j)}.
+\tag{4}\]</span></span> where <span class="math display">\[\begin{align*}
+    A^{(j)} &amp;:= X^{(j)T} X^{(j)} + R \\
+    b^{(j)} &amp;:= X^{(j)T} y^{(j)}.
+\end{align*}\]</span> Solving this linear equation for each <span class="math inline">\(j\)</span> has a time complexity of <span class="math inline">\(O(m^2 n)\)</span> (assuming <span class="math inline">\(n &gt; m\)</span>). Therefore, in a naive implementation, the overall complexity of LOOCV becomes <span class="math inline">\(O(m^2 n^2)\)</span>, posing a significant computational challenge, particularly when <span class="math inline">\(n\)</span> is large.</p>
+<p>The key idea behind efficient LOOCV lies in leveraging the solution for <a href="#eq-theta-solve" class="quarto-xref">Equation&nbsp;3</a> to calculate the solution for each <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a>. We will utilize an important idea from computational linear algebra: the time required to solve multiple <span class="math inline">\(m\)</span> by <span class="math inline">\(m\)</span> equations that share the same matrix is almost identical to the time it takes to solve a single <span class="math inline">\(m\)</span> by <span class="math inline">\(m\)</span> equation. Specifically, we will solve, in additional to <a href="#eq-theta-solve" class="quarto-xref">Equation&nbsp;3</a>, the following <span class="math inline">\(n\)</span> equations: <span class="math display">\[
+A t_j = x_j.
+\]</span></p>
+<p>We start by noting that <span class="math display">\[\begin{align*}
+X^TX &amp;= X^{(j)^T} X^{(j)} + x_j x_j^T    \\
+X^Ty &amp;= X^{(j)^T} y^{(j)} + x_j y_j,
+\end{align*}\]</span> so we can write <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a> like so: <span class="math display">\[
+(A - x_j x_j^T) \theta^{(j)} = b - x_j y_j.
+\]</span> The usual way forward is employing Sherman-Morrison formula, solve for <span class="math inline">\(\theta^{(j)}\)</span> and substitute in <a href="#eq-y-tilde-j-def" class="quarto-xref">Equation&nbsp;2</a> to get an expression for <span class="math inline">\(\tilde{y}\)</span>. But there is a better way <a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>: rewrite <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a> as: <span class="math display">\[\begin{align*}
+    A \theta^{(j)} - x_j \tilde{y}_j &amp;= b - x_j y_j \\
+    \tilde{y}_j &amp;= x_j ^T \theta^{(j)}
+\end{align*}\]</span> so instead of a single equation with one unknown (<span class="math inline">\(\theta^{(j)}\)</span>), we now have two equations with two unknowns (<span class="math inline">\(\theta^{(j)}\)</span> and <span class="math inline">\(\tilde{y}_j\)</span>). At first this seems more complicated, but notice that since the coefficient of <span class="math inline">\(\theta^{(j)}\)</span> in the first equation is <span class="math inline">\(A\)</span>, we can eliminate it: <span class="math display">\[\begin{align*}
+\theta^{(j)}  &amp;= A^{-1} ( b - x_j y_j + x_j \tilde{y}_j ) \\
+&amp;= \theta - t_j (  y_j - \tilde{y}_j )
+\end{align*}\]</span> substituting in the bottom equation, we can solve for <span class="math inline">\(\tilde{y}_j\)</span>: <span class="math display">\[\begin{align*}
+\tilde{y}_j &amp;= x_j ^T \left( \theta - t_j (  y_j - \tilde{y}_j ) \right)
+\\
+\tilde{y}_j &amp;= \hat{y}_j - h_j (y_j - \tilde{y}_j)
+\\
+\tilde{y}_j &amp;= \frac{\hat{y}_j - h_j y_j}{1-h_j}
+% \\
+% \tilde{y}_j &amp;= \frac{\hat{y}_j -h_j \hat{y}_j + h_j \hat{y}_j - h_j y_j}{1-h_j}
+\\
+\tilde{y}_j &amp;= \hat{y}_j + \frac{h_j }{1-h_j} \left( \hat{y}_j - y_j \right)
+% \\
+% \tilde{y}_j &amp;= \frac{\hat{y}_j - y_j}{1-h_j} + y_j
+\end{align*}\]</span> where <span class="math display">\[
+h_j := x_j ^T t_j = x_j^T A^{-1} x_j.
+\]</span> That’s it! we got an expression for <span class="math inline">\(\tilde{y}_j\)</span> that doesn’t require inverting any matrix other than <span class="math inline">\(A\)</span>. It also has a nice interpretation: the difference between the prediction and the LOO prediction is the difference between the prediction an the true target, amplified by <span class="math inline">\(\frac{h_j }{1-h_j}\)</span>.</p>
+<p>If we wanted, we could substitute <span class="math inline">\(\hat{y}_j\)</span> in (5) to get a concrete expression for <span class="math inline">\(\theta^{(j)}\)</span>. Although it can be useful for stuff like sensitivity analysis of the model coefficients, we won’t pursuit this direction here.</p>
 
 
+</section>
 
 
-<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
-<div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-date-sort="1708984800000" data-listing-file-modified-sort="1709072821898" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="6" data-listing-word-count-sort="1101">
-<div class="thumbnail">
-<p><a href="./posts/loocv/loocv.html" class="no-external"></a></p><a href="./posts/loocv/loocv.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/loocv/loocv.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/loocv/loocv.html" class="no-external">Efficient Leave One Out Cross Validation</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/loocv/loocv.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/loocv/loocv.html" class="no-external">TBD</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/loocv/loocv.html" class="no-external">
-<div class="listing-date">
-Feb 27, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="1" data-listing-date-sort="1706565600000" data-listing-file-modified-sort="1709065780031" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1678">
-<div class="thumbnail">
-<p><a href="./posts/music/music.html" class="no-external"></a></p><a href="./posts/music/music.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/music/music.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/music/music.html" class="no-external">MUSIC as a sparse decomposition method</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/music/music.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/music/music.html" class="no-external">A unique introduction to the MUSIC algorithm, as a general method to solve the multisnapshot sparse decomposition problem.</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/music/music.html" class="no-external">
-<div class="listing-date">
-Jan 30, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="2" data-listing-date-sort="1705701600000" data-listing-file-modified-sort="1706548102590" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1322">
-<div class="thumbnail">
-<p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a></p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">A practical interpertation of the Pearson correlation coefficient</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"><span class="math inline">\(\rho=1\)</span> means perfect positive correlation, <span class="math inline">\(\rho=-1\)</span> means perfect negative correlation, <span class="math inline">\(\rho=0\)</span> means no correlation. But what does <span class="math inline">\(\rho=0.72\)</span> mean?</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">
-<div class="listing-date">
-Jan 20, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="3" data-listing-date-sort="1705269600000" data-listing-file-modified-sort="1709066008021" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="10" data-listing-word-count-sort="1964">
-<div class="thumbnail">
-<p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a></p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">Augmentation is Regularization</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">On the equivalence of training data augmentation and quadratic regularization for linear models - a very useful (but not well known) result.</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">
-<div class="listing-date">
-Jan 15, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-</div>
-<div class="listing-no-matching d-none">
-No matching items
-</div>
-</div></main> <!-- /main -->
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>I am deliberately avoiding writing <span class="math inline">\(\theta = A^{-1} b\)</span>, as <span class="math inline">\(A\)</span> does not have to be invertible for this equation to have a solution. Furthermore, it can mislead people into an implementation like <code>np.linalg.inv(A) @ b</code>, which is less stable and efficient than an implementation like <code>np.linalg.solve(A, b)</code>.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>For several reasons: Translates better into code; We get the expression for <span class="math inline">\(\tilde{y}_j\)</span> directly, without goind through an expression for $^{(j)} first; Sherman-Morisson is a bit too strong here and can obscure some insights, so it’s nice to avoid it. But actually the other way is just halfway it’s proof (see for example <a href="https://www.cs.cornell.edu/~bindel/class/cs6210-f09/lec12.pdf">here</a>).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {

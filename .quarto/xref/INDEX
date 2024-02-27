@@ -25,5 +25,8 @@
   },
   "posts/music/music.md": {
     "music.html": "8e5efa51"
+  },
+  "posts/loocv/loocv.ipynb": {
+    "loocv.html": "db8ce182"
   }
 }
