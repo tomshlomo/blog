@@ -235,7 +235,7 @@ X^TX &amp;= X^{(j)^T} X^{(j)} + x_j x_j^T    \\
 X^Ty &amp;= X^{(j)^T} y^{(j)} + x_j y_j,
 \end{align*}\]</span> so we can write <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a> like so: <span class="math display">\[
 (A - x_j x_j^T) \theta^{(j)} = b - x_j y_j.
-\]</span> The usual way forward is employing Sherman-Morrison formula, solve for <span class="math inline">\(\theta^{(j)}\)</span> and substitute in <a href="#eq-y-tilde-j-def" class="quarto-xref">Equation&nbsp;2</a> to get an expression for <span class="math inline">\(\tilde{y}\)</span>. But there is a better way <a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>: rewrite <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a> as <span class="math display">\[\begin{align*}
+\]</span> The usual way forward is employing Sherman-Morrison formula, solve for <span class="math inline">\(\theta^{(j)}\)</span> and substitute in <a href="#eq-y-tilde-j-def" class="quarto-xref">Equation&nbsp;2</a> to get an expression for <span class="math inline">\(\tilde{y}\)</span>. But there is a better<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> way: rewrite <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a> as <span class="math display">\[\begin{align*}
     A \theta^{(j)} - x_j \tilde{y}_j &amp;= b - x_j y_j \\
     \tilde{y}_j &amp;= x_j ^T \theta^{(j)}
 \end{align*}\]</span> so instead of a single equation with one unknown (<span class="math inline">\(\theta^{(j)}\)</span>), we now have two equations with two unknowns (<span class="math inline">\(\theta^{(j)}\)</span> and <span class="math inline">\(\tilde{y}_j\)</span>). At first this seems more complicated, but notice that since the coefficient of <span class="math inline">\(\theta^{(j)}\)</span> in the first equation is <span class="math inline">\(A\)</span>, we can eliminate it: <span class="math display">\[\begin{align*}
@@ -254,9 +254,24 @@ X^Ty &amp;= X^{(j)^T} y^{(j)} + x_j y_j,
 % \\
 % \tilde{y}_j &amp;= \frac{\hat{y}_j - y_j}{1-h_j} + y_j
 \end{align*}\]</span> where <span class="math display">\[
-h_j := x_j ^T t_j = x_j^T A^{-1} x_j.
-\]</span> That’s it! we got an expression for <span class="math inline">\(\tilde{y}_j\)</span> that doesn’t require inverting any matrix other than <span class="math inline">\(A\)</span>. It also has a nice interpretation: the difference between the prediction and the LOO prediction is the difference between the prediction an the true target, amplified by <span class="math inline">\(\frac{h_j }{1-h_j}\)</span>.</p>
-<p>If we wanted, we could substitute <span class="math inline">\(\hat{y}_j\)</span> in (5) to get a concrete expression for <span class="math inline">\(\theta^{(j)}\)</span>. Although it can be useful for stuff like sensitivity analysis of the model coefficients, we won’t pursuit this direction here.</p>
+h_j := x_j ^T t_j.
+\]</span></p>
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Reminder
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><span class="math inline">\(y_j\)</span> is the label<br>
+<span class="math inline">\(\hat{y}_j\)</span> is the prediction using all the data<br>
+<span class="math inline">\(\tilde{y}_j\)</span> is the leave-one-out prediction</p>
+</div>
+</div>
+<p>That’s it! we got an expression for <span class="math inline">\(\tilde{y}_j\)</span> that doesn’t require inverting any matrix other than <span class="math inline">\(A\)</span>. It also has a nice interpretation: the difference between the prediction and the LOO prediction is the difference between the prediction an the true label, “amplified” by <span class="math inline">\(\frac{h_j }{1-h_j}\)</span>.</p>
 
 
 </section>
