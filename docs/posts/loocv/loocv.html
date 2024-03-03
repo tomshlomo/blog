@@ -23,6 +23,40 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -195,27 +229,27 @@ window.Quarto = {
 <p>In this blog post, we derive the formulas for efficient LOOCV calculations and demonstrate these results on a practical example.</p>
 <section id="notation" class="level1">
 <h1>Notation</h1>
-<p>We use <span class="math inline">\(n\)</span> to denote the number of samples in the training dataset.</p>
+<p>We denote the number of samples in the training dataset as <span class="math inline">\(n\)</span>.</p>
 <p>The <span class="math inline">\(m\)</span>-dimensional feature vectors are represented as <span class="math inline">\(x_1\)</span> to <span class="math inline">\(x_n\)</span>, forming the rows of matrix <span class="math inline">\(X\)</span>.</p>
-<p>Targets are denoted as <span class="math inline">\(y_1\)</span> to <span class="math inline">\(y_n\)</span>, forming the vector <span class="math inline">\(y\)</span>. The model’s prediction for the <span class="math inline">\(i\)</span>-th training sample is <span class="math inline">\(\hat{y}_i = x_i^T \theta\)</span>, where <span class="math inline">\(\theta\)</span> is the vector of coefficients. <span class="math inline">\(\hat{y} = X \theta\)</span> is the vector containing all predictions.</p>
+<p>Targets are denoted as <span class="math inline">\(y_1\)</span> to <span class="math inline">\(y_n\)</span>, forming the vector <span class="math inline">\(y\)</span>. The model’s prediction for the <span class="math inline">\(i\)</span>-th training sample is <span class="math inline">\(\hat{y}_i = x_i^T \theta\)</span>, where <span class="math inline">\(\theta\)</span> is the coefficients vector. <span class="math inline">\(\hat{y} = X \theta\)</span> represents the vector containing all predictions.</p>
 <p>We fit <span class="math inline">\(\theta\)</span> to the training data by minimizing the combined loss and regularization terms: <span id="eq-theta-def"><span class="math display">\[
 \theta := \arg\min_{\theta'} f(\theta').
 \tag{1}\]</span></span> where <span class="math display">\[
 f(\theta') := \sum_{i=1}^{n} l(x_i^T \theta'; y_i) + r(\theta').
-\]</span> Here, <span class="math inline">\(l(\hat{y}_i; y_i)\)</span> represents the loss function, quantifying the difference between the prediction <span class="math inline">\(\hat{y}\)</span> and the true target <span class="math inline">\(y_i\)</span>, while <span class="math inline">\(r\)</span> is the regularization function. We will assume <span class="math inline">\(l\)</span> (as a function of <span class="math inline">\(\hat{y}_i\)</span>) and <span class="math inline">\(r\)</span> are convex and twice differentiable. Special cases of this model include ordinary least squares (<span class="math inline">\(l(\hat{y}_i; y_i) = (\hat{y}_i - y_i)^2\)</span>, <span class="math inline">\(r(\theta') = 0\)</span>), ridge regression (<span class="math inline">\(l(\hat{y}_i; y_i) = (\hat{y}_i - y_i)^2\)</span>, <span class="math inline">\(r(\theta') = \alpha \| \theta' \|^2\)</span>), logistic regression (<span class="math inline">\(l(\hat{y}_i;y_i) = \log \left( 1 + e^{-y_i \hat{y}_i}\right)\)</span> with <span class="math inline">\(y_i \in \{ -1, 1\}\)</span>), and Poisson regression (<span class="math inline">\(l(\hat{y}_i;y_i) = y_i \hat{y}_i - e^{\hat{y}_i}\)</span>).</p>
+\]</span> Here, <span class="math inline">\(l(\hat{y}_i; y_i)\)</span> represents the loss function, quantifying the difference between the prediction <span class="math inline">\(\hat{y}\)</span> and the true target <span class="math inline">\(y_i\)</span>, while <span class="math inline">\(r\)</span> is the regularization function. We assume <span class="math inline">\(l\)</span> (as a function of <span class="math inline">\(\hat{y}_i\)</span>) and <span class="math inline">\(r\)</span> are convex and twice differentiable. Special cases of this model include ordinary least squares (<span class="math inline">\(l(\hat{y}_i; y_i) = (\hat{y}_i - y_i)^2\)</span>, <span class="math inline">\(r(\theta') = 0\)</span>), ridge regression (<span class="math inline">\(l(\hat{y}_i; y_i) = (\hat{y}_i - y_i)^2\)</span>, <span class="math inline">\(r(\theta') = \alpha \| \theta' \|^2\)</span>), logistic regression (<span class="math inline">\(l(\hat{y}_i;y_i) = \log \left( 1 + e^{-y_i \hat{y}_i}\right)\)</span> with <span class="math inline">\(y_i \in \{ -1, 1\}\)</span>), and Poisson regression (<span class="math inline">\(l(\hat{y}_i;y_i) = y_i \hat{y}_i - e^{\hat{y}_i}\)</span>).</p>
 <p>To denote the coefficients obtained by excluding the <span class="math inline">\(j\)</span>-th example, we use <span class="math inline">\(\theta^{(j)}\)</span>: <span class="math display">\[
 \theta^{(j)} = \arg\min_{\theta'} f^{(j)} (\theta')
-\]</span> where <span class="math display">\[ f^{(j)}(\theta') := \sum_{i \neq j} l(x_i^T \theta'; y_i) + r(\theta') \]</span> Similarly, <span class="math inline">\(X^{(j)}\)</span> and <span class="math inline">\(y^{(j)}\)</span>, are employed to represent <span class="math inline">\(X\)</span> and <span class="math inline">\(y\)</span> with the <span class="math inline">\(j\)</span>-th row removed, respectively. We denote by <span class="math inline">\(\tilde{y}_j\)</span> the predicted label for sample <span class="math inline">\(j\)</span> when it is left out: <span id="eq-y-tilde-j-def"><span class="math display">\[
+\]</span> where <span class="math display">\[ f^{(j)}(\theta') := \sum_{i \neq j} l(x_i^T \theta'; y_i) + r(\theta') \]</span> Similarly, <span class="math inline">\(X^{(j)}\)</span> and <span class="math inline">\(y^{(j)}\)</span>, represent <span class="math inline">\(X\)</span> and <span class="math inline">\(y\)</span> with the <span class="math inline">\(j\)</span>-th row removed, respectively. We denote by <span class="math inline">\(\tilde{y}_j\)</span> the predicted label for sample <span class="math inline">\(j\)</span> when it is left out: <span id="eq-y-tilde-j-def"><span class="math display">\[
 \tilde{y}_j := x_j ^T \theta^{(j)}
 \tag{2}\]</span></span> Our goal is calculating <span class="math inline">\(\tilde{y}_j\)</span>, for all <span class="math inline">\(j\)</span>, efficiently.</p>
 </section>
-<section id="loocv-with-the-sum-of-squares-loss-and-quadratic-regularization" class="level1">
-<h1>LOOCV with the sum of squares loss and quadratic regularization</h1>
-<p>In scenarios where the loss function is the sum of squares loss <span class="math display">\[
+<section id="the-quadratic-case" class="level1">
+<h1>The quadratic case</h1>
+<p>In scenarios where the loss function is the sum of squares loss, <span class="math display">\[
 l(\hat{y}_i; y_i) = (\hat{y}_i - y_i)^2,
-\]</span> and the regularizer is quadaratic <span class="math display">\[
+\]</span> and the regularizer is quadratic <span class="math display">\[
 r(\theta') = \theta'^T R \theta'
-\]</span> where <span class="math inline">\(R\)</span> is an <span class="math inline">\(m \times m\)</span> semi-positive definite matrix, the solution to optimization problem <a href="#eq-theta-def" class="quarto-xref">Equation&nbsp;1</a> is obtained by solving the linear equation <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>: <span id="eq-theta-solve"><span class="math display">\[
+\]</span> where <span class="math inline">\(R\)</span> is an <span class="math inline">\(m \times m\)</span> semi-positive definite matrix, the solution to the optimization problem <a href="#eq-theta-def" class="quarto-xref">Equation&nbsp;1</a> is obtained by solving the linear equation <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>: <span id="eq-theta-solve"><span class="math display">\[
 A \theta = b.
 \tag{3}\]</span></span> where <span class="math display">\[\begin{align*}
     A &amp;:= X^T X + R \\
@@ -226,16 +260,21 @@ A^{(j)} \theta^{(j)} = b^{(j)}.
 \tag{4}\]</span></span> where <span class="math display">\[\begin{align*}
     A^{(j)} &amp;:= X^{(j)T} X^{(j)} + R \\
     b^{(j)} &amp;:= X^{(j)T} y^{(j)}.
-\end{align*}\]</span> Forming and solving <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a> for each <span class="math inline">\(j\)</span> has a time complexity of <span class="math inline">\(O(m^3 + n m^2)\)</span>. Therefore, in a naive implementation, the overall complexity of LOOCV becomes <span class="math inline">\(O(n m^3 + n^2 m^2)\)</span>, posing a significant computational challenge, particularly when <span class="math inline">\(n\)</span> is large.</p>
-<p>The key idea behind efficient LOOCV lies in leveraging the solution for <a href="#eq-theta-solve" class="quarto-xref">Equation&nbsp;3</a> to calculate the solution for <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a>. We will utilize an important idea from computational linear algebra: even though the complexity of solving a single <span class="math inline">\(m\)</span> by <span class="math inline">\(m\)</span> equation is <span class="math inline">\(O(m^3)\)</span>, the complexity of solving <span class="math inline">\(n\)</span> such equations is not <span class="math inline">\(O(nm^3)\)</span>, but <span class="math inline">\(O(m^3 + nm^2)\)</span>, if all the equations share the same matrix. <!-- the time required to solve multiple $m$ by $m$ equations that share the same matrix is almost identical to the time it takes to solve a single $m$ by $m$ equation. --> Specifically, we will solve, in additional to <a href="#eq-theta-solve" class="quarto-xref">Equation&nbsp;3</a>, the following <span class="math inline">\(n\)</span> equations: <span class="math display">\[
+\end{align*}\]</span> Forming and solving <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a> for each <span class="math inline">\(j\)</span> has a time complexity of <span class="math inline">\(O(m^3 + n m^2)\)</span>. Thus, in a naive implementation, the overall complexity of LOOCV becomes <span class="math inline">\(O(n m^3 + n^2 m^2)\)</span>, posing a significant computational challenge, particularly when <span class="math inline">\(n\)</span> is large.</p>
+<p>Efficient LOOCV leverages the solution for <a href="#eq-theta-solve" class="quarto-xref">Equation&nbsp;3</a> to calculate the solution for <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a>. We exploit the idea from computational linear algebra that solving multiple <span class="math inline">\(m\)</span> by <span class="math inline">\(m\)</span> equations with the same matrix has a time complexity similar to solving a single such equation. Thus, we solve, in addition to <a href="#eq-theta-solve" class="quarto-xref">Equation&nbsp;3</a>, the following <span class="math inline">\(n\)</span> equations: <span class="math display">\[
 A t_j = x_j.
 \]</span></p>
+<!-- The key idea behind efficient LOOCV lies in leveraging the solution for @eq-theta-solve to calculate the solution for @eq-theta-j-solve.
+We will utilize an important idea from computational linear algebra: 
+even though the complexity of solving a single $m$ by $m$ equation is $O(m^3)$, the complexity of solving $n$ such equations is not $O(nm^3)$, but $O(m^3 + nm^2)$, if all the equations share the same matrix. -->
+<!-- the time required to solve multiple $m$ by $m$ equations that share the same matrix is almost identical to the time it takes to solve a single $m$ by $m$ equation. -->
+<!-- Specifically, we will solve, in additional to @eq-theta-solve, the following $n$ equations: -->
 <p>We start by noting that <span class="math display">\[\begin{align*}
 X^TX &amp;= X^{(j)^T} X^{(j)} + x_j x_j^T    \\
 X^Ty &amp;= X^{(j)^T} y^{(j)} + x_j y_j,
 \end{align*}\]</span> so we can write <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a> like so: <span class="math display">\[
 (A - x_j x_j^T) \theta^{(j)} = b - x_j y_j.
-\]</span> The usual way forward is employing Sherman-Morrison formula, solve for <span class="math inline">\(\theta^{(j)}\)</span> and substitute in <a href="#eq-y-tilde-j-def" class="quarto-xref">Equation&nbsp;2</a> to get an expression for <span class="math inline">\(\tilde{y}\)</span>. But there is a better<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> way: rewrite <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a> as <span class="math display">\[\begin{align*}
+\]</span> The usual way forward involves employing Sherman-Morrison formula, solving for <span class="math inline">\(\theta^{(j)}\)</span> and substituting it in <a href="#eq-y-tilde-j-def" class="quarto-xref">Equation&nbsp;2</a> to obtain an expression for <span class="math inline">\(\tilde{y}\)</span>. However, there’s a better approach <a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>: We rewrite <a href="#eq-theta-j-solve" class="quarto-xref">Equation&nbsp;4</a> as <span class="math display">\[\begin{align*}
     A \theta^{(j)} - x_j \tilde{y}_j &amp;= b - x_j y_j \\
     \tilde{y}_j &amp;= x_j ^T \theta^{(j)}
 \end{align*}\]</span> so instead of a single equation with one unknown (<span class="math inline">\(\theta^{(j)}\)</span>), we now have two equations with two unknowns (<span class="math inline">\(\theta^{(j)}\)</span> and <span class="math inline">\(\tilde{y}_j\)</span>). At first this seems more complicated, but notice that since the coefficient of <span class="math inline">\(\theta^{(j)}\)</span> in the first equation is <span class="math inline">\(A\)</span>, we can eliminate it: <span class="math display">\[\begin{align*}
@@ -266,14 +305,222 @@ Reminder
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p><span class="math inline">\(y_j\)</span> is the label<br>
-<span class="math inline">\(\hat{y}_j\)</span> is the prediction using all the data<br>
-<span class="math inline">\(\tilde{y}_j\)</span> is the leave-one-out prediction</p>
+<p><span class="math inline">\(y_j\)</span> is the true label.<br>
+<span class="math inline">\(\hat{y}_j\)</span> is the prediction using all the data.<br>
+<span class="math inline">\(\tilde{y}_j\)</span> is the leave-one-out prediction.</p>
 </div>
 </div>
 <p>That’s it! we got an expression for <span class="math inline">\(\tilde{y}_j\)</span> that doesn’t require inverting any matrix other than <span class="math inline">\(A\)</span>. It also has a nice interpretation: the difference between the prediction and the LOO prediction is the difference between the prediction an the true label, “amplified” by <span class="math inline">\(\frac{h_j }{1-h_j}\)</span>.</p>
+<section id="python-implementation" class="level2">
+<h2 class="anchored" data-anchor-id="python-implementation">Python implementation</h2>
+<p>The approach outlined above adapts seamlessly into code. We’ll construct an estimator resembling the sklearn style, featuring standard fit and predict methods, alongside a function to compute <span class="math inline">\(\tilde{y}\)</span>, the leave-one-out predictions:</p>
+<div id="cell-5" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Self</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> scipy</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> LinearRegressionWithQuadraticRegularization:</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, R) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.R <span class="op">=</span> R</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> fit(<span class="va">self</span>, X, y) <span class="op">-&gt;</span> Self:</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        A <span class="op">=</span> X.T <span class="op">@</span> X <span class="op">+</span> <span class="va">self</span>.R</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        b <span class="op">=</span> X.T <span class="op">@</span> y</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.theta_ <span class="op">=</span> scipy.linalg.solve(</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>            A,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>            b,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>            overwrite_a<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>            overwrite_b<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>            assume_a<span class="op">=</span><span class="st">"pos"</span>,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> predict(<span class="va">self</span>, X) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> X <span class="op">@</span> <span class="va">self</span>.theta_</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> fit_loocv_predict(<span class="va">self</span>, X, y) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        A <span class="op">=</span> X.T <span class="op">@</span> X <span class="op">+</span> <span class="va">self</span>.R</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        b <span class="op">=</span> X.T <span class="op">@</span> y</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        temp <span class="op">=</span> scipy.linalg.solve(</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>            A,</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>            np.vstack([b, X]).T,</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>            overwrite_a<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>            overwrite_b<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>            assume_a<span class="op">=</span><span class="st">"pos"</span>,</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.theta_ <span class="op">=</span> temp[:, <span class="dv">0</span>]</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> temp[:, <span class="dv">1</span>:]</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>        h <span class="op">=</span> np.einsum(<span class="st">"ij,ji-&gt;i"</span>, X, t)  <span class="co"># h[i] = np.dot(X[i, :], t[:, i])</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>        y_hat <span class="op">=</span> <span class="va">self</span>.predict(X)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> y_hat <span class="op">+</span> (h <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> h)) <span class="op">*</span> (y_hat <span class="op">-</span> y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let’s check that our method for calculating the leave-one-out predictions is correct on random data, and compare it’s run time to the usual leave-one-out procedure.</p>
+<div id="cell-7" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> LeaveOneOut</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> time <span class="im">import</span> time</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> standard_loocv(model, X, y) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    y_tilde <span class="op">=</span> np.empty_like(y)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i, (train_index, test_index) <span class="kw">in</span> <span class="bu">enumerate</span>(LeaveOneOut().split(X)):</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        X_loo <span class="op">=</span> X[train_index, :]</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        y_loo <span class="op">=</span> y[train_index]</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        model.fit(X_loo, y_loo)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        y_tilde[i] <span class="op">=</span> model.predict(X[test_index, :])[<span class="dv">0</span>]</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> y_tilde</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gen_random_data(n: <span class="bu">int</span>, m: <span class="bu">int</span>) <span class="op">-&gt;</span> <span class="bu">tuple</span>[np.ndarray, np.ndarray, np.ndarray]:</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> rng.standard_normal((n, m))</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    L <span class="op">=</span> rng.standard_normal((m, m))</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    theta <span class="op">=</span> L <span class="op">@</span> rng.standard_normal(m)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> X <span class="op">@</span> theta <span class="op">+</span> rng.standard_normal(n)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    R <span class="op">=</span> L <span class="op">@</span> L.T  <span class="co"># random positive definite matrix</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> X, y, R</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>X, y, R <span class="op">=</span> gen_random_data(n<span class="op">=</span><span class="dv">100</span>, m<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> LinearRegressionWithQuadraticRegularization(R<span class="op">=</span>R)</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f"max absolute error: </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">max</span>(np.<span class="bu">abs</span>(model.fit_loocv_predict(X, y) <span class="op">-</span> standard_loocv(model, X, y)))<span class="sc">:.3e}</span><span class="ss">"</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>max absolute error: 1.243e-14</code></pre>
+</div>
+</div>
+<p>Good, the two methods to calculate <span class="math inline">\(\tilde{y}\)</span> give the same result. Let’s also compare the runtime:</p>
+<div id="cell-9" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit model.fit_loocv_predict(X, y) </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit standard_loocv(model, X, y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>34.6 µs ± 1.35 µs per loop (mean ± std. dev. of 7 runs, 10,000 loops each)
+2.39 ms ± 10.7 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)</code></pre>
+</div>
+</div>
+<p>Nice, a significant speedup. But that’s quite fast to begin with. Let’s increase <code>n</code> and <code>m</code>:</p>
+<div id="cell-11" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>X, y, R <span class="op">=</span> gen_random_data(n<span class="op">=</span><span class="dv">1000</span>, m<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> LinearRegressionWithQuadraticRegularization(R<span class="op">=</span>R)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'max absolute error: </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">max</span>(np.<span class="bu">abs</span>(model.fit_loocv_predict(X, y) <span class="op">-</span> standard_loocv(model, X, y)))<span class="sc">:.3e}</span><span class="ss">'</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit model.fit_loocv_predict(X, y) </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit standard_loocv(model, X, y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>max absolute error: 8.527e-14
+138 ms ± 16.4 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+The slowest run took 4.24 times longer than the fastest. This could mean that an intermediate result is being cached.
+822 ms ± 461 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)</code></pre>
+</div>
+</div>
+<p>Hmm… Much less impressive. This is likely due to some python inefficiencies, not the algorithm itself. Let’s try to improve by using JAX’s just-in-time compilation feature:</p>
+<div id="cell-13" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> JitLinearRegressionWithQuadraticRegularization:</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, R) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.R <span class="op">=</span> R</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> fit(<span class="va">self</span>, X, y) <span class="op">-&gt;</span> Self:</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.theta_ <span class="op">=</span> <span class="va">self</span>._fit(X, y, <span class="va">self</span>.R)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> predict(<span class="va">self</span>, X) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>._predict(X, <span class="va">self</span>.theta_)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> fit_loocv_predict(<span class="va">self</span>, X, y) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.theta_, y_tilde <span class="op">=</span> <span class="va">self</span>._fit_loocv_predict(X, y, <span class="va">self</span>.R)</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> y_tilde</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">@staticmethod</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">@jax.jit</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _fit(X, y, R) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> jax.scipy.linalg.solve(</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>            X.T <span class="op">@</span> X <span class="op">+</span> R, </span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>            X.T <span class="op">@</span> y,</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>            overwrite_a<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>            overwrite_b<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>            assume_a<span class="op">=</span><span class="st">"pos"</span>,</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">@staticmethod</span></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">@jax.jit</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _predict(X, theta) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> X <span class="op">@</span> theta</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">@staticmethod</span></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">@jax.jit</span></span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _fit_loocv_predict(X, y, R) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>        temp <span class="op">=</span> jax.scipy.linalg.solve(</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>            X.T <span class="op">@</span> X <span class="op">+</span> R,</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>            jax.numpy.vstack([X.T <span class="op">@</span> y, X]).T,</span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>            overwrite_a<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>            overwrite_b<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>            assume_a<span class="op">=</span><span class="st">"pos"</span>,</span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>        theta <span class="op">=</span> temp[:, <span class="dv">0</span>]</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> temp[:, <span class="dv">1</span>:]</span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>        h <span class="op">=</span> jax.numpy.einsum(<span class="st">"ij,ji-&gt;i"</span>, X, t)  <span class="co"># h[i] = np.dot(X[i, :], t[:, i])</span></span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>        y_hat <span class="op">=</span> X <span class="op">@</span> theta</span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> theta, y_hat <span class="op">+</span> (h <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> h)) <span class="op">*</span> (y_hat <span class="op">-</span> y)</span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> JitLinearRegressionWithQuadraticRegularization(R<span class="op">=</span>R)</span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'max absolute error: </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">max</span>(np.<span class="bu">abs</span>(model.fit_loocv_predict(X, y) <span class="op">-</span> standard_loocv(model, X, y)))<span class="sc">:.3e}</span><span class="ss">'</span>)</span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit model.fit_loocv_predict(X, y) </span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit standard_loocv(model, X, y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>max absolute error: 4.780e-05
+1.65 ms ± 522 µs per loop (mean ± std. dev. of 7 runs, 1,000 loops each)
+326 ms ± 1.03 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)</code></pre>
+</div>
+</div>
+<p>Much better!</p>
+</section>
+</section>
+<section id="the-non-quadratic-case" class="level1">
+<h1>The non-quadratic case</h1>
+<p>In this section, we extend our approach to scenarios where <span class="math inline">\(l\)</span> or <span class="math inline">\(r\)</span> are not quadratic. Although solving equation <a href="#eq-theta-def" class="quarto-xref">Equation&nbsp;1</a> is not simplified to solving a linear equation in this case, we can resort to the following approximation: <span id="eq-newton-approx"><span class="math display">\[
+H^{(j)} (\theta^{(j)} - \theta) \approx -g^{(j)}
+\tag{5}\]</span></span> where <span class="math inline">\(H^{(j)}\)</span> and <span class="math inline">\(g^{(j)}\)</span> represent the Hessian and gradient of <span class="math inline">\(f^{(j)}\)</span> at <span class="math inline">\(\theta\)</span>, respectively. The rationale here is that <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\theta^{(j)}\)</span> should be relatively close (and closer as <span class="math inline">\(n\)</span> increases), making it likely that Newton’s method on <span class="math inline">\(f^{(j)}\)</span> converges in a single iteration when initialized on <span class="math inline">\(\theta\)</span>.</p>
+<p>Similar to the quadratic case, we can relate <span class="math inline">\(H^{(j)}\)</span> and <span class="math inline">\(g^{(j)}\)</span> to <span class="math inline">\(H\)</span> and <span class="math inline">\(g\)</span>, the Hessian and gradient of <span class="math inline">\(f\)</span> at <span class="math inline">\(\theta\)</span>: <span class="math display">\[\begin{align*}
+H^{(j)} &amp;= H - x_j l''(\hat{y}_i ; y_i) x_j^T
+\\
+g^{(j)} &amp;= g - x_j l'(\hat{y}_i ; y_i) = - x_j l'(\hat{y}_i ; y_i)
+\end{align*}\]</span> allowing us to rewrite <a href="#eq-newton-approx" class="quarto-xref">Equation&nbsp;5</a> as: <span class="math display">\[
+\left(
+    H - x_j l''\left(\hat{y}_i ; y_i\right) x_j^T
+\right)
+\left( \theta^{(j)} - \theta \right)
+\approx  x_j l'(\hat{y}_i ; y_i).
+\]</span> Next, we introduce the second equation: <span class="math display">\[\begin{align*}
+H \theta^{(j)}
+    - x_j l''(\hat{y}_i ; y_i) \tilde{y}_j
+    - H \theta
+    + x_j l''(\hat{y}_i ; y_i) \hat{y}_j
+    &amp;=  
+    x_j l'(\hat{y}_i ; y_i)
+    \\
+    \tilde{y}_j &amp;= x_j ^T \theta^{(j)}.
+\end{align*}\]</span> Now, we can eliminate <span class="math inline">\(\theta^{(j)}\)</span> and solve for <span class="math inline">\(\tilde{y}_j\)</span>: <span class="math display">\[\begin{align*}
+\theta^{(j)} &amp;= \theta + t_j (l'(\hat{y}_i ; y_i) +  l''(\hat{y}_i ; y_i) (\tilde{y}_j - \hat{y}_j))
+\\
+\tilde{y}_j &amp;= x_j ^T \left(
+    \theta + t_j (l'(\hat{y}_i ; y_i) +  l''(\hat{y}_i ; y_i) (\tilde{y}_j - \hat{y}_j))
+    \right)
+\\
+\tilde{y}_j &amp;=
+     \hat{y}_j
+    + \frac{h_j}{1 - h_j l''(\hat{y}_i ; y_i)}  l'(\hat{y}_i ; y_i)
+\end{align*}\]</span> where <span class="math inline">\(t_j := H^{-1} x_j\)</span> and <span class="math inline">\(h_j := x_j^T t_j\)</span>.</p>
+<p>It’s worth noting the resemblance between our expression for <span class="math inline">\(\tilde{y}_j\)</span> here and the expression obtained for the quadratic case.</p>
+<section id="python-implementation-1" class="level2">
+<h2 class="anchored" data-anchor-id="python-implementation-1">Python implementation</h2>
+<p>Once more, we’ll turn to jax, leveraging its automatic differentiation capabilities. Our estimator will take as inputs the loss and regularization functions, along with an optional “inverse link” function. This function can be employed to transform the predicted labels (e.g.&nbsp;a sigmoid to convert log-odds to probabilities in logistic regression).</p>
 
 
+</section>
 </section>
 
 
@@ -281,7 +528,7 @@ Reminder
 
 <ol>
 <li id="fn1"><p>I am deliberately avoiding writing <span class="math inline">\(\theta = A^{-1} b\)</span>, as <span class="math inline">\(A\)</span> does not have to be invertible for this equation to have a solution, and it allows me to avoid the usual “assuming full rank” caveats people tend to use here. Furthermore, it can mislead people into implementations like <code>np.linalg.inv(A) @ b</code>, which are less stable and efficient than implementations like <code>np.linalg.solve(A, b)</code>.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn2"><p>Translates better into code, as we get the expression for <span class="math inline">\(\tilde{y}_j\)</span> directly, without going through an expression for <span class="math inline">\(\theta^{(j)}\)</span> first. I also think Sherman-Morisson is a bit too strong here and can obscure some insights, so it’s nice to avoid it. But actually the other way is just halfway it’s proof (see for example <a href="https://www.cs.cornell.edu/~bindel/class/cs6210-f09/lec12.pdf">here</a>).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>This approach translates better into code, as we get the expression for <span class="math inline">\(\tilde{y}_j\)</span> directly, without going through an expression for <span class="math inline">\(\theta^{(j)}\)</span> first. I also think Sherman-Morisson is a bit too strong here and can obscure some insights, so it’s nice to avoid it. But actually the other approach is just halfway it’s proof (see for example <a href="https://www.cs.cornell.edu/~bindel/class/cs6210-f09/lec12.pdf">here</a>).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
