@@ -122,8 +122,19 @@ window.Quarto = {
 </ul>
             <ul class="navbar-nav navbar-nav-scroll ms-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../../about.html"> 
-<span class="menu-text">About</span></a>
+    <a class="nav-link" href="https://www.linkedin.com/in/tom-shlomo/"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text">LinkedIn</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://github.com/tomshlomo"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text">Github</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://scholar.google.com/citations?user=ZJSZgpwAAAAJ&amp;hl=en"> <i class="bi bi-google" role="img">
+</i> 
+<span class="menu-text">Google Scholar</span></a>
   </li>  
 </ul>
           </div> <!-- /navcollapse -->
@@ -184,19 +195,19 @@ window.Quarto = {
 \]</span> My goal is to explain the Pearson correlation coefficient without using the word correlation, which is often used to describe it.<br>
 The Pearson correlation coefficient of two random variables <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> is <span class="math display">\[
 \rho := \frac{\sigma_{XY}}{\sigma_X \sigma_Y},
-\]</span> where <span class="math inline">\(\sigma_X, \sigma_Y\)</span> are the standard deviation of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, and <span class="math inline">\(\sigma_{XY}\)</span> is their covariance.</p>
+\]</span> where <span class="math inline">\(\sigma_X\)</span> and <span class="math inline">\(\sigma_Y\)</span> are the standard deviation of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> respectively, and <span class="math inline">\(\sigma_{XY}\)</span> is their covariance.</p>
 <p>A motivation for the definition <span class="math inline">\(\rho\)</span> comes from the problem of estimating <span class="math inline">\(Y\)</span> from an observation of <span class="math inline">\(X\)</span>. It turns out that in the optimal (lowest MSE) linear estimation, <em>the number of standard deviations <span class="math inline">\(Y\)</span> is above it’s mean is <span class="math inline">\(\rho\)</span> times the number of standard deviations <span class="math inline">\(X\)</span> is above it’s mean.</em><br>
-For example, consider a population of people where height and weight are correlated with <span class="math inline">\(\rho=0.72\)</span>, heights are distributed with mean <span class="math inline">\(170\)</span>cm and a standard deviation of <span class="math inline">\(10\)</span>cm, weights are distributed with mean <span class="math inline">\(70\)</span>Kg and a standard deviation of <span class="math inline">\(20\)</span>Kg. If you know that the height of a certain person is <span class="math inline">\(190\)</span>cm, a good guess for it’s weight is <span class="math inline">\(70 + 2 \cdot 0.72 \cdot 20 = 98.8\)</span>Kg.</p>
+For example, consider a population of people where height and weight are correlated with <span class="math inline">\(\rho=0.72\)</span>, heights are distributed with mean <span class="math inline">\(170\)</span>cm and a standard deviation of <span class="math inline">\(10\)</span>cm, weights are distributed with mean <span class="math inline">\(70\)</span>Kg and a standard deviation of <span class="math inline">\(20\)</span>Kg. If we know that the height of a certain person is <span class="math inline">\(190\)</span>cm, a good guess for it’s weight is <span class="math inline">\(70 + 2 \cdot 0.72 \cdot 20 = 98.8\)</span>Kg.</p>
 <p>The proof is very simple. Since we are dealing with linear (actually, affine) estimators, we need to show that the <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> that would minimize <span class="math display">\[
 \text{MSE} := \E{ \left( \hat{Y} - Y \right) ^2},
 \]</span> where <span class="math inline">\(\hat{Y} := a (X - \mu_x) + b\)</span>, are <span class="math inline">\(\rho \sigma_Y / \sigma_X\)</span> and <span class="math inline">\(\mu_Y\)</span>.<br>
-The MSE is the sum of bias squared and variance. The variance doesn’t depend on <span class="math inline">\(b\)</span>, and the bias is <span class="math inline">\(\E{  \hat{Y} - Y } = b - \mu_Y\)</span> which doesn’t depend on <span class="math inline">\(a\)</span>. so <span class="math inline">\(b=\mu_Y\)</span>. To minimize the variance, we simplify <span class="math display">\[
+The MSE is the sum of bias squared and variance. The variance doesn’t depend on <span class="math inline">\(b\)</span>, and the bias is <span class="math inline">\(\E{  \hat{Y} - Y } = b - \mu_Y\)</span> which doesn’t depend on <span class="math inline">\(a\)</span>, so <span class="math inline">\(b=\mu_Y\)</span>. To minimize the variance, we simplify: <span class="math display">\[
 \begin{align*}
 \var{\hat{Y} - Y}
 &amp;= \var{\hat{Y}} + \var{Y} - 2 \cov{\hat{Y}, Y}
 \\&amp;= \sigma_x ^ 2 a^2
    + \sigma_Y ^2
-   -2  \sigma_{XY} a
+   -2  \sigma_{XY} a.
 \end{align*}
 \]</span> This is just a parabola in <span class="math inline">\(a\)</span>, so the optimal <span class="math inline">\(a\)</span> is <span class="math display">\[
 a=\frac{2 \sigma_{XY}} {2 \sigma_X ^2}
@@ -215,8 +226,7 @@ In the example above, knowing the height decreases weight estimation standard de
 In our example, we estimated the weight to be <span class="math inline">\(98.8\)</span>Kg with variance <span class="math inline">\(9.6^2\)</span>. It doesn’t mean that if we will sample random people with height <span class="math inline">\(190\)</span>cm, we would get a mean weight of <span class="math inline">\(98.8\)</span>Kg and variance smaller than <span class="math inline">\(9.6^2\)</span>. It means that if we sample random people, and estimate their weight from their height using the optimal linear estimator, our error will be zero on average, and with variance <span class="math inline">\(9.6^2\)</span>. If we use the optimal estimator, the <span class="math inline">\(9.6^2\)</span> is an upper bound on the variance.</p></li>
 <li><p>The sentence “<span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are not correlated” now has a concrete meaning: it means that the optimal linear estimator of <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> will be the mean of <span class="math inline">\(Y\)</span>, ignoring <span class="math inline">\(X\)</span> completely.</p></li>
 <li><p>The discussion above is “Bayesian”, in the sense that it assumes you have some knowledge about the distribution of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. In practice we usually get <span class="math inline">\(n\)</span> samples of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> pairs, and we use plug-in estimators to estimate the means, variances, and covariance, which we will then use build our <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> linear estimator.<br>
-Machine learning people would say: we can use the samples to train a linear regression model to predict <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> directly. Sounds better, more “end-to-end”y, but actually it gives exactly the same result (assuming we don’t use <a href="https://en.wikipedia.org/wiki/Bessel%27s_correction">Bessel’s correction</a>).<br>
-Proof:<br>
+Machine learning people would say: we can use the samples to train a linear regression model to predict <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> directly. Sounds better, more “end-to-end”y, but actually it gives exactly the same result<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. Proof:<br>
 We denote by <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> be the vectors of samples of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, by <span class="math inline">\(\mathbf{1}\)</span> a vector of ones, and by <span class="math inline">\(A\)</span> the matrix whose first column is <span class="math inline">\(x\)</span> and the second column is <span class="math inline">\(\mathbf{1}\)</span>. The coefficients of the linear model are given by: <span class="math display">\[
 \begin{align*}
 \begin{bmatrix}
@@ -337,7 +347,13 @@ $$ -->
 
 
 
-</main> <!-- /main -->
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>Assuming we don’t use <a href="https://en.wikipedia.org/wiki/Bessel%27s_correction">Bessel’s correction</a><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {

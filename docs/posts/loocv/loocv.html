@@ -414,8 +414,8 @@ The slowest run took 4.24 times longer than the fastest. This could mean that an
 822 ms ± 461 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)</code></pre>
 </div>
 </div>
-<p>Hmm… Much less impressive. This is likely due to some python inefficiencies, not the algorithm itself. Let’s try to improve by using JAX’s just-in-time compilation feature:</p>
-<div id="cell-13" class="cell" data-execution_count="5">
+<p>Hmm… Much less impressive. In theory the speedup should improve as the problem size increases. This is likely due to some python inefficiencies, not the algorithm itself. Let’s try to improve by using JAX’s just-in-time compilation feature:</p>
+<div id="cell-13" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -468,12 +468,12 @@ The slowest run took 4.24 times longer than the fastest. This could mean that an
 <span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> JitLinearRegressionWithQuadraticRegularization(R<span class="op">=</span>R)</span>
 <span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f'max absolute error: </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">max</span>(np.<span class="bu">abs</span>(model.fit_loocv_predict(X, y) <span class="op">-</span> standard_loocv(model, X, y)))<span class="sc">:.3e}</span><span class="ss">'</span>)</span>
-<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit model.fit_loocv_predict(X, y) </span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit model.fit_loocv_predict(X, y).block_until_ready()</span>
 <span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit standard_loocv(model, X, y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>max absolute error: 4.780e-05
-1.65 ms ± 522 µs per loop (mean ± std. dev. of 7 runs, 1,000 loops each)
-326 ms ± 1.03 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)</code></pre>
+1.75 ms ± 232 µs per loop (mean ± std. dev. of 7 runs, 1,000 loops each)
+353 ms ± 11.9 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)</code></pre>
 </div>
 </div>
 <p>Much better!</p>
@@ -499,22 +499,22 @@ H \theta^{(j)}
     - x_j l''(\hat{y}_i ; y_i) \tilde{y}_j
     - H \theta
     + x_j l''(\hat{y}_i ; y_i) \hat{y}_j
-    &amp;=  
+    &amp;\approx
     x_j l'(\hat{y}_i ; y_i)
     \\
     \tilde{y}_j &amp;= x_j ^T \theta^{(j)}.
 \end{align*}\]</span> Now, we can eliminate <span class="math inline">\(\theta^{(j)}\)</span> and solve for <span class="math inline">\(\tilde{y}_j\)</span>: <span class="math display">\[\begin{align*}
-\theta^{(j)} &amp;= \theta + t_j (l'(\hat{y}_i ; y_i) +  l''(\hat{y}_i ; y_i) (\tilde{y}_j - \hat{y}_j))
+\theta^{(j)} &amp;\approx \theta + t_j (l'(\hat{y}_i ; y_i) +  l''(\hat{y}_i ; y_i) (\tilde{y}_j - \hat{y}_j))
 \\
-\tilde{y}_j &amp;= x_j ^T \left(
+\tilde{y}_j &amp;\approx x_j ^T \left(
     \theta + t_j (l'(\hat{y}_i ; y_i) +  l''(\hat{y}_i ; y_i) (\tilde{y}_j - \hat{y}_j))
     \right)
 \\
-\tilde{y}_j &amp;=
+\tilde{y}_j &amp;\approx
      \hat{y}_j
     + \frac{h_j}{1 - h_j l''(\hat{y}_i ; y_i)}  l'(\hat{y}_i ; y_i)
 \end{align*}\]</span> where <span class="math inline">\(t_j := H^{-1} x_j\)</span> and <span class="math inline">\(h_j := x_j^T t_j\)</span>.</p>
-<p>It’s worth noting the resemblance between our expression for <span class="math inline">\(\tilde{y}_j\)</span> here and the expression obtained for the quadratic case.</p>
+<p>It’s worth noting the resemblance between the expression for <span class="math inline">\(\tilde{y}_j\)</span> here and the expression obtained for the quadratic case.</p>
 <section id="python-implementation-1" class="level2">
 <h2 class="anchored" data-anchor-id="python-implementation-1">Python implementation</h2>
 <p>Once more, we’ll turn to jax, leveraging its automatic differentiation capabilities. Our estimator will take as inputs the loss and regularization functions, along with an optional “inverse link” function. This function can be employed to transform the predicted labels (e.g.&nbsp;a sigmoid to convert log-odds to probabilities in logistic regression).</p>
