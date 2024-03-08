@@ -8,9 +8,9 @@
 
 <meta name="author" content="Tom Shlomo">
 <meta name="dcterms.date" content="2024-02-27">
-<meta name="description" content="The quadratic case">
+<meta name="description" content="The derivation and implementation of a method for leave one out cross validation with neglible extra runtime compared to fitting alone.">
 
-<title>Efficient Leave One Out Cross Validation - Part 1</title>
+<title>Efficient leave one out cross validation - part 1</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -181,10 +181,10 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
     <div class="quarto-title column-body">
-      <h1 class="title">Efficient Leave One Out Cross Validation - Part 1</h1>
+      <h1 class="title">Efficient leave one out cross validation - part 1</h1>
                   <div>
         <div class="description">
-          The quadratic case
+          The derivation and implementation of a method for leave one out cross validation with neglible extra runtime compared to fitting alone.
         </div>
       </div>
                 </div>
@@ -224,10 +224,10 @@ window.Quarto = {
 
 <p>Cross-validation is a crucial technique in assessing the performance of machine learning models. K-fold cross-validation, a widely-used method, involves dividing the dataset into K subsets, training the model K times, each time using a different subset as the testing set. This helps us gauge how well our model generalizes to unseen data. However, as K increases so does the computational time. This becomes painfully evident, particularly during hyperparameter tuning, where sluggish fits can be a major bottleneck.</p>
 <p>Leave-one-out cross-validation (LOOCV), a special case of K-fold cross-validation where K equals the number of training samples, can offer accurate evaluation but comes at a hefty computational cost, making it less practical for larger datasets and hyperparameter tuning.</p>
-<p>For linear models like ordinary least squares and ridge regression, a little-known trick exists to efficiently calculate LOOCV scores. scikit-learn even implements this in it’s <code>RidgeCV</code> estimator. Notably, this same trick extends beyond these linear models to any problem involving quadratically regularized least squares regression — a fact not widely recognized.</p>
+<p>For linear models like ordinary least squares and ridge regression, a little-known trick exists to efficiently calculate LOOCV scores. scikit-learn even implements this in it’s <code>RidgeCV</code> estimator. Notably, this same trick extends beyond these linear models to any quadratically regularized least squares regression — a fact not widely recognized.</p>
 <p>Taking it a step further, even for non-least-squares models like logistic and Poisson regression, a similar trick can be employed to approximate LOOCV scores efficiently. Intriguingly, the accuracy of this approximation improves with larger datasets, addressing the need for speedup in precisely those scenarios.</p>
-<p>In this first part, we derive efficient LOOCV for the quadratic case, and implement it python using JAX.</p>
-<p>In part 2, we will extend the derivation for the non-quadratic case, and demonstrate these results on a practical example.</p>
+<p>In this initial segment, we derive efficient LOOCV for the quadratic scenario and demonstrate its implementation in Python.</p>
+<p>In part 2, we will build upon this derivation to cover non-quadratic scenarios and showcase these findings with a practical example dataset.</p>
 <section id="notation" class="level1">
 <h1>Notation</h1>
 <p>We denote the number of samples in the training dataset as <span class="math inline">\(n\)</span>.</p>
@@ -479,49 +479,8 @@ The slowest run took 4.24 times longer than the fastest. This could mean that an
 </div>
 </div>
 <p>Much better!</p>
-</section>
-<section id="the-non-quadratic-case" class="level1">
-<h1>The non-quadratic case</h1>
-<p>In this section, we extend our approach to scenarios where <span class="math inline">\(l\)</span> or <span class="math inline">\(r\)</span> are not quadratic. Although solving equation <a href="#eq-theta-def" class="quarto-xref">Equation&nbsp;1</a> is not simplified to solving a linear equation in this case, we can resort to the following approximation: <span id="eq-newton-approx"><span class="math display">\[
-H^{(j)} (\theta^{(j)} - \theta) \approx -g^{(j)}
-\tag{5}\]</span></span> where <span class="math inline">\(H^{(j)}\)</span> and <span class="math inline">\(g^{(j)}\)</span> represent the Hessian and gradient of <span class="math inline">\(f^{(j)}\)</span> at <span class="math inline">\(\theta\)</span>, respectively. The rationale here is that <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\theta^{(j)}\)</span> should be relatively close (and closer as <span class="math inline">\(n\)</span> increases), making it likely that Newton’s method on <span class="math inline">\(f^{(j)}\)</span> converges in a single iteration when initialized on <span class="math inline">\(\theta\)</span>.</p>
-<p>Similar to the quadratic case, we can relate <span class="math inline">\(H^{(j)}\)</span> and <span class="math inline">\(g^{(j)}\)</span> to <span class="math inline">\(H\)</span> and <span class="math inline">\(g\)</span>, the Hessian and gradient of <span class="math inline">\(f\)</span> at <span class="math inline">\(\theta\)</span>: <span class="math display">\[\begin{align*}
-H^{(j)} &amp;= H - x_j l''(\hat{y}_i ; y_i) x_j^T
-\\
-g^{(j)} &amp;= g - x_j l'(\hat{y}_i ; y_i) = - x_j l'(\hat{y}_i ; y_i)
-\end{align*}\]</span> allowing us to rewrite <a href="#eq-newton-approx" class="quarto-xref">Equation&nbsp;5</a> as: <span class="math display">\[
-\left(
-    H - x_j l''\left(\hat{y}_i ; y_i\right) x_j^T
-\right)
-\left( \theta^{(j)} - \theta \right)
-\approx  x_j l'(\hat{y}_i ; y_i).
-\]</span> Next, we introduce the second equation: <span class="math display">\[\begin{align*}
-H \theta^{(j)}
-    - x_j l''(\hat{y}_i ; y_i) \tilde{y}_j
-    - H \theta
-    + x_j l''(\hat{y}_i ; y_i) \hat{y}_j
-    &amp;\approx
-    x_j l'(\hat{y}_i ; y_i)
-    \\
-    \tilde{y}_j &amp;= x_j ^T \theta^{(j)}.
-\end{align*}\]</span> Now, we can eliminate <span class="math inline">\(\theta^{(j)}\)</span> and solve for <span class="math inline">\(\tilde{y}_j\)</span>: <span class="math display">\[\begin{align*}
-\theta^{(j)} &amp;\approx \theta + t_j (l'(\hat{y}_i ; y_i) +  l''(\hat{y}_i ; y_i) (\tilde{y}_j - \hat{y}_j))
-\\
-\tilde{y}_j &amp;\approx x_j ^T \left(
-    \theta + t_j (l'(\hat{y}_i ; y_i) +  l''(\hat{y}_i ; y_i) (\tilde{y}_j - \hat{y}_j))
-    \right)
-\\
-\tilde{y}_j &amp;\approx
-     \hat{y}_j
-    + \frac{h_j}{1 - h_j l''(\hat{y}_i ; y_i)}  l'(\hat{y}_i ; y_i)
-\end{align*}\]</span> where <span class="math inline">\(t_j := H^{-1} x_j\)</span> and <span class="math inline">\(h_j := x_j^T t_j\)</span>.</p>
-<p>It’s worth noting the resemblance between the expression for <span class="math inline">\(\tilde{y}_j\)</span> here and the expression obtained for the quadratic case.</p>
-<section id="python-implementation-1" class="level2">
-<h2 class="anchored" data-anchor-id="python-implementation-1">Python implementation</h2>
-<p>Once more, we’ll turn to jax, leveraging its automatic differentiation capabilities. Our estimator will take as inputs the loss and regularization functions, along with an optional “inverse link” function. This function can be employed to transform the predicted labels (e.g.&nbsp;a sigmoid to convert log-odds to probabilities in logistic regression).</p>
 
 
-</section>
 </section>
 
 

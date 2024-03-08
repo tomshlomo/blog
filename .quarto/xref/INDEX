@@ -28,5 +28,11 @@
   },
   "posts/loocv/loocv.ipynb": {
     "loocv.html": "db8ce182"
+  },
+  "posts/loocv_part2/loocv_part2.ipynb": {
+    "loocv_part2.html": "6b2cc606"
+  },
+  "posts/loocv/loocv_part1.ipynb": {
+    "loocv_part1.html": "f648aeff"
   }
 }

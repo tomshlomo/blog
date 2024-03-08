@@ -60,7 +60,7 @@
     "href": "index.html",
     "title": "Tom Shlomo’s Blog",
     "section": "",
-    "text": "Efficient Leave One Out Cross Validation\n\n\n\n\n\nTBD\n\n\n\n\n\nFeb 27, 2024\n\n\nTom Shlomo\n\n\n\n\n\n\n\n\n\n\n\n\nMUSIC as a sparse decomposition method\n\n\n\n\n\nA unique introduction to the MUSIC algorithm, as a general method to solve the multisnapshot sparse decomposition problem.\n\n\n\n\n\nJan 30, 2024\n\n\nTom Shlomo\n\n\n\n\n\n\n\n\n\n\n\n\nA practical interpertation of the Pearson correlation coefficient\n\n\n\n\n\n\\(\\rho=1\\) means perfect positive correlation, \\(\\rho=-1\\) means perfect negative correlation, \\(\\rho=0\\) means no correlation. But what does \\(\\rho=0.72\\) mean?\n\n\n\n\n\nJan 20, 2024\n\n\nTom Shlomo\n\n\n\n\n\n\n\n\n\n\n\n\nAugmentation is Regularization\n\n\n\n\n\nOn the equivalence of training data augmentation and quadratic regularization for linear models - a very useful (but not well known) result.\n\n\n\n\n\nJan 15, 2024\n\n\nTom Shlomo\n\n\n\n\n\n\nNo matching items"
+    "text": "Efficient leave one out cross validation - part 1\n\n\n\n\n\nThe derivation and implementation of a method for leave one out cross validation with neglible extra runtime compared to fitting alone.\n\n\n\n\n\nFeb 27, 2024\n\n\nTom Shlomo\n\n\n\n\n\n\n\n\n\n\n\n\nMUSIC as a sparse decomposition method\n\n\n\n\n\nA unique introduction to the MUSIC algorithm, as a general method to solve the multisnapshot sparse decomposition problem.\n\n\n\n\n\nJan 30, 2024\n\n\nTom Shlomo\n\n\n\n\n\n\n\n\n\n\n\n\nA practical interpertation of the Pearson correlation coefficient\n\n\n\n\n\n\\(\\rho=1\\) means perfect positive correlation, \\(\\rho=-1\\) means perfect negative correlation, \\(\\rho=0\\) means no correlation. But what does \\(\\rho=0.72\\) mean?\n\n\n\n\n\nJan 20, 2024\n\n\nTom Shlomo\n\n\n\n\n\n\n\n\n\n\n\n\nAugmentation is Regularization\n\n\n\n\n\nOn the equivalence of training data augmentation and quadratic regularization for linear models - a very useful (but not well known) result.\n\n\n\n\n\nJan 15, 2024\n\n\nTom Shlomo\n\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "posts/music/music.html",
@@ -93,9 +93,9 @@
   {
     "objectID": "posts/loocv/loocv.html",
     "href": "posts/loocv/loocv.html",
-    "title": "Efficient Leave One Out Cross Validation",
+    "title": "Efficient Leave One Out Cross Validation - Part 1",
     "section": "",
-    "text": "Cross-validation is a crucial technique in assessing the performance of machine learning models. K-fold cross-validation, a widely-used method, involves dividing the dataset into K subsets, training the model K times, each time using a different subset as the testing set. This helps us gauge how well our model generalizes to unseen data. However, as K increases so does the computational time. This becomes painfully evident, particularly during hyperparameter tuning, where sluggish fits can be a major bottleneck.\nLeave-one-out cross-validation (LOOCV), a special case of K-fold cross-validation where K equals the number of training samples, can offer accurate evaluation but comes at a hefty computational cost, making it less practical for larger datasets and hyperparameter tuning.\nFor linear models like ordinary least squares and ridge regression, a little-known trick exists to efficiently calculate LOOCV scores. scikit-learn even implements this in it’s RidgeCV estimator. Notably, this same trick extends beyond these linear models to any problem involving quadratically regularized least squares regression—a fact not widely recognized.\nTaking it a step further, even for non-least-squares models like logistic and Poisson regression, a similar trick can be employed to approximate LOOCV scores efficiently. Intriguingly, the accuracy of this approximation improves with larger datasets, addressing the need for speedup in precisely those scenarios.\nIn this blog post, we derive the formulas for efficient LOOCV calculations and demonstrate these results on a practical example."
+    "text": "Cross-validation is a crucial technique in assessing the performance of machine learning models. K-fold cross-validation, a widely-used method, involves dividing the dataset into K subsets, training the model K times, each time using a different subset as the testing set. This helps us gauge how well our model generalizes to unseen data. However, as K increases so does the computational time. This becomes painfully evident, particularly during hyperparameter tuning, where sluggish fits can be a major bottleneck.\nLeave-one-out cross-validation (LOOCV), a special case of K-fold cross-validation where K equals the number of training samples, can offer accurate evaluation but comes at a hefty computational cost, making it less practical for larger datasets and hyperparameter tuning.\nFor linear models like ordinary least squares and ridge regression, a little-known trick exists to efficiently calculate LOOCV scores. scikit-learn even implements this in it’s RidgeCV estimator. Notably, this same trick extends beyond these linear models to any problem involving quadratically regularized least squares regression — a fact not widely recognized.\nTaking it a step further, even for non-least-squares models like logistic and Poisson regression, a similar trick can be employed to approximate LOOCV scores efficiently. Intriguingly, the accuracy of this approximation improves with larger datasets, addressing the need for speedup in precisely those scenarios.\nIn this first part, we derive efficient LOOCV for the quadratic case, and implement it python using JAX.\nIn part 2, we will extend the derivation for the non-quadratic case, and demonstrate these results on a practical example."
   },
   {
     "objectID": "posts/loocv/loocv.html#notation",
@@ -142,7 +142,7 @@
   {
     "objectID": "posts/loocv/loocv.html#footnotes",
     "href": "posts/loocv/loocv.html#footnotes",
-    "title": "Efficient Leave One Out Cross Validation",
+    "title": "Efficient Leave One Out Cross Validation - Part 1",
     "section": "Footnotes",
     "text": "Footnotes\n\n\nI am deliberately avoiding writing \\(\\theta = A^{-1} b\\), as \\(A\\) does not have to be invertible for this equation to have a solution, and it allows me to avoid the usual “assuming full rank” caveats people tend to use here. Furthermore, it can mislead people into implementations like np.linalg.inv(A) @ b, which are less stable and efficient than implementations like np.linalg.solve(A, b).↩︎\nThis approach translates better into code, as we get the expression for \\(\\tilde{y}_j\\) directly, without going through an expression for \\(\\theta^{(j)}\\) first. I also think Sherman-Morisson is a bit too strong here and can obscure some insights, so it’s nice to avoid it. But actually the other approach is just halfway it’s proof (see for example here).↩︎"
   },
@@ -156,7 +156,7 @@
   {
     "objectID": "posts/loocv/loocv.html#python-implementation-1",
     "href": "posts/loocv/loocv.html#python-implementation-1",
-    "title": "Efficient Leave One Out Cross Validation",
+    "title": "Efficient Leave One Out Cross Validation - Part 1",
     "section": "Python implementation",
     "text": "Python implementation\nOnce more, we’ll turn to jax, leveraging its automatic differentiation capabilities. Our estimator will take as inputs the loss and regularization functions, along with an optional “inverse link” function. This function can be employed to transform the predicted labels (e.g. a sigmoid to convert log-odds to probabilities in logistic regression)."
   },
@@ -166,5 +166,26 @@
     "title": "A practical interpertation of the Pearson correlation coefficient",
     "section": "Footnotes",
     "text": "Footnotes\n\n\nAssuming we don’t use Bessel’s correction↩︎"
+  },
+  {
+    "objectID": "posts/loocv/loocv_part1.html",
+    "href": "posts/loocv/loocv_part1.html",
+    "title": "Efficient leave one out cross validation - part 1",
+    "section": "",
+    "text": "Cross-validation is a crucial technique in assessing the performance of machine learning models. K-fold cross-validation, a widely-used method, involves dividing the dataset into K subsets, training the model K times, each time using a different subset as the testing set. This helps us gauge how well our model generalizes to unseen data. However, as K increases so does the computational time. This becomes painfully evident, particularly during hyperparameter tuning, where sluggish fits can be a major bottleneck.\nLeave-one-out cross-validation (LOOCV), a special case of K-fold cross-validation where K equals the number of training samples, can offer accurate evaluation but comes at a hefty computational cost, making it less practical for larger datasets and hyperparameter tuning.\nFor linear models like ordinary least squares and ridge regression, a little-known trick exists to efficiently calculate LOOCV scores. scikit-learn even implements this in it’s RidgeCV estimator. Notably, this same trick extends beyond these linear models to any quadratically regularized least squares regression — a fact not widely recognized.\nTaking it a step further, even for non-least-squares models like logistic and Poisson regression, a similar trick can be employed to approximate LOOCV scores efficiently. Intriguingly, the accuracy of this approximation improves with larger datasets, addressing the need for speedup in precisely those scenarios.\nIn this initial segment, we derive efficient LOOCV for the quadratic scenario and demonstrate its implementation in Python.\nIn part 2, we will build upon this derivation to cover non-quadratic scenarios and showcase these findings with a practical example dataset."
+  },
+  {
+    "objectID": "posts/loocv/loocv_part1.html#python-implementation-1",
+    "href": "posts/loocv/loocv_part1.html#python-implementation-1",
+    "title": "Efficient Leave One Out Cross Validation - Part 1",
+    "section": "Python implementation",
+    "text": "Python implementation\nOnce more, we’ll turn to jax, leveraging its automatic differentiation capabilities. Our estimator will take as inputs the loss and regularization functions, along with an optional “inverse link” function. This function can be employed to transform the predicted labels (e.g. a sigmoid to convert log-odds to probabilities in logistic regression)."
+  },
+  {
+    "objectID": "posts/loocv/loocv_part1.html#footnotes",
+    "href": "posts/loocv/loocv_part1.html#footnotes",
+    "title": "Efficient leave one out cross validation - part 1",
+    "section": "Footnotes",
+    "text": "Footnotes\n\n\nI am deliberately avoiding writing \\(\\theta = A^{-1} b\\), as \\(A\\) does not have to be invertible for this equation to have a solution, and it allows me to avoid the usual “assuming full rank” caveats people tend to use here. Furthermore, it can mislead people into implementations like np.linalg.inv(A) @ b, which are less stable and efficient than implementations like np.linalg.solve(A, b).↩︎\nThis approach translates better into code, as we get the expression for \\(\\tilde{y}_j\\) directly, without going through an expression for \\(\\theta^{(j)}\\) first. I also think Sherman-Morisson is a bit too strong here and can obscure some insights, so it’s nice to avoid it. But actually the other approach is just halfway it’s proof (see for example here).↩︎"
   }
 ]
