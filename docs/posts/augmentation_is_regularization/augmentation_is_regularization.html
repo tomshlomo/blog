@@ -214,8 +214,6 @@ window.Quarto = {
 
 
 
-<section id="augmentation-is-regularization" class="level1">
-<h1>Augmentation is Regularization</h1>
 <p>Training data augmentation enhances the training dataset by applying transformations to existing training data instances. The specific transformations vary depending on the type of data involved, and this flexibility allows to leverage domain knowledge, such as known invariants, effectively. The goal is to introduce variability and increase the diversity of the training set, allowing the model to better generalize to unseen data and exhibit improved robustness. Despite the advantages, training data augmentation introduces an inherent computational cost: the increased volume of data requires additional computational resources, impacting both training time and memory requirements.</p>
 <p>As we will show below, for linear models with the sum of squares loss, training data augmentation is equivalent to adding quadratic regularization term, which implies that the computational cost of fitting a model to an augmented dataset is the same as using no augmentation at all!</p>
 <p>This link between augmentation and regularization is useful in the other direction as well: it gives a concrete interpretation to the value of regularization hyperparameters, and can be used to avoid costly hyperparameters tuning (<code>np.logspace(-6, 6, 100)</code> much?), and to design regularizers that are more appropriate to the data than the simple ones (i.e sum of squares regularization used in ridge regression).</p>
@@ -845,7 +843,6 @@ So like in the least squares case, in the loss term we just replace each <span c
 <p>I use this result to tell myself that it is ok to select an <span class="math inline">\(R\)</span> for a quadratic regularization based on the covariance of an augmentation, as long as the covariance is small (usually correct for augmentations), and <span class="math inline">\(l''\)</span> is bounded (correct for logistic regression).</p>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->

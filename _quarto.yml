@@ -6,7 +6,15 @@ website:
   # title: "Blog"
   navbar:
     right:
-      - about.qmd
+      - icon: linkedin
+        text: LinkedIn
+        href: https://www.linkedin.com/in/tom-shlomo/
+      - icon: github
+        text: Github
+        href: https://github.com/tomshlomo
+      - icon: google
+        text: Google Scholar
+        href: https://scholar.google.com/citations?user=ZJSZgpwAAAAJ&hl=en
     left:
       - text: "Home"
         file: index.qmd

@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/loocv/loocv_part1.html",
       "/posts/music/music.html",
       "/posts/pearson_correlation/pearson_correlation.html",
       "/posts/augmentation_is_regularization/augmentation_is_regularization.html"
