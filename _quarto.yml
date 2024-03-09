@@ -3,24 +3,27 @@ project:
   output-dir: docs
 
 website:
-  # title: "Blog"
+  title: "Tom Shlomo's Blog"
+  description: "Tom Shlomo's blog"
+  site-url: https://tomshlomo.github.io/blog/
   navbar:
     right:
       - icon: linkedin
-        text: LinkedIn
+        # text: LinkedIn
         href: https://www.linkedin.com/in/tom-shlomo/
       - icon: github
-        text: Github
+        # text: Github
         href: https://github.com/tomshlomo
-      - icon: google
-        text: Google Scholar
+      - text: "{{< ai google-scholar size=Large >}}"
         href: https://scholar.google.com/citations?user=ZJSZgpwAAAAJ&hl=en
-    left:
-      - text: "Home"
-        file: index.qmd
+      - icon: rss
+        href: index.xml
+    # left:
+    #   - text: "Home"
+    #     file: index.qmd
 format:
   html:
-    theme: cosmo
+    theme: darkly
     css: styles.css
 
 

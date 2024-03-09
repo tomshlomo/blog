@@ -3,6 +3,9 @@ title: "MUSIC as a sparse decomposition method"
 author: "Tom Shlomo"
 date: "2024-01-30"
 description: A unique introduction to the MUSIC algorithm, as a general method to solve the multisnapshot sparse decomposition problem.
+format:
+  html:
+    toc: true
 ---
 
 MUSIC (MUltiple SIgnal Classification) is a popular algorithm used to estimating the 

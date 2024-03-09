@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://tomshlomo.github.io/blog/index.html</loc>
+    <lastmod>2024-03-09T06:33:12.910Z</lastmod>
+  </url>
+  <url>
+    <loc>https://tomshlomo.github.io/blog/posts/loocv/loocv_part1.html</loc>
+    <lastmod>2024-03-09T16:52:22.020Z</lastmod>
+  </url>
+  <url>
+    <loc>https://tomshlomo.github.io/blog/posts/augmentation_is_regularization/augmentation_is_regularization.html</loc>
+    <lastmod>2024-03-09T16:55:50.342Z</lastmod>
+  </url>
+  <url>
+    <loc>https://tomshlomo.github.io/blog/posts/pearson_correlation/pearson_correlation.html</loc>
+    <lastmod>2024-03-08T15:22:58.015Z</lastmod>
+  </url>
+  <url>
+    <loc>https://tomshlomo.github.io/blog/posts/music/music.html</loc>
+    <lastmod>2024-03-09T16:55:50.087Z</lastmod>
+  </url>
+</urlset>
