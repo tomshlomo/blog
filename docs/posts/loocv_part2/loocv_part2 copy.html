@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.543">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Tom Shlomo">
+<meta name="dcterms.date" content="2024-02-27">
+<meta name="description" content="The non quadratic case">
+
+<title>Tom Shlomo’s Blog - Efficient Leave One Out Cross Validation - Part 2</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/quarto-contrib/academicons-1.9.2/all.css" rel="stylesheet">
+<link href="../../site_libs/quarto-contrib/academicons-1.9.2/size.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Tom Shlomo’s Blog</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/tom-shlomo/"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/tomshlomo"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://scholar.google.com/citations?user=ZJSZgpwAAAAJ&amp;hl=en"> 
+<span class="menu-text"><i class="ai  ai-google-scholar ai-Large"></i></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+          <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Efficient Leave One Out Cross Validation - Part 2</h1>
+                  <div>
+        <div class="description">
+          The non quadratic case
+        </div>
+      </div>
+                </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Tom Shlomo </p>
+            </div>
+    </div>
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">February 27, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<p>In the <a href="https://tomshlomo.github.io/blog/posts/loocv/loocv_part1.html">first part</a>, we developed a method for performing efficient leave-one-out cross-validation (LOOCV). This method was precise but mandated that the loss and regularization functions be quadratic. Here, we’ll introduce a similar technique that provides an approximation, but eliminates the necessity for the loss and regularization to be quadratic. Additionally, we’ll code this method in Python using JAX and showcase its application on a sample dataset.</p>
+<section id="deriving-efficient-loocv-for-the-non-quadratic-case" class="level1">
+<h1>Deriving efficient LOOCV for the non-quadratic case</h1>
+<p>In this section, we extend our approach to scenarios where <span class="math inline">\(l\)</span> or <span class="math inline">\(r\)</span> are not quadratic. Although solving equation <strong>?@eq-theta-def</strong> is not simplified to solving a linear equation in this case, we can resort to the following approximation: <span id="eq-newton-approx"><span class="math display">\[
+H^{(j)} (\theta^{(j)} - \theta) \approx -g^{(j)}
+\tag{1}\]</span></span> where <span class="math inline">\(H^{(j)}\)</span> and <span class="math inline">\(g^{(j)}\)</span> represent the Hessian and gradient of <span class="math inline">\(f^{(j)}\)</span> at <span class="math inline">\(\theta\)</span>, respectively. The rationale here is that <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\theta^{(j)}\)</span> should be relatively close (and closer as <span class="math inline">\(n\)</span> increases), making it likely that Newton’s method on <span class="math inline">\(f^{(j)}\)</span> converges in a single iteration when initialized on <span class="math inline">\(\theta\)</span>.</p>
+<p>Similar to the quadratic case, we can relate <span class="math inline">\(H^{(j)}\)</span> and <span class="math inline">\(g^{(j)}\)</span> to <span class="math inline">\(H\)</span> and <span class="math inline">\(g\)</span>, the Hessian and gradient of <span class="math inline">\(f\)</span> at <span class="math inline">\(\theta\)</span>: <span class="math display">\[\begin{align*}
+H^{(j)} &amp;= H - x_j l''(\hat{y}_i ; y_i) x_j^T
+\\
+g^{(j)} &amp;= g - x_j l'(\hat{y}_i ; y_i) = - x_j l'(\hat{y}_i ; y_i)
+\end{align*}\]</span> allowing us to rewrite <a href="#eq-newton-approx" class="quarto-xref">Equation&nbsp;1</a> as: <span class="math display">\[
+\left(
+    H - x_j l''\left(\hat{y}_i ; y_i\right) x_j^T
+\right)
+\left( \theta^{(j)} - \theta \right)
+\approx  x_j l'(\hat{y}_i ; y_i).
+\]</span> Next, we introduce the second equation: <span class="math display">\[\begin{align*}
+H \theta^{(j)}
+    - x_j l''(\hat{y}_i ; y_i) \tilde{y}_j
+    - H \theta
+    + x_j l''(\hat{y}_i ; y_i) \hat{y}_j
+    &amp;\approx
+    x_j l'(\hat{y}_i ; y_i)
+    \\
+    \tilde{y}_j &amp;= x_j ^T \theta^{(j)}.
+\end{align*}\]</span> Now, we can eliminate <span class="math inline">\(\theta^{(j)}\)</span> and solve for <span class="math inline">\(\tilde{y}_j\)</span>: <span class="math display">\[\begin{align*}
+\theta^{(j)} &amp;\approx \theta + t_j (l'(\hat{y}_i ; y_i) +  l''(\hat{y}_i ; y_i) (\tilde{y}_j - \hat{y}_j))
+\\
+\tilde{y}_j &amp;\approx x_j ^T \left(
+    \theta + t_j (l'(\hat{y}_i ; y_i) +  l''(\hat{y}_i ; y_i) (\tilde{y}_j - \hat{y}_j))
+    \right)
+\\
+\tilde{y}_j &amp;\approx
+     \hat{y}_j
+    + \frac{h_j}{1 - h_j l''(\hat{y}_i ; y_i)}  l'(\hat{y}_i ; y_i)
+\end{align*}\]</span> where <span class="math inline">\(t_j := H^{-1} x_j\)</span> and <span class="math inline">\(h_j := x_j^T t_j\)</span>.</p>
+<p>It’s worth noting the resemblance between the expression for <span class="math inline">\(\tilde{y}_j\)</span> here and the expression obtained for the quadratic case.</p>
+<section id="python-implementation" class="level2">
+<h2 class="anchored" data-anchor-id="python-implementation">Python implementation</h2>
+<p>Once more, we’ll turn to jax, leveraging its automatic differentiation capabilities. Our estimator will take as inputs the loss and regularization functions, along with an optional “inverse link” function. This function can be employed to transform the predicted labels (e.g.&nbsp;a sigmoid to convert log-odds to probabilities in logistic regression).</p>
+<div id="cell-4" class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Callable, Self</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy.typing <span class="im">as</span> npt</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> scipy</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>Array <span class="op">=</span> npt.NDArray[np.float64]</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> GLMWithLOOCV:</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        loss: Callable[[Array, Array], Array],</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        reg: Callable[[Array], <span class="bu">float</span>],</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        inverse_link: Callable[[Array], Array],</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    ) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.loss <span class="op">=</span> loss</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.reg <span class="op">=</span> reg</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.inverse_link <span class="op">=</span> inverse_link</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> f(<span class="va">self</span>, theta: Array, X: Array, y: Array) <span class="op">-&gt;</span> <span class="bu">float</span>:</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>        y_hat <span class="op">=</span> X <span class="op">@</span> theta</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.loss(y_hat, y).<span class="bu">sum</span>() <span class="op">+</span> <span class="va">self</span>.reg(theta)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> fit(<span class="va">self</span>, X: Array, y: Array) <span class="op">-&gt;</span> Self:</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        <span class="co"># We optimize f with L-BFGS-B as it has reasonable performance with the data below,</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        <span class="co">#  but any other convex optimization algorithm can be used here.</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        result <span class="op">=</span> scipy.optimize.minimize(</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>            jax.value_and_grad(<span class="kw">lambda</span> theta: <span class="va">self</span>.f(theta, X, y)),</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>            x0<span class="op">=</span>np.zeros(X.shape[<span class="dv">1</span>]),</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>            method<span class="op">=</span><span class="st">"L-BFGS-B"</span>,</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>            jac<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.theta_ <span class="op">=</span> result.x</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> predict(<span class="va">self</span>, X: Array) <span class="op">-&gt;</span> Array:</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.inverse_link(X <span class="op">@</span> <span class="va">self</span>.theta_)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> fit_loocv_predict(<span class="va">self</span>, X: Array, y: Array) <span class="op">-&gt;</span> Array:</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.fit(X, y)</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>        y_hat <span class="op">=</span> X <span class="op">@</span> <span class="va">self</span>.theta_</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>        l_prime <span class="op">=</span> jax.vmap(jax.grad(<span class="va">self</span>.loss, argnums<span class="op">=</span><span class="dv">0</span>))(y_hat, y)</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>        l_prime_prime <span class="op">=</span> jax.vmap(jax.hessian(<span class="va">self</span>.loss, argnums<span class="op">=</span><span class="dv">0</span>))(y_hat, y)</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>        H <span class="op">=</span> jax.hessian(<span class="va">self</span>.f, argnums<span class="op">=</span><span class="dv">0</span>)(<span class="va">self</span>.theta_, X, y)</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> scipy.linalg.solve(</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>            H,</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>            X.T,</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>            overwrite_a<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>            assume_a<span class="op">=</span><span class="st">"pos"</span>,</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>        h <span class="op">=</span> np.einsum(<span class="st">"ij,ji-&gt;i"</span>, X, t)</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.inverse_link(y_hat <span class="op">+</span> (h <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> h <span class="op">*</span> l_prime_prime)) <span class="op">*</span> l_prime)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let’s check the implementation on random data. We will use the logistic loss with a sum of squares regularizer.</p>
+<div id="cell-6" class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> LeaveOneOut</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.express <span class="im">as</span> px</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> standard_loocv(model, X: Array, y: Array) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    y_tilde <span class="op">=</span> np.empty_like(y)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i, (train_index, test_index) <span class="kw">in</span> <span class="bu">enumerate</span>(LeaveOneOut().split(X)):</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        X_loo <span class="op">=</span> X[train_index, :]</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        y_loo <span class="op">=</span> y[train_index]</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        model.fit(X_loo, y_loo)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        y_tilde[i] <span class="op">=</span> model.predict(X[test_index, :])[<span class="dv">0</span>]</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> y_tilde</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gen_random_data(n: <span class="bu">int</span>, m: <span class="bu">int</span>) <span class="op">-&gt;</span> <span class="bu">tuple</span>[Array, Array]:</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> np.random.default_rng(<span class="dv">42</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> rng.standard_normal((n, m))</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    L <span class="op">=</span> rng.standard_normal((m, m))</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    theta <span class="op">=</span> L <span class="op">@</span> rng.standard_normal(m)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> np.sign(X <span class="op">@</span> theta <span class="op">+</span> rng.standard_normal(n))</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> X, y</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>X, y <span class="op">=</span> gen_random_data(n<span class="op">=</span><span class="dv">100</span>, m<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> GLMWithLOOCV(</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    loss<span class="op">=</span><span class="kw">lambda</span> y_hat, y: <span class="op">-</span>jax.nn.log_sigmoid(y <span class="op">*</span> y_hat),</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># loss=lambda y_hat, y: (y_hat - y) ** 2,</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    reg<span class="op">=</span><span class="kw">lambda</span> theta: theta.T <span class="op">@</span> theta,</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    inverse_link<span class="op">=</span>jax.nn.sigmoid,</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="co"># inverse_link=lambda y: y,</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>y_tilde <span class="op">=</span> standard_loocv(model, X, y)</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>y_tilde_approx <span class="op">=</span> model.fit_loocv_predict(X, y)</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(y_tilde <span class="op">-</span> y_tilde_approx)<span class="sc">.</span><span class="bu">max</span>()<span class="op">=</span><span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>px.scatter(x<span class="op">=</span>y_tilde, y<span class="op">=</span>y_tilde_approx)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>np.abs(y_tilde - y_tilde_approx).max()=0.0013626814</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>Unable to display output for mime type(s): application/vnd.plotly.v1+json</code></pre>
+</div>
+</div>
+<p>The approximation is really good in this case. Let’s compare the runtimes:</p>
+<div id="cell-8" class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit model.fit_loocv_predict(X, y) </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>timeit standard_loocv(model, X, y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>81.6 ms ± 2.94 ms per loop (mean ± std. dev. of 7 runs, 10 loops each)
+5.89 s ± 24.5 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)</code></pre>
+</div>
+</div>
+<p>That’s a significant speedup! Note, however, that there is much room for improvement. For example, the BFGS iterations can be initialized with a previous solution, or we can <a href="https://tomshlomo.github.io/blog/posts/loocv/loocv_part1.html#python-implementation">use JIT like we did in part 1</a>.</p>
+</section>
+</section>
+<section id="example" class="level1">
+<h1>Example</h1>
+<p>We train a classifier to predict heart disease events, using this dataset from Kaggle.</p>
+<div id="cell-11" class="cell" data-execution_count="93">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LogisticRegression</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.compose <span class="im">import</span> ColumnTransformer</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.pipeline <span class="im">import</span> Pipeline</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> StandardScaler, FunctionTransformer</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn <span class="im">import</span> set_config</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> accuracy_score, roc_auc_score, log_loss</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>set_config(transform_output<span class="op">=</span><span class="st">"pandas"</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="st">"data/heart.csv"</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>df</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="93">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Age</th>
+<th data-quarto-table-cell-role="th">Sex</th>
+<th data-quarto-table-cell-role="th">ChestPainType</th>
+<th data-quarto-table-cell-role="th">RestingBP</th>
+<th data-quarto-table-cell-role="th">Cholesterol</th>
+<th data-quarto-table-cell-role="th">FastingBS</th>
+<th data-quarto-table-cell-role="th">RestingECG</th>
+<th data-quarto-table-cell-role="th">MaxHR</th>
+<th data-quarto-table-cell-role="th">ExerciseAngina</th>
+<th data-quarto-table-cell-role="th">Oldpeak</th>
+<th data-quarto-table-cell-role="th">ST_Slope</th>
+<th data-quarto-table-cell-role="th">HeartDisease</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>40</td>
+<td>M</td>
+<td>ATA</td>
+<td>140</td>
+<td>289</td>
+<td>0</td>
+<td>Normal</td>
+<td>172</td>
+<td>N</td>
+<td>0.0</td>
+<td>Up</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>49</td>
+<td>F</td>
+<td>NAP</td>
+<td>160</td>
+<td>180</td>
+<td>0</td>
+<td>Normal</td>
+<td>156</td>
+<td>N</td>
+<td>1.0</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>37</td>
+<td>M</td>
+<td>ATA</td>
+<td>130</td>
+<td>283</td>
+<td>0</td>
+<td>ST</td>
+<td>98</td>
+<td>N</td>
+<td>0.0</td>
+<td>Up</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>48</td>
+<td>F</td>
+<td>ASY</td>
+<td>138</td>
+<td>214</td>
+<td>0</td>
+<td>Normal</td>
+<td>108</td>
+<td>Y</td>
+<td>1.5</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>54</td>
+<td>M</td>
+<td>NAP</td>
+<td>150</td>
+<td>195</td>
+<td>0</td>
+<td>Normal</td>
+<td>122</td>
+<td>N</td>
+<td>0.0</td>
+<td>Up</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">913</td>
+<td>45</td>
+<td>M</td>
+<td>TA</td>
+<td>110</td>
+<td>264</td>
+<td>0</td>
+<td>Normal</td>
+<td>132</td>
+<td>N</td>
+<td>1.2</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">914</td>
+<td>68</td>
+<td>M</td>
+<td>ASY</td>
+<td>144</td>
+<td>193</td>
+<td>1</td>
+<td>Normal</td>
+<td>141</td>
+<td>N</td>
+<td>3.4</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">915</td>
+<td>57</td>
+<td>M</td>
+<td>ASY</td>
+<td>130</td>
+<td>131</td>
+<td>0</td>
+<td>Normal</td>
+<td>115</td>
+<td>Y</td>
+<td>1.2</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">916</td>
+<td>57</td>
+<td>F</td>
+<td>ATA</td>
+<td>130</td>
+<td>236</td>
+<td>0</td>
+<td>LVH</td>
+<td>174</td>
+<td>N</td>
+<td>0.0</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">917</td>
+<td>38</td>
+<td>M</td>
+<td>NAP</td>
+<td>138</td>
+<td>175</td>
+<td>0</td>
+<td>Normal</td>
+<td>173</td>
+<td>N</td>
+<td>0.0</td>
+<td>Up</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+
+<p>918 rows × 12 columns</p>
+</div>
+</div>
+</div>
+<div id="cell-12" class="cell" data-execution_count="94">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> df[<span class="st">"HeartDisease"</span>]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> df.drop(columns<span class="op">=</span>[<span class="st">"HeartDisease"</span>])</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> pd.get_dummies(X, drop_first<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>x_train, x_test, y_train, y_test <span class="op">=</span> train_test_split(</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    X, y, test_size<span class="op">=</span><span class="fl">0.9</span>, random_state<span class="op">=</span><span class="dv">42</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>x_train<span class="sc">.</span>shape<span class="op">=</span><span class="sc">}</span><span class="ss">, </span><span class="sc">{</span>x_test<span class="sc">.</span>shape<span class="op">=</span><span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>x_train.shape=(91, 15), x_test.shape=(827, 15)</code></pre>
+</div>
+</div>
+<p>Our classifier will be probabilistic, so we will use AUC for model evaluation. Let’s compute it for a simple logistic regression, unstratified and unregularized:</p>
+<div id="cell-14" class="cell" data-execution_count="95">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>bmodel <span class="op">=</span> Pipeline(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        (<span class="st">"scale"</span>, StandardScaler()),</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        (<span class="st">"logisitc"</span>, LogisticRegression(fit_intercept<span class="op">=</span><span class="va">True</span>)),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    accuracy_score(</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        y_test,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>        bmodel.fit(x_train, y_train).predict(x_test),</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    log_loss(</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        y_test,</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>        bmodel.fit(x_train, y_train).predict_proba(x_test)[:, <span class="dv">1</span>],</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    roc_auc_score(</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>        y_test,</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>        bmodel.fit(x_train, y_train).predict_proba(x_test)[:, <span class="dv">1</span>],</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="95">
+<pre><code>(0.8174123337363967, 0.4394678346343008, 0.8992514703261452)</code></pre>
+</div>
+</div>
+<p>That’s our baseline.</p>
+<p>We will use stratified logistic regression with a mix of laplacian and sum of squares regularization, not because it is the best model for this problem, but because it is good for demonstrating the ideas above.</p>
+<p>We stratify over the sex of the patient, which just means we fit 2 coefficient vectors: one for males, and one for females. The Laplacian regularization will encourage the female and male coefficients vectors to be similar. You can read more about stratified models with laplacian regularization here.</p>
+<div id="cell-16" class="cell" data-execution_count="96">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> stratify(X: Array) <span class="op">-&gt;</span> Array:</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> X[<span class="st">"Sex_M"</span>].values[:, np.newaxis]</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> X.drop(columns<span class="op">=</span>[<span class="st">"Sex_M"</span>]).astype(<span class="bu">float</span>).values</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.hstack([X <span class="op">*</span> z, X <span class="op">*</span> <span class="op">~</span>z])</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>x_train[<span class="st">"one"</span>] <span class="op">=</span> <span class="fl">1.0</span>  <span class="co"># all-ones column to implicitly fit an intercept term</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>x_test[<span class="st">"one"</span>] <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>transformer <span class="op">=</span> Pipeline(</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>        (</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>            <span class="st">"scale"</span>,</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>            ColumnTransformer(</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>                [</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>                    (<span class="st">"none"</span>, <span class="st">"passthrough"</span>, [<span class="st">"one"</span>, <span class="st">"Sex_M"</span>]),</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>                    (</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"scale"</span>,</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>                        StandardScaler(),</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>                        <span class="bu">list</span>(<span class="bu">set</span>(x_train.columns) <span class="op">-</span> {<span class="st">"one"</span>, <span class="st">"Sex_M"</span>}),</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>                    ),</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>                ],</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>                verbose_feature_names_out<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>        (<span class="st">"stratify"</span>, FunctionTransformer(stratify)),</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>x_train <span class="op">=</span> transformer.fit_transform(x_train)</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>x_test <span class="op">=</span> transformer.transform(x_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Next we define the regularization matrices</p>
+<div id="cell-18" class="cell" data-execution_count="97">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>laplacian <span class="op">=</span> np.array([[<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>], [<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>]])</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>laplacian <span class="op">=</span> np.kron(laplacian, np.eye(m <span class="op">//</span> <span class="dv">2</span>))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>ridge <span class="op">=</span> np.eye(m)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>ridge[<span class="dv">0</span>] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>ridge[m <span class="op">//</span> <span class="dv">2</span>] <span class="op">=</span> <span class="dv">0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We have 2 hyperparameters in our model, the strength of the sum of squares (ridge) regression, and the strength on the laplacian regularization. We will use optuna for hyperparameters optimization. The hyperparameters optimization objective will be to maximize the (approximate) leave-one-out AUC of our model.</p>
+<div id="cell-20" class="cell" data-execution_count="98">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> optuna</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_factory(alpha: <span class="bu">float</span>, beta: <span class="bu">float</span>) <span class="op">-&gt;</span> GLMWithLOOCV:</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    R <span class="op">=</span> alpha <span class="op">*</span> ridge <span class="op">+</span> beta <span class="op">*</span> laplacian</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> GLMWithLOOCV(</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        loss<span class="op">=</span><span class="kw">lambda</span> y_hat, y: <span class="op">-</span>jax.nn.log_sigmoid((y <span class="op">*</span> <span class="dv">2</span> <span class="op">-</span> <span class="dv">1</span>) <span class="op">*</span> y_hat),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        reg<span class="op">=</span><span class="kw">lambda</span> theta: theta.T <span class="op">@</span> R <span class="op">@</span> theta,</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>        inverse_link<span class="op">=</span>jax.nn.sigmoid,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective(trial: optuna.Trial):</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> trial.suggest_float(<span class="st">"alpha"</span>, <span class="fl">1e-9</span>, <span class="fl">1e3</span>, log<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    beta <span class="op">=</span> trial.suggest_float(<span class="st">"beta"</span>, <span class="fl">1e-9</span>, <span class="fl">1e3</span>, log<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> model_factory(alpha, beta)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    y_tilde <span class="op">=</span> model.fit_loocv_predict(x_train, y_train.values)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span>accuracy_score(y_train, y_tilde <span class="op">&gt;</span> <span class="fl">0.5</span>)  <span class="co"># minus since optuna minimizes</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># return -(y_train * np.log(y_tilde) + (1 - y_train) * np.log(1 - y_tilde)).median()</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    <span class="co"># return log_loss(y_train, y_tilde)  # minus since optuna minimizes</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>study: optuna.Study <span class="op">=</span> optuna.create_study()</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>study.optimize(objective, n_trials<span class="op">=</span><span class="dv">50</span>)</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> model_factory(<span class="op">**</span>study.best_params)</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a><span class="co"># log_loss(</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     y_test,</span></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a><span class="co">#     model.fit(x_train, y_train.values).predict(x_test),</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a><span class="co"># )</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[I 2024-03-22 23:52:15,634] A new study created in memory with name: no-name-e96793f8-12bd-4aab-b6b7-a71ca2d13022
+/var/folders/sl/p3bc0s_x6gj_02pp_7cc4t4h0000gp/T/ipykernel_80133/1928041204.py:47: LinAlgWarning:
+
+Ill-conditioned matrix (rcond=2.88301e-08): result may not be accurate.
+
+[I 2024-03-22 23:52:16,099] Trial 0 finished with value: -0.7582417582417582 and parameters: {'alpha': 2.40727113467038e-06, 'beta': 7.296159245507239e-08}. Best is trial 0 with value: -0.7582417582417582.
+/var/folders/sl/p3bc0s_x6gj_02pp_7cc4t4h0000gp/T/ipykernel_80133/1928041204.py:47: LinAlgWarning:
+
+Ill-conditioned matrix (rcond=4.842e-08): result may not be accurate.
+
+[I 2024-03-22 23:52:16,599] Trial 1 finished with value: -0.7582417582417582 and parameters: {'alpha': 3.82798787620628e-06, 'beta': 2.1124613182464154e-07}. Best is trial 0 with value: -0.7582417582417582.
+[I 2024-03-22 23:52:17,032] Trial 2 finished with value: -0.6483516483516484 and parameters: {'alpha': 484.96715854568134, 'beta': 0.00030941269897457176}. Best is trial 0 with value: -0.7582417582417582.
+[I 2024-03-22 23:52:17,531] Trial 3 finished with value: -0.7472527472527473 and parameters: {'alpha': 1.1968950027763673e-05, 'beta': 1.417636382499289e-05}. Best is trial 0 with value: -0.7582417582417582.
+[I 2024-03-22 23:52:18,061] Trial 4 finished with value: -0.7802197802197802 and parameters: {'alpha': 2.634499224753654e-07, 'beta': 3.837145327073751}. Best is trial 4 with value: -0.7802197802197802.
+[I 2024-03-22 23:52:18,931] Trial 5 finished with value: -0.7472527472527473 and parameters: {'alpha': 0.0020265917757641212, 'beta': 0.002209014412689484}. Best is trial 4 with value: -0.7802197802197802.
+[I 2024-03-22 23:52:19,362] Trial 6 finished with value: -0.8021978021978022 and parameters: {'alpha': 0.1780322281173303, 'beta': 5.393675710758361}. Best is trial 6 with value: -0.8021978021978022.
+[I 2024-03-22 23:52:19,802] Trial 7 finished with value: -0.7472527472527473 and parameters: {'alpha': 3.145060715304632e-05, 'beta': 1.0117907261915148e-07}. Best is trial 6 with value: -0.8021978021978022.
+[I 2024-03-22 23:52:20,103] Trial 8 finished with value: -0.8021978021978022 and parameters: {'alpha': 9.919596700715994, 'beta': 0.000818695629092717}. Best is trial 6 with value: -0.8021978021978022.
+[I 2024-03-22 23:52:20,612] Trial 9 finished with value: -0.6043956043956044 and parameters: {'alpha': 660.3614103925041, 'beta': 1.0476262657416289e-07}. Best is trial 6 with value: -0.8021978021978022.
+[I 2024-03-22 23:52:21,622] Trial 10 finished with value: -0.7912087912087912 and parameters: {'alpha': 1.0745951352917472e-09, 'beta': 574.4836779900695}. Best is trial 6 with value: -0.8021978021978022.
+[I 2024-03-22 23:52:22,320] Trial 11 finished with value: -0.7802197802197802 and parameters: {'alpha': 0.3577076216843227, 'beta': 0.11101462707734902}. Best is trial 6 with value: -0.8021978021978022.
+[I 2024-03-22 23:52:22,679] Trial 12 finished with value: -0.7912087912087912 and parameters: {'alpha': 0.8932605539678848, 'beta': 0.6843785875530046}. Best is trial 6 with value: -0.8021978021978022.
+[I 2024-03-22 23:52:23,490] Trial 13 finished with value: -0.8131868131868132 and parameters: {'alpha': 0.8270424013539804, 'beta': 822.2549249639038}. Best is trial 13 with value: -0.8131868131868132.
+[I 2024-03-22 23:52:24,634] Trial 14 finished with value: -0.7912087912087912 and parameters: {'alpha': 0.0058680919166386345, 'beta': 890.7663732705074}. Best is trial 13 with value: -0.8131868131868132.
+[I 2024-03-22 23:52:25,240] Trial 15 finished with value: -0.7912087912087912 and parameters: {'alpha': 0.021834957819863013, 'beta': 17.435217317836546}. Best is trial 13 with value: -0.8131868131868132.
+[I 2024-03-22 23:52:25,615] Trial 16 finished with value: -0.8241758241758241 and parameters: {'alpha': 8.60640378080033, 'beta': 68.86219552430641}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:25,958] Trial 17 finished with value: -0.8131868131868132 and parameters: {'alpha': 21.479126640337075, 'beta': 0.04251464501508993}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:26,440] Trial 18 finished with value: -0.8021978021978022 and parameters: {'alpha': 12.64978713657557, 'beta': 72.45156474916577}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:27,239] Trial 19 finished with value: -0.7912087912087912 and parameters: {'alpha': 0.00016755652072323454, 'beta': 95.15867214084713}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:27,763] Trial 20 finished with value: -0.7362637362637363 and parameters: {'alpha': 0.07216137476810992, 'beta': 2.2344329805164173e-09}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:28,219] Trial 21 finished with value: -0.8131868131868132 and parameters: {'alpha': 12.642951734198281, 'beta': 0.0739276916583238}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:28,496] Trial 22 finished with value: -0.8021978021978022 and parameters: {'alpha': 53.84802121350828, 'beta': 0.025732973583551862}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:28,836] Trial 23 finished with value: -0.7802197802197802 and parameters: {'alpha': 1.4777378832662391, 'beta': 0.7336822320795798}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:29,116] Trial 24 finished with value: -0.7692307692307693 and parameters: {'alpha': 78.7851649467451, 'beta': 45.08869494401244}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:29,463] Trial 25 finished with value: -0.7692307692307693 and parameters: {'alpha': 1.8284432837876232, 'beta': 0.009237108325962418}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:29,716] Trial 26 finished with value: -0.8021978021978022 and parameters: {'alpha': 85.24318334294003, 'beta': 1.7630916342074345e-05}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:30,082] Trial 27 finished with value: -0.7912087912087912 and parameters: {'alpha': 5.016688129224645, 'beta': 0.5239872653374518}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:31,067] Trial 28 finished with value: -0.7912087912087912 and parameters: {'alpha': 0.01438603248760876, 'beta': 302.5616080886284}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:31,455] Trial 29 finished with value: -0.7912087912087912 and parameters: {'alpha': 0.08861881179597268, 'beta': 5.650977325730251}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:32,069] Trial 30 finished with value: -0.7472527472527473 and parameters: {'alpha': 0.00035016281125810475, 'beta': 2.5499014638127147e-05}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:32,558] Trial 31 finished with value: -0.8131868131868132 and parameters: {'alpha': 11.946408413455048, 'beta': 0.07010121958102118}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:32,945] Trial 32 finished with value: -0.7692307692307693 and parameters: {'alpha': 199.86034899156024, 'beta': 0.006406348657671491}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:33,403] Trial 33 finished with value: -0.8021978021978022 and parameters: {'alpha': 40.35470176318799, 'beta': 0.18553247347926877}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:33,706] Trial 34 finished with value: -0.6373626373626373 and parameters: {'alpha': 580.1698677228435, 'beta': 1.327926260107439e-06}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:33,997] Trial 35 finished with value: -0.7912087912087912 and parameters: {'alpha': 4.110150153051455, 'beta': 0.00021357563824139954}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:34,299] Trial 36 finished with value: -0.8021978021978022 and parameters: {'alpha': 24.75206759749116, 'beta': 13.60045642713986}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:35,070] Trial 37 finished with value: -0.8021978021978022 and parameters: {'alpha': 0.372000909919652, 'beta': 1.8043322483771551}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:36,036] Trial 38 finished with value: -0.7912087912087912 and parameters: {'alpha': 1.1422626467938675e-06, 'beta': 174.29289629098184}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:36,324] Trial 39 finished with value: -0.7692307692307693 and parameters: {'alpha': 179.58966025558507, 'beta': 0.00027219820870856163}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:36,609] Trial 40 finished with value: -0.7692307692307693 and parameters: {'alpha': 1.792179852420336, 'beta': 0.0034394087521556417}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:36,874] Trial 41 finished with value: -0.8131868131868132 and parameters: {'alpha': 13.096379834892495, 'beta': 0.02768613895543147}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:37,223] Trial 42 finished with value: -0.5494505494505495 and parameters: {'alpha': 938.4304159747102, 'beta': 0.07719585595595546}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:37,662] Trial 43 finished with value: -0.7692307692307693 and parameters: {'alpha': 0.49310884774942815, 'beta': 0.0009352366201241305}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:37,979] Trial 44 finished with value: -0.8021978021978022 and parameters: {'alpha': 6.313898507585674, 'beta': 0.027136618203246202}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:38,355] Trial 45 finished with value: -0.7912087912087912 and parameters: {'alpha': 0.04499239443976949, 'beta': 2.2388325218954264}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:38,805] Trial 46 finished with value: -0.7472527472527473 and parameters: {'alpha': 6.883884069014894e-09, 'beta': 0.20437797359389}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:39,135] Trial 47 finished with value: -0.7142857142857143 and parameters: {'alpha': 194.3744633827905, 'beta': 32.74803597764603}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:39,922] Trial 48 finished with value: -0.8131868131868132 and parameters: {'alpha': 2.037971702346982, 'beta': 995.822464126741}. Best is trial 16 with value: -0.8241758241758241.
+[I 2024-03-22 23:52:40,508] Trial 49 finished with value: -0.8021978021978022 and parameters: {'alpha': 0.21280960556010306, 'beta': 5.5816132496012}. Best is trial 16 with value: -0.8241758241758241.</code></pre>
+</div>
+</div>
+<div id="cell-21" class="cell" data-execution_count="92">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    accuracy_score(</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>        y_test,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>        model.fit(x_train, y_train.values).predict(x_test) <span class="op">&gt;</span> <span class="fl">0.5</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    log_loss(</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>        y_test,</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>        model.fit(x_train, y_train.values).predict(x_test),</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    roc_auc_score(</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>        y_test,</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>        model.fit(x_train, y_train.values).predict(x_test),</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="92">
+<pre><code>(0.7714631197097944, 0.7739358258021295, 0.8519663755717936)</code></pre>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

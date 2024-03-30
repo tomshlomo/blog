@@ -6,7 +6,7 @@
   </url>
   <url>
     <loc>https://tomshlomo.github.io/blog/posts/loocv/loocv_part1.html</loc>
-    <lastmod>2024-03-09T16:52:22.020Z</lastmod>
+    <lastmod>2024-03-21T19:37:15.937Z</lastmod>
   </url>
   <url>
     <loc>https://tomshlomo.github.io/blog/posts/augmentation_is_regularization/augmentation_is_regularization.html</loc>
@@ -19,5 +19,9 @@
   <url>
     <loc>https://tomshlomo.github.io/blog/posts/music/music.html</loc>
     <lastmod>2024-03-09T16:55:50.087Z</lastmod>
+  </url>
+  <url>
+    <loc>https://tomshlomo.github.io/blog/posts/loocv_part2/loocv_part2.html</loc>
+    <lastmod>2024-03-30T08:54:24.417Z</lastmod>
   </url>
 </urlset>

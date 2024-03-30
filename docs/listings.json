@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/loocv_part2/loocv_part2.html",
       "/posts/loocv/loocv_part1.html",
       "/posts/music/music.html",
       "/posts/pearson_correlation/pearson_correlation.html",

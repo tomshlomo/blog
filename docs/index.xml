@@ -10,7 +10,1143 @@
 <atom:link href="https://tomshlomo.github.io/blog/index.xml" rel="self" type="application/rss+xml"/>
 <description>Tom Shlomo&#39;s blog</description>
 <generator>quarto-1.4.543</generator>
-<lastBuildDate>Mon, 26 Feb 2024 22:00:00 GMT</lastBuildDate>
+<lastBuildDate>Sat, 23 Mar 2024 22:00:00 GMT</lastBuildDate>
+<item>
+  <title>Efficient Leave One Out Cross Validation - Part 2</title>
+  <dc:creator>Tom Shlomo</dc:creator>
+  <link>https://tomshlomo.github.io/blog/posts/loocv_part2/loocv_part2.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p>In the <a href="https://tomshlomo.github.io/blog/posts/loocv/loocv_part1.html">first part</a>, we developed a method for performing efficient leave-one-out cross-validation (LOOCV). This method was precise but mandated that the loss and regularization functions be quadratic. Here, we’ll introduce a similar technique that provides an approximation, but eliminates the necessity for the loss and regularization to be quadratic. Additionally, we’ll code this method in Python using JAX and showcase its application on a sample dataset.</p>
+<section id="notation-same-as-part-1" class="level1">
+<h1>Notation (same as part 1)</h1>
+<p>We denote the number of samples in the training dataset as <img src="https://latex.codecogs.com/png.latex?n">.</p>
+<p>The <img src="https://latex.codecogs.com/png.latex?m">-dimensional feature vectors are represented as <img src="https://latex.codecogs.com/png.latex?x_1"> to <img src="https://latex.codecogs.com/png.latex?x_n">, forming the rows of matrix <img src="https://latex.codecogs.com/png.latex?X">.</p>
+<p>Targets are denoted as <img src="https://latex.codecogs.com/png.latex?y_1"> to <img src="https://latex.codecogs.com/png.latex?y_n">, forming the vector <img src="https://latex.codecogs.com/png.latex?y">. The model’s prediction for the <img src="https://latex.codecogs.com/png.latex?i">-th training sample is <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D_i%20=%20x_i%5ET%20%5Ctheta">, where <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> is the coefficients vector. <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D%20=%20X%20%5Ctheta"> represents the vector containing all predictions.</p>
+<p>We fit <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> to the training data by minimizing the combined loss and regularization terms: <span id="eq-theta-def"><img src="https://latex.codecogs.com/png.latex?%0A%5Ctheta%20:=%20%5Carg%5Cmin_%7B%5Ctheta'%7D%20f(%5Ctheta').%0A%5Ctag%7B1%7D"></span> where <img src="https://latex.codecogs.com/png.latex?%0Af(%5Ctheta')%20:=%20%5Csum_%7Bi=1%7D%5E%7Bn%7D%20l(x_i%5ET%20%5Ctheta';%20y_i)%20+%20r(%5Ctheta').%0A"> Here, <img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)"> represents the loss function, quantifying the difference between the prediction <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D"> and the true target <img src="https://latex.codecogs.com/png.latex?y_i">, while <img src="https://latex.codecogs.com/png.latex?r"> is the regularization function. We assume <img src="https://latex.codecogs.com/png.latex?l"> (as a function of <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D_i">) and <img src="https://latex.codecogs.com/png.latex?r"> are convex and twice differentiable. Special cases of this model include ordinary least squares (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)%20=%20(%5Chat%7By%7D_i%20-%20y_i)%5E2">, <img src="https://latex.codecogs.com/png.latex?r(%5Ctheta')%20=%200">), ridge regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)%20=%20(%5Chat%7By%7D_i%20-%20y_i)%5E2">, <img src="https://latex.codecogs.com/png.latex?r(%5Ctheta')%20=%20%5Calpha%20%5C%7C%20%5Ctheta'%20%5C%7C%5E2">), logistic regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;y_i)%20=%20%5Clog%20%5Cleft(%201%20+%20e%5E%7B-y_i%20%5Chat%7By%7D_i%7D%5Cright)"> with <img src="https://latex.codecogs.com/png.latex?y_i%20%5Cin%20%5C%7B%20-1,%201%5C%7D">), and Poisson regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;y_i)%20=%20y_i%20%5Chat%7By%7D_i%20-%20e%5E%7B%5Chat%7By%7D_i%7D">).</p>
+<p>To denote the coefficients obtained by excluding the <img src="https://latex.codecogs.com/png.latex?j">-th example, we use <img src="https://latex.codecogs.com/png.latex?%5Ctheta%5E%7B(j)%7D">: <img src="https://latex.codecogs.com/png.latex?%0A%5Ctheta%5E%7B(j)%7D%20=%20%5Carg%5Cmin_%7B%5Ctheta'%7D%20f%5E%7B(j)%7D%20(%5Ctheta')%0A"> where <img src="https://latex.codecogs.com/png.latex?%20f%5E%7B(j)%7D(%5Ctheta')%20:=%20%5Csum_%7Bi%20%5Cneq%20j%7D%20l(x_i%5ET%20%5Ctheta';%20y_i)%20+%20r(%5Ctheta')%20"> Similarly, <img src="https://latex.codecogs.com/png.latex?X%5E%7B(j)%7D"> and <img src="https://latex.codecogs.com/png.latex?y%5E%7B(j)%7D">, represent <img src="https://latex.codecogs.com/png.latex?X"> and <img src="https://latex.codecogs.com/png.latex?y"> with the <img src="https://latex.codecogs.com/png.latex?j">-th row removed, respectively. We denote by <img src="https://latex.codecogs.com/png.latex?%5Ctilde%7By%7D_j"> the predicted label for sample <img src="https://latex.codecogs.com/png.latex?j"> when it is left out: <span id="eq-y-tilde-j-def"><img src="https://latex.codecogs.com/png.latex?%0A%5Ctilde%7By%7D_j%20:=%20x_j%20%5ET%20%5Ctheta%5E%7B(j)%7D%0A%5Ctag%7B2%7D"></span> Our goal is calculating <img src="https://latex.codecogs.com/png.latex?%5Ctilde%7By%7D_j">, for all <img src="https://latex.codecogs.com/png.latex?j">, efficiently.</p>
+</section>
+<section id="deriving-efficient-loocv-for-the-non-quadratic-case" class="level1">
+<h1>Deriving efficient LOOCV for the non-quadratic case</h1>
+<p>In this section, we extend our approach to scenarios where <img src="https://latex.codecogs.com/png.latex?l"> or <img src="https://latex.codecogs.com/png.latex?r"> are not quadratic. Although solving equation Equation&nbsp;1 is not simplified to solving a linear equation as it did in part 1, we can resort to the following approximation: <span id="eq-newton-approx"><img src="https://latex.codecogs.com/png.latex?%0AH%5E%7B(j)%7D%20(%5Ctheta%5E%7B(j)%7D%20-%20%5Ctheta)%20%5Capprox%20-g%5E%7B(j)%7D%0A%5Ctag%7B3%7D"></span> where <img src="https://latex.codecogs.com/png.latex?H%5E%7B(j)%7D"> and <img src="https://latex.codecogs.com/png.latex?g%5E%7B(j)%7D"> represent the Hessian and gradient of <img src="https://latex.codecogs.com/png.latex?f%5E%7B(j)%7D"> at <img src="https://latex.codecogs.com/png.latex?%5Ctheta">, respectively. The rationale here is that <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> and <img src="https://latex.codecogs.com/png.latex?%5Ctheta%5E%7B(j)%7D"> should be relatively close (and closer as <img src="https://latex.codecogs.com/png.latex?n"> increases), making it likely that Newton’s method on <img src="https://latex.codecogs.com/png.latex?f%5E%7B(j)%7D"> converges in a single iteration when initialized on <img src="https://latex.codecogs.com/png.latex?%5Ctheta">.</p>
+<p>Similar to the quadratic case, we can relate <img src="https://latex.codecogs.com/png.latex?H%5E%7B(j)%7D"> and <img src="https://latex.codecogs.com/png.latex?g%5E%7B(j)%7D"> to <img src="https://latex.codecogs.com/png.latex?H"> and <img src="https://latex.codecogs.com/png.latex?g">, the Hessian and gradient of <img src="https://latex.codecogs.com/png.latex?f"> at <img src="https://latex.codecogs.com/png.latex?%5Ctheta">: <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Balign*%7D%0AH%5E%7B(j)%7D%20&amp;=%20H%20-%20x_j%20l''(%5Chat%7By%7D_i%20;%20y_i)%20x_j%5ET%0A%5C%5C%0Ag%5E%7B(j)%7D%20&amp;=%20g%20-%20x_j%20l'(%5Chat%7By%7D_i%20;%20y_i)%20=%20-%20x_j%20l'(%5Chat%7By%7D_i%20;%20y_i)%0A%5Cend%7Balign*%7D"> allowing us to rewrite Equation&nbsp;3 as: <img src="https://latex.codecogs.com/png.latex?%0A%5Cleft(%0A%20%20%20%20H%20-%20x_j%20l''%5Cleft(%5Chat%7By%7D_i%20;%20y_i%5Cright)%20x_j%5ET%0A%5Cright)%0A%5Cleft(%20%5Ctheta%5E%7B(j)%7D%20-%20%5Ctheta%20%5Cright)%0A%5Capprox%20%20x_j%20l'(%5Chat%7By%7D_i%20;%20y_i).%0A"> Next, we introduce the second equation: <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Balign*%7D%0AH%20%5Ctheta%5E%7B(j)%7D%0A%20%20%20%20-%20x_j%20l''(%5Chat%7By%7D_i%20;%20y_i)%20%5Ctilde%7By%7D_j%0A%20%20%20%20-%20H%20%5Ctheta%0A%20%20%20%20+%20x_j%20l''(%5Chat%7By%7D_i%20;%20y_i)%20%5Chat%7By%7D_j%0A%20%20%20%20&amp;%5Capprox%0A%20%20%20%20x_j%20l'(%5Chat%7By%7D_i%20;%20y_i)%0A%20%20%20%20%5C%5C%0A%20%20%20%20%5Ctilde%7By%7D_j%20&amp;=%20x_j%20%5ET%20%5Ctheta%5E%7B(j)%7D.%0A%5Cend%7Balign*%7D"> Now, we can eliminate <img src="https://latex.codecogs.com/png.latex?%5Ctheta%5E%7B(j)%7D"> and solve for <img src="https://latex.codecogs.com/png.latex?%5Ctilde%7By%7D_j">: <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Balign*%7D%0A%5Ctheta%5E%7B(j)%7D%20&amp;%5Capprox%20%5Ctheta%20+%20t_j%20(l'(%5Chat%7By%7D_i%20;%20y_i)%20+%20%20l''(%5Chat%7By%7D_i%20;%20y_i)%20(%5Ctilde%7By%7D_j%20-%20%5Chat%7By%7D_j))%0A%5C%5C%0A%5Ctilde%7By%7D_j%20&amp;%5Capprox%20x_j%20%5ET%20%5Cleft(%0A%20%20%20%20%5Ctheta%20+%20t_j%20(l'(%5Chat%7By%7D_i%20;%20y_i)%20+%20%20l''(%5Chat%7By%7D_i%20;%20y_i)%20(%5Ctilde%7By%7D_j%20-%20%5Chat%7By%7D_j))%0A%20%20%20%20%5Cright)%0A%5C%5C%0A%5Ctilde%7By%7D_j%20&amp;%5Capprox%0A%20%20%20%20%20%5Chat%7By%7D_j%0A%20%20%20%20+%20%5Cfrac%7Bh_j%7D%7B1%20-%20h_j%20l''(%5Chat%7By%7D_i%20;%20y_i)%7D%20%20l'(%5Chat%7By%7D_i%20;%20y_i)%0A%5Cend%7Balign*%7D"> where <img src="https://latex.codecogs.com/png.latex?t_j%20:=%20H%5E%7B-1%7D%20x_j"> and <img src="https://latex.codecogs.com/png.latex?h_j%20:=%20x_j%5ET%20t_j">.</p>
+<p>It’s worth noting the resemblance between the expression for <img src="https://latex.codecogs.com/png.latex?%5Ctilde%7By%7D_j"> here and the expression obtained for the quadratic case.</p>
+</section>
+<section id="python-implementation" class="level1">
+<h1>Python implementation</h1>
+<p>Once more, we’ll turn to JAX, leveraging its automatic differentiation capabilities. Our estimator will take as inputs the loss and regularization functions, along with an optional “inverse link” function. This function can be employed to transform the predicted labels (e.g.&nbsp;a sigmoid to convert log-odds to probabilities in logistic regression, or an exponent to convert log-rate to rate in Poisson regression).</p>
+<div id="cell-5" class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> typing <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> Callable</span>
+<span id="cb1-2"></span>
+<span id="cb1-3"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> jax</span>
+<span id="cb1-4"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> numpy <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">as</span> np</span>
+<span id="cb1-5"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> numpy.typing <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">as</span> npt</span>
+<span id="cb1-6"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> scipy</span>
+<span id="cb1-7"></span>
+<span id="cb1-8">Array <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> npt.NDArray[np.float64]</span>
+<span id="cb1-9"></span>
+<span id="cb1-10"></span>
+<span id="cb1-11"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">class</span> GLMWithLOOCV:</span>
+<span id="cb1-12">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> <span class="fu" style="color: #4758AB;
+background-color: null;
+font-style: inherit;">__init__</span>(</span>
+<span id="cb1-13">        <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>,</span>
+<span id="cb1-14">        loss: Callable[[Array, Array], Array],</span>
+<span id="cb1-15">        reg: Callable[[Array], <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">float</span>],</span>
+<span id="cb1-16">        inverse_link: Callable[[Array], Array],</span>
+<span id="cb1-17">    ) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-&gt;</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">None</span>:</span>
+<span id="cb1-18">        <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.loss <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> loss</span>
+<span id="cb1-19">        <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.reg <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> reg</span>
+<span id="cb1-20">        <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.inverse_link <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> inverse_link</span>
+<span id="cb1-21"></span>
+<span id="cb1-22">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> f(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>, theta: Array, X: Array, y: Array) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-&gt;</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">float</span>:</span>
+<span id="cb1-23">        y_hat <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> X <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> theta</span>
+<span id="cb1-24">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.loss(y_hat, y).<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">sum</span>() <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.reg(theta)</span>
+<span id="cb1-25"></span>
+<span id="cb1-26">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> fit(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>, X: Array, y: Array):</span>
+<span id="cb1-27">        <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># We optimize f with L-BFGS-B as it has reasonable performance with the data below,</span></span>
+<span id="cb1-28">        <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">#  but any other convex optimization algorithm can be used here.</span></span>
+<span id="cb1-29">        result <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> scipy.optimize.minimize(</span>
+<span id="cb1-30">            jax.value_and_grad(<span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">lambda</span> theta: <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.f(theta, X, y)),</span>
+<span id="cb1-31">            x0<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>np.zeros(X.shape[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>]),</span>
+<span id="cb1-32">            method<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"L-BFGS-B"</span>,</span>
+<span id="cb1-33">            jac<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span>,</span>
+<span id="cb1-34">        )</span>
+<span id="cb1-35">        <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.theta_ <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> result.x</span>
+<span id="cb1-36">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span></span>
+<span id="cb1-37"></span>
+<span id="cb1-38">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> predict(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>, X: Array) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-&gt;</span> Array:</span>
+<span id="cb1-39">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.inverse_link(X <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.theta_)</span>
+<span id="cb1-40"></span>
+<span id="cb1-41">    <span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> fit_loocv_predict(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>, X: Array, y: Array) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-&gt;</span> Array:</span>
+<span id="cb1-42">        <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.fit(X, y)</span>
+<span id="cb1-43">        y_hat <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> X <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.theta_</span>
+<span id="cb1-44">        l_prime <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jax.vmap(jax.grad(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.loss, argnums<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>))(y_hat, y)</span>
+<span id="cb1-45">        l_prime_prime <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jax.vmap(jax.hessian(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.loss, argnums<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>))(y_hat, y)</span>
+<span id="cb1-46">        H <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> jax.hessian(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.f, argnums<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>)(<span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.theta_, X, y)</span>
+<span id="cb1-47">        t <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> scipy.linalg.solve(</span>
+<span id="cb1-48">            H,</span>
+<span id="cb1-49">            X.T,</span>
+<span id="cb1-50">            overwrite_a<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span>,</span>
+<span id="cb1-51">            assume_a<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"pos"</span>,</span>
+<span id="cb1-52">        )</span>
+<span id="cb1-53">        h <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.einsum(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"ij,ji-&gt;i"</span>, X, t)</span>
+<span id="cb1-54">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> <span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">self</span>.inverse_link(y_hat <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> (h <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span> (<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> h <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> l_prime_prime)) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> l_prime)</span></code></pre></div>
+</div>
+</section>
+<section id="example" class="level1">
+<h1>Example</h1>
+<p>To illustrate the concepts discussed above, we train a classifier on a dataset for predicting heart disease events. From a quick glance over Kaggle, it appears that achieving an AUC of approximately 0.9 is feasible.</p>
+<div id="cell-7" class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> pandas <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">as</span> pd</span>
+<span id="cb2-2"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> sklearn.model_selection <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> train_test_split</span>
+<span id="cb2-3"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> sklearn.compose <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> ColumnTransformer</span>
+<span id="cb2-4"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> sklearn.pipeline <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> Pipeline</span>
+<span id="cb2-5"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> sklearn.preprocessing <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> StandardScaler, FunctionTransformer</span>
+<span id="cb2-6"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> sklearn <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> set_config</span>
+<span id="cb2-7"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> sklearn.metrics <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> roc_auc_score</span>
+<span id="cb2-8"></span>
+<span id="cb2-9">df <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> pd.read_csv(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"data/heart.csv"</span>)</span>
+<span id="cb2-10">df</span></code></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="8">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Age</th>
+<th data-quarto-table-cell-role="th">Sex</th>
+<th data-quarto-table-cell-role="th">ChestPainType</th>
+<th data-quarto-table-cell-role="th">RestingBP</th>
+<th data-quarto-table-cell-role="th">Cholesterol</th>
+<th data-quarto-table-cell-role="th">FastingBS</th>
+<th data-quarto-table-cell-role="th">RestingECG</th>
+<th data-quarto-table-cell-role="th">MaxHR</th>
+<th data-quarto-table-cell-role="th">ExerciseAngina</th>
+<th data-quarto-table-cell-role="th">Oldpeak</th>
+<th data-quarto-table-cell-role="th">ST_Slope</th>
+<th data-quarto-table-cell-role="th">HeartDisease</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>40</td>
+<td>M</td>
+<td>ATA</td>
+<td>140</td>
+<td>289</td>
+<td>0</td>
+<td>Normal</td>
+<td>172</td>
+<td>N</td>
+<td>0.0</td>
+<td>Up</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>49</td>
+<td>F</td>
+<td>NAP</td>
+<td>160</td>
+<td>180</td>
+<td>0</td>
+<td>Normal</td>
+<td>156</td>
+<td>N</td>
+<td>1.0</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>37</td>
+<td>M</td>
+<td>ATA</td>
+<td>130</td>
+<td>283</td>
+<td>0</td>
+<td>ST</td>
+<td>98</td>
+<td>N</td>
+<td>0.0</td>
+<td>Up</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>48</td>
+<td>F</td>
+<td>ASY</td>
+<td>138</td>
+<td>214</td>
+<td>0</td>
+<td>Normal</td>
+<td>108</td>
+<td>Y</td>
+<td>1.5</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>54</td>
+<td>M</td>
+<td>NAP</td>
+<td>150</td>
+<td>195</td>
+<td>0</td>
+<td>Normal</td>
+<td>122</td>
+<td>N</td>
+<td>0.0</td>
+<td>Up</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">913</td>
+<td>45</td>
+<td>M</td>
+<td>TA</td>
+<td>110</td>
+<td>264</td>
+<td>0</td>
+<td>Normal</td>
+<td>132</td>
+<td>N</td>
+<td>1.2</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">914</td>
+<td>68</td>
+<td>M</td>
+<td>ASY</td>
+<td>144</td>
+<td>193</td>
+<td>1</td>
+<td>Normal</td>
+<td>141</td>
+<td>N</td>
+<td>3.4</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">915</td>
+<td>57</td>
+<td>M</td>
+<td>ASY</td>
+<td>130</td>
+<td>131</td>
+<td>0</td>
+<td>Normal</td>
+<td>115</td>
+<td>Y</td>
+<td>1.2</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">916</td>
+<td>57</td>
+<td>F</td>
+<td>ATA</td>
+<td>130</td>
+<td>236</td>
+<td>0</td>
+<td>LVH</td>
+<td>174</td>
+<td>N</td>
+<td>0.0</td>
+<td>Flat</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">917</td>
+<td>38</td>
+<td>M</td>
+<td>NAP</td>
+<td>138</td>
+<td>175</td>
+<td>0</td>
+<td>Normal</td>
+<td>173</td>
+<td>N</td>
+<td>0.0</td>
+<td>Up</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+
+<p>918 rows × 12 columns</p>
+</div>
+</div>
+</div>
+<div id="cell-8" class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1">y <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> df[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"HeartDisease"</span>]</span>
+<span id="cb3-2">X <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> df.drop(columns<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"HeartDisease"</span>])</span>
+<span id="cb3-3">X[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"one"</span>] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1.0</span>  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># an all-ones column to implicitly fit an intercept term</span></span>
+<span id="cb3-4">X <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> pd.get_dummies(X, drop_first<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span>)</span>
+<span id="cb3-5">x_train, x_test, y_train, y_test <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> train_test_split(</span>
+<span id="cb3-6">    X, y, test_size<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0.3</span>, random_state<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">42</span></span>
+<span id="cb3-7">)</span>
+<span id="cb3-8"><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">print</span>(<span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">f"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>x_train<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>shape<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">, </span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>x_test<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>shape<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>x_train.shape=(642, 16), x_test.shape=(276, 16)</code></pre>
+</div>
+</div>
+<p>Our approach involves using stratified logistic regression with a combination of Laplacian and sum of squares regularization. While this may not be the optimal model for this specific problem, it serves well for demonstrating the concepts.</p>
+<p>In our model, we stratify over the sex of the patient, meaning we fit two coefficient vectors: one for males and one for females. The Laplacian regularization promotes similarity between the coefficient vectors for females and males. You can read more about stratified models with Laplacian regularization <a href="https://web.stanford.edu/~boyd/papers/pdf/strat_models.pdf">here</a>.</p>
+<div id="cell-10" class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb5" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> stratify(X: Array) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-&gt;</span> Array:</span>
+<span id="cb5-2">    z <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> X[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Sex_M"</span>].values[:, np.newaxis]</span>
+<span id="cb5-3">    X <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> X.drop(columns<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>[<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Sex_M"</span>]).astype(<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">float</span>).values</span>
+<span id="cb5-4">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> np.hstack([X <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> z, X <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">~</span>z])</span>
+<span id="cb5-5"></span>
+<span id="cb5-6"></span>
+<span id="cb5-7">transformer <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> Pipeline(</span>
+<span id="cb5-8">    [</span>
+<span id="cb5-9">        (</span>
+<span id="cb5-10">            <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"scale"</span>,</span>
+<span id="cb5-11">            ColumnTransformer(</span>
+<span id="cb5-12">                [</span>
+<span id="cb5-13">                    (<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"none"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"passthrough"</span>, [<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"one"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Sex_M"</span>]),</span>
+<span id="cb5-14">                    (</span>
+<span id="cb5-15">                        <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"scale"</span>,</span>
+<span id="cb5-16">                        StandardScaler(),</span>
+<span id="cb5-17">                        <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">list</span>(<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">set</span>(x_train.columns) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> {<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"one"</span>, <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"Sex_M"</span>}),</span>
+<span id="cb5-18">                    ),</span>
+<span id="cb5-19">                ],</span>
+<span id="cb5-20">                verbose_feature_names_out<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">False</span>,</span>
+<span id="cb5-21">            ).set_output(transform<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"pandas"</span>),</span>
+<span id="cb5-22">        ),</span>
+<span id="cb5-23">        (<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"stratify"</span>, FunctionTransformer(stratify)),</span>
+<span id="cb5-24">    ]</span>
+<span id="cb5-25">)</span>
+<span id="cb5-26"></span>
+<span id="cb5-27">x_train <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> transformer.fit_transform(x_train)</span>
+<span id="cb5-28">x_test <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> transformer.transform(x_test)</span></code></pre></div>
+</div>
+<p>Next we define the regularization matrices:</p>
+<div id="cell-12" class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb6" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1">m <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> x_train.shape[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>]</span>
+<span id="cb6-2">laplacian <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.array([[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>], [<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>, <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>]])</span>
+<span id="cb6-3">laplacian <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.kron(laplacian, np.eye(m <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">//</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>))</span>
+<span id="cb6-4">ridge <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.eye(m)</span>
+<span id="cb6-5">ridge[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># no penalty on the intercept</span></span>
+<span id="cb6-6">ridge[m <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">//</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span>] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span></span></code></pre></div>
+</div>
+<p>We have two hyperparameters in our model: the strength of the sum of squares (ridge) regularization and the strength of the Laplacian regularization.</p>
+<p>For hyperparameter optimization, we utilize Optuna.</p>
+<div id="cell-14" class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb7" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> optuna</span>
+<span id="cb7-2"></span>
+<span id="cb7-3"></span>
+<span id="cb7-4"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> model_factory(alpha: <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">float</span>, beta: <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">float</span>) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-&gt;</span> GLMWithLOOCV:</span>
+<span id="cb7-5">    R <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> alpha <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> ridge <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">+</span> beta <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> laplacian</span>
+<span id="cb7-6">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> GLMWithLOOCV(</span>
+<span id="cb7-7">        loss<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">lambda</span> y_hat, y: <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span>jax.nn.log_sigmoid((y <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">2</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> <span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1</span>) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> y_hat),</span>
+<span id="cb7-8">        reg<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">lambda</span> theta: theta.T <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> R <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> theta,</span>
+<span id="cb7-9">        inverse_link<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>jax.nn.sigmoid,</span>
+<span id="cb7-10">    )</span>
+<span id="cb7-11"></span>
+<span id="cb7-12"></span>
+<span id="cb7-13"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> objective(trial: optuna.Trial):</span>
+<span id="cb7-14">    alpha <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> trial.suggest_float(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"alpha"</span>, <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1e-6</span>, <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1e3</span>, log<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span>)</span>
+<span id="cb7-15">    beta <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> trial.suggest_float(<span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"beta"</span>, <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1e-6</span>, <span class="fl" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">1e3</span>, log<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="va" style="color: #111111;
+background-color: null;
+font-style: inherit;">True</span>)</span>
+<span id="cb7-16">    model <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> model_factory(alpha, beta)</span>
+<span id="cb7-17">    y_tilde <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> model.fit_loocv_predict(x_train, y_train.values)</span>
+<span id="cb7-18">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span>roc_auc_score(</span>
+<span id="cb7-19">        y_train, y_tilde</span>
+<span id="cb7-20">    )  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># minus since optuna minimizes the objective and we need to maximize</span></span>
+<span id="cb7-21"></span>
+<span id="cb7-22"></span>
+<span id="cb7-23">study: optuna.Study <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> optuna.create_study()</span>
+<span id="cb7-24">study.optimize(objective, n_trials<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">50</span>)</span>
+<span id="cb7-25">model <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> model_factory(<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">**</span>study.best_params)</span>
+<span id="cb7-26">roc_auc_score(</span>
+<span id="cb7-27">    y_test,</span>
+<span id="cb7-28">    model.fit(x_train, y_train.values).predict(x_test),</span>
+<span id="cb7-29">)</span></code></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[I 2024-03-24 08:56:29,175] A new study created in memory with name: no-name-61410be4-4d1d-4a9b-8cc6-068004336d5c
+[I 2024-03-24 08:56:30,700] Trial 0 finished with value: -0.9092301389105666 and parameters: {'alpha': 0.012775258780126265, 'beta': 0.002191596541067304}. Best is trial 0 with value: -0.9092301389105666.
+[I 2024-03-24 08:56:31,058] Trial 1 finished with value: -0.909025284844701 and parameters: {'alpha': 0.0006298752554559054, 'beta': 2.1509611015314225e-05}. Best is trial 0 with value: -0.9092301389105666.
+[I 2024-03-24 08:56:31,605] Trial 2 finished with value: -0.9118639769002653 and parameters: {'alpha': 4.938878297009436e-06, 'beta': 780.3122728275399}. Best is trial 2 with value: -0.9118639769002653.
+[I 2024-03-24 08:56:31,926] Trial 3 finished with value: -0.914858748244108 and parameters: {'alpha': 3.1356031871802617, 'beta': 30.256480198543056}. Best is trial 3 with value: -0.914858748244108.
+[I 2024-03-24 08:56:32,239] Trial 4 finished with value: -0.9104885281723115 and parameters: {'alpha': 0.005919567636794085, 'beta': 0.21420343169280254}. Best is trial 3 with value: -0.914858748244108.
+[I 2024-03-24 08:56:32,557] Trial 5 finished with value: -0.9091325893553925 and parameters: {'alpha': 0.0029083107541165135, 'beta': 0.003468355333742003}. Best is trial 3 with value: -0.914858748244108.
+[I 2024-03-24 08:56:32,947] Trial 6 finished with value: -0.9103422038395502 and parameters: {'alpha': 0.25663606336322276, 'beta': 2.027770483000284e-06}. Best is trial 3 with value: -0.914858748244108.
+[I 2024-03-24 08:56:33,339] Trial 7 finished with value: -0.912537068830966 and parameters: {'alpha': 1.0538711667069038, 'beta': 0.0003360283526189701}. Best is trial 3 with value: -0.914858748244108.
+[I 2024-03-24 08:56:33,622] Trial 8 finished with value: -0.9089862650226315 and parameters: {'alpha': 1.079098816654311e-05, 'beta': 1.3846427704434615e-06}. Best is trial 3 with value: -0.914858748244108.
+[I 2024-03-24 08:56:34,060] Trial 9 finished with value: -0.9089667551115967 and parameters: {'alpha': 1.2646277638647537e-06, 'beta': 5.240465554229351e-05}. Best is trial 3 with value: -0.914858748244108.
+[I 2024-03-24 08:56:34,378] Trial 10 finished with value: -0.8929003433744341 and parameters: {'alpha': 521.943351068861, 'beta': 21.128403850663364}. Best is trial 3 with value: -0.914858748244108.
+[I 2024-03-24 08:56:34,601] Trial 11 finished with value: -0.9151416419541125 and parameters: {'alpha': 7.849754690834663, 'beta': 0.6886856542708458}. Best is trial 11 with value: -0.9151416419541125.
+[I 2024-03-24 08:56:34,839] Trial 12 finished with value: -0.9127614328078664 and parameters: {'alpha': 36.17696304784756, 'beta': 0.9382223092187879}. Best is trial 11 with value: -0.9151416419541125.
+[I 2024-03-24 08:56:35,023] Trial 13 finished with value: -0.9154538005306695 and parameters: {'alpha': 20.819919697832866, 'beta': 18.009933396875475}. Best is trial 13 with value: -0.9154538005306695.
+[I 2024-03-24 08:56:35,430] Trial 14 finished with value: -0.9134150148275324 and parameters: {'alpha': 50.2350037043773, 'beta': 3.819223887756615}. Best is trial 13 with value: -0.9154538005306695.
+[I 2024-03-24 08:56:35,728] Trial 15 finished with value: -0.8607480099890744 and parameters: {'alpha': 768.6568030874997, 'beta': 0.07013747752246598}. Best is trial 13 with value: -0.9154538005306695.
+[I 2024-03-24 08:56:36,291] Trial 16 finished with value: -0.9138930076478852 and parameters: {'alpha': 9.155957878379764, 'beta': 819.8096902730499}. Best is trial 13 with value: -0.9154538005306695.
+[I 2024-03-24 08:56:36,608] Trial 17 finished with value: -0.9130540814733884 and parameters: {'alpha': 0.1485485239581707, 'beta': 38.97815021766497}. Best is trial 13 with value: -0.9154538005306695.
+[I 2024-03-24 08:56:36,858] Trial 18 finished with value: -0.9053866864367098 and parameters: {'alpha': 78.72829138458891, 'beta': 0.016036059061954787}. Best is trial 13 with value: -0.9154538005306695.
+[I 2024-03-24 08:56:37,161] Trial 19 finished with value: -0.9136783986265022 and parameters: {'alpha': 0.1375243107258574, 'beta': 1.8291549312508841}. Best is trial 13 with value: -0.9154538005306695.
+[I 2024-03-24 08:56:37,528] Trial 20 finished with value: -0.9129760418292493 and parameters: {'alpha': 1.0707674807216208, 'beta': 117.83261301793227}. Best is trial 13 with value: -0.9154538005306695.
+[I 2024-03-24 08:56:37,795] Trial 21 finished with value: -0.9159903230841268 and parameters: {'alpha': 4.416371155644641, 'beta': 9.316946205587612}. Best is trial 21 with value: -0.9159903230841268.
+[I 2024-03-24 08:56:38,065] Trial 22 finished with value: -0.9146831590447948 and parameters: {'alpha': 12.426070601603788, 'beta': 0.3853665693475585}. Best is trial 21 with value: -0.9159903230841268.
+[I 2024-03-24 08:56:38,316] Trial 23 finished with value: -0.8677228031840175 and parameters: {'alpha': 319.5534395847857, 'beta': 2.7762991166087905}. Best is trial 21 with value: -0.9159903230841268.
+[I 2024-03-24 08:56:38,620] Trial 24 finished with value: -0.9158342437958482 and parameters: {'alpha': 3.112413409324069, 'beta': 7.37150462979163}. Best is trial 21 with value: -0.9159903230841268.
+[I 2024-03-24 08:56:38,914] Trial 25 finished with value: -0.9150733572654908 and parameters: {'alpha': 0.7868633423237494, 'beta': 8.431547546648925}. Best is trial 21 with value: -0.9159903230841268.
+[I 2024-03-24 08:56:39,290] Trial 26 finished with value: -0.9122541751209613 and parameters: {'alpha': 0.03174734240904159, 'beta': 114.13914385182184}. Best is trial 21 with value: -0.9159903230841268.
+[I 2024-03-24 08:56:39,658] Trial 27 finished with value: -0.9116103480568128 and parameters: {'alpha': 90.62207805800448, 'beta': 202.6257677752164}. Best is trial 21 with value: -0.9159903230841268.
+[I 2024-03-24 08:56:39,917] Trial 28 finished with value: -0.9160781176837834 and parameters: {'alpha': 6.553554396630455, 'beta': 11.167094954503991}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:40,310] Trial 29 finished with value: -0.9098349461526456 and parameters: {'alpha': 0.029887003146111108, 'beta': 0.05116561128441574}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:40,633] Trial 30 finished with value: -0.9140198220696114 and parameters: {'alpha': 2.942224930336697, 'beta': 0.00513193420243311}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:40,934] Trial 31 finished with value: -0.915219681598252 and parameters: {'alpha': 22.919512362299404, 'beta': 12.27623192594196}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:41,189] Trial 32 finished with value: -0.9157464491961917 and parameters: {'alpha': 2.757918964666127, 'beta': 6.038269195534732}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:41,617] Trial 33 finished with value: -0.9142149211799594 and parameters: {'alpha': 2.838682256536785, 'beta': 0.22519746478261113}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:41,949] Trial 34 finished with value: -0.9148392383330732 and parameters: {'alpha': 0.3616241392613928, 'beta': 5.830178783914518}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:42,382] Trial 35 finished with value: -0.9120005462775089 and parameters: {'alpha': 0.0008822564977771567, 'beta': 307.9388398609111}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:42,562] Trial 36 finished with value: -0.9134930544716716 and parameters: {'alpha': 0.04187871349145953, 'beta': 1.8734690287950477}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:42,925] Trial 37 finished with value: -0.9120590760106134 and parameters: {'alpha': 120.58206602832338, 'beta': 38.5688359496023}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:43,277] Trial 38 finished with value: -0.9141856563134072 and parameters: {'alpha': 2.86004817515422, 'beta': 0.14090599669599804}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:43,658] Trial 39 finished with value: -0.9131028562509754 and parameters: {'alpha': 0.46403986565570593, 'beta': 48.64240100580483}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:44,034] Trial 40 finished with value: -0.9092106289995319 and parameters: {'alpha': 3.056882608727012e-05, 'beta': 0.013794522533314474}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:44,311] Trial 41 finished with value: -0.9159513032620571 and parameters: {'alpha': 7.453204156267973, 'beta': 18.41659964949616}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:44,593] Trial 42 finished with value: -0.916068362728266 and parameters: {'alpha': 5.494711869607197, 'beta': 6.6964359014868124}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:44,981] Trial 43 finished with value: -0.9152391915092868 and parameters: {'alpha': 6.789849837478972, 'beta': 0.9088200937340541}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:45,353] Trial 44 finished with value: -0.9095422974871235 and parameters: {'alpha': 272.45143282464653, 'beta': 86.15445718504921}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:45,689] Trial 45 finished with value: -0.9129857967847667 and parameters: {'alpha': 1.245276289906343, 'beta': 494.7421191070618}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:46,090] Trial 46 finished with value: -0.9099032308412675 and parameters: {'alpha': 0.0911593221200086, 'beta': 0.0005329474451518324}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:46,388] Trial 47 finished with value: -0.9154050257530826 and parameters: {'alpha': 19.418957034796815, 'beta': 17.869675293948607}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:46,745] Trial 48 finished with value: -0.9114152489464649 and parameters: {'alpha': 0.004900207869786724, 'beta': 0.5092857463474738}. Best is trial 28 with value: -0.9160781176837834.
+[I 2024-03-24 08:56:47,053] Trial 49 finished with value: -0.9153757608865303 and parameters: {'alpha': 5.6025164558499885, 'beta': 1.4684843094190325}. Best is trial 28 with value: -0.9160781176837834.</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="6">
+<pre><code>0.9398954703832751</code></pre>
+</div>
+</div>
+</section>
+<section id="verify-our-implementation" class="level1">
+<h1>Verify our implementation</h1>
+<p>To assess the accuracy of our implementation, we compare the approximated leave-one-out predictions with the actual leave-one-out predictions:</p>
+<div id="cell-16" class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb10" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> time <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> time</span>
+<span id="cb10-2"></span>
+<span id="cb10-3"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> plotly.express <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">as</span> px</span>
+<span id="cb10-4"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> plotly.io <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">as</span> pio</span>
+<span id="cb10-5"></span>
+<span id="cb10-6">pio.renderers.default <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="st" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"notebook"</span></span>
+<span id="cb10-7"></span>
+<span id="cb10-8"><span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">from</span> sklearn.model_selection <span class="im" style="color: #00769E;
+background-color: null;
+font-style: inherit;">import</span> LeaveOneOut</span>
+<span id="cb10-9"></span>
+<span id="cb10-10">t_start <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> time()</span>
+<span id="cb10-11">y_tilde <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.zeros(y_train.shape)</span>
+<span id="cb10-12"><span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">for</span> i, (train_index, val_index) <span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">in</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">enumerate</span>(LeaveOneOut().split(x_train)):</span>
+<span id="cb10-13">    X_loo <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> x_train[train_index, :]</span>
+<span id="cb10-14">    y_loo <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> y_train.values[train_index]</span>
+<span id="cb10-15">    model.fit(X_loo, y_loo)</span>
+<span id="cb10-16">    y_tilde[i] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> model.predict(x_train[val_index, :])[<span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>]</span>
+<span id="cb10-17">standard_loocv_runtime <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> time() <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> t_start</span>
+<span id="cb10-18"></span>
+<span id="cb10-19">t_start <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> time()</span>
+<span id="cb10-20">y_tilde_approx <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> model.fit_loocv_predict(x_train, y_train.values)</span>
+<span id="cb10-21">efficient_loocv_runtime <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> time() <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> t_start</span>
+<span id="cb10-22"></span>
+<span id="cb10-23"><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">print</span>(<span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">f"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>np<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">abs</span>(y_tilde <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> y_tilde_approx)<span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">.</span>mean()<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb10-24">px.scatter(x<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>y_tilde, y<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span>y_tilde_approx)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>np.abs(y_tilde - y_tilde_approx).mean()=4.465176e-05</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>                            <div id="ecbdd84e-604b-4eb1-9306-ef14fc04ad80" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                require(["plotly"], function(Plotly) {                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("ecbdd84e-604b-4eb1-9306-ef14fc04ad80")) {                    Plotly.newPlot(                        "ecbdd84e-604b-4eb1-9306-ef14fc04ad80",                        [{"hovertemplate":"x=%{x}\u003cbr\u003ey=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"","marker":{"color":"#636efa","symbol":"circle"},"mode":"markers","name":"","orientation":"v","showlegend":false,"x":[0.2087310403585434,0.951321005821228,0.892578125,0.9492283463478088,0.6897168755531311,0.8895952105522156,0.057480331510305405,0.23683156073093414,0.8105262517929077,0.9072948694229126,0.4536738991737366,0.06033267080783844,0.10185585916042328,0.07936308532953262,0.0703546404838562,0.7259936332702637,0.10135380923748016,0.1026042178273201,0.825215756893158,0.1844044029712677,0.9412919878959656,0.3393535017967224,0.08525629341602325,0.040929585695266724,0.36935651302337646,0.10833979398012161,0.8948796391487122,0.5802428722381592,0.10267791152000427,0.6525864005088806,0.9136537909507751,0.0833110436797142,0.05976325646042824,0.7122671604156494,0.8504403829574585,0.16025599837303162,0.46891725063323975,0.7724125385284424,0.20057350397109985,0.1749124526977539,0.06272809207439423,0.6853570342063904,0.8739985823631287,0.9606488943099976,0.8582143783569336,0.31899288296699524,0.968699038028717,0.6505769491195679,0.4328449070453644,0.8997237682342529,0.2661797106266022,0.19862237572669983,0.8321604132652283,0.6485037207603455,0.9042520523071289,0.8799607753753662,0.08250493556261063,0.9313024282455444,0.7011739015579224,0.7757863402366638,0.8470264077186584,0.6725320219993591,0.42317652702331543,0.4804948568344116,0.7179282307624817,0.7257971167564392,0.7150857448577881,0.7720867991447449,0.16145862638950348,0.7748014330863953,0.18231891095638275,0.10540591925382614,0.911888062953949,0.07707317173480988,0.06324166059494019,0.9431082010269165,0.07852508872747421,0.09072653949260712,0.3859798014163971,0.07407274842262268,0.8612204790115356,0.7250381112098694,0.8421931266784668,0.04659707471728325,0.9294630885124207,0.11661204695701599,0.9220478534698486,0.9279577136039734,0.8292301893234253,0.7606818079948425,0.813230037689209,0.10530895739793777,0.7741605043411255,0.9083536863327026,0.07693560421466827,0.8614555597305298,0.9513072371482849,0.12733982503414154,0.8903078436851501,0.05285748839378357,0.8654146790504456,0.07511915266513824,0.6991581916809082,0.07012956589460373,0.922487735748291,0.07205508649349213,0.6723937392234802,0.8845747113227844,0.8393978476524353,0.07828027755022049,0.9181877970695496,0.07827742397785187,0.9323244690895081,0.1822272539138794,0.18095725774765015,0.04384802654385567,0.8322041630744934,0.719239354133606,0.06631715595722198,0.04979793354868889,0.9164431095123291,0.08540880680084229,0.9424579739570618,0.3083292245864868,0.04228374361991882,0.8856253623962402,0.07880861312150955,0.9411454200744629,0.8755931854248047,0.46339428424835205,0.07331972569227219,0.2218138575553894,0.3143472373485565,0.13897372782230377,0.299835741519928,0.5352551341056824,0.07403014600276947,0.850985050201416,0.7966851592063904,0.24168190360069275,0.37758350372314453,0.8387112021446228,0.9403632283210754,0.04968101903796196,0.04815135523676872,0.800367534160614,0.257630854845047,0.9557643532752991,0.078946553170681,0.2140844464302063,0.8513705730438232,0.08160232752561569,0.733271062374115,0.8302977085113525,0.06655026972293854,0.8408424854278564,0.06738677620887756,0.9476971626281738,0.7754809260368347,0.31508544087409973,0.5104517936706543,0.9586314558982849,0.10553105920553207,0.8249387145042419,0.29967421293258667,0.27396735548973083,0.8852274417877197,0.039901748299598694,0.4456704556941986,0.8770008683204651,0.9586985111236572,0.18430499732494354,0.8999195098876953,0.11574368923902512,0.0882386714220047,0.9006831645965576,0.7757165431976318,0.9024726748466492,0.2033347636461258,0.11284390091896057,0.7530911564826965,0.7884171009063721,0.4643567204475403,0.8949801921844482,0.9577525854110718,0.9452322125434875,0.9515891075134277,0.7714871168136597,0.04680183157324791,0.12554046511650085,0.8753000497817993,0.9071999788284302,0.3479093611240387,0.07352201640605927,0.8862862586975098,0.09767239540815353,0.43989118933677673,0.0657842606306076,0.8828748464584351,0.04941267892718315,0.7769240736961365,0.9421719312667847,0.5085277557373047,0.8559432029724121,0.8673598766326904,0.05676526948809624,0.8358811140060425,0.8786158561706543,0.5347985029220581,0.8478772044181824,0.0513913631439209,0.9469733238220215,0.051493093371391296,0.42895573377609253,0.09101572632789612,0.07516443729400635,0.9688757658004761,0.8847766518592834,0.29739710688591003,0.8906638622283936,0.793807327747345,0.06650164723396301,0.16865800321102142,0.9684415459632874,0.9009794592857361,0.3801676034927368,0.420207142829895,0.8819141983985901,0.4685937464237213,0.40700316429138184,0.1606413722038269,0.9602925777435303,0.9659398198127747,0.9120914340019226,0.9271039366722107,0.1020229235291481,0.15988604724407196,0.07381155341863632,0.09444916993379593,0.8645961284637451,0.7683597803115845,0.9311071634292603,0.2676723003387451,0.9507537484169006,0.9392818808555603,0.08717995136976242,0.8255689740180969,0.08612480759620667,0.7650277614593506,0.9133515357971191,0.9461516737937927,0.3343157470226288,0.8930245041847229,0.8326566815376282,0.7959510684013367,0.3993188738822937,0.8698099255561829,0.5299842953681946,0.05578729137778282,0.05286641791462898,0.9243903160095215,0.966105043888092,0.9426194429397583,0.9351277947425842,0.1554795652627945,0.8789321780204773,0.278093159198761,0.9174546599388123,0.7523866891860962,0.8489865660667419,0.7928344011306763,0.050687503069639206,0.10257282853126526,0.845484733581543,0.06024947017431259,0.24843578040599823,0.532315194606781,0.06744884699583054,0.36367669701576233,0.7386084198951721,0.17062193155288696,0.6374344229698181,0.8738610148429871,0.9180182814598083,0.15131217241287231,0.8441857695579529,0.08777207881212234,0.7028859853744507,0.7284144759178162,0.7907246351242065,0.9147592782974243,0.4831897020339966,0.7327115535736084,0.15669891238212585,0.23638449609279633,0.6223838925361633,0.058921415358781815,0.6103551983833313,0.9597985744476318,0.34214693307876587,0.1353352963924408,0.9169896245002747,0.912632942199707,0.14265838265419006,0.9444606900215149,0.04064545780420303,0.7504770159721375,0.614197850227356,0.9419201612472534,0.14354941248893738,0.9558071494102478,0.1068350225687027,0.7047193050384521,0.12632480263710022,0.04748031497001648,0.915087103843689,0.8286321759223938,0.7522391080856323,0.07999377697706223,0.941343367099762,0.13272547721862793,0.05903242528438568,0.12826597690582275,0.4002159535884857,0.3519414961338043,0.9310546517372131,0.18755027651786804,0.9537779688835144,0.8967862129211426,0.056566350162029266,0.18274234235286713,0.0588318333029747,0.7079342007637024,0.06269782036542892,0.4904952049255371,0.9464264512062073,0.10462086647748947,0.7697261571884155,0.836976170539856,0.18552283942699432,0.5664607286453247,0.9148613810539246,0.3977566361427307,0.06202172487974167,0.12439121305942535,0.9763551354408264,0.819310188293457,0.3135751187801361,0.6449512839317322,0.23856158554553986,0.8797604441642761,0.0952906459569931,0.9541757106781006,0.8904979228973389,0.10889361053705215,0.8957836627960205,0.8374279737472534,0.9725998044013977,0.714676022529602,0.6141152381896973,0.17929528653621674,0.8387454152107239,0.6043301820755005,0.8114116191864014,0.9853599667549133,0.08082623779773712,0.4074491858482361,0.0694747120141983,0.385276198387146,0.8368853330612183,0.8491184711456299,0.15699487924575806,0.04419117420911789,0.07449550926685333,0.8256090879440308,0.17058640718460083,0.07288192212581635,0.9611362814903259,0.40136030316352844,0.7884674072265625,0.10022105276584625,0.608020007610321,0.42577841877937317,0.8568881750106812,0.19269205629825592,0.5207127928733826,0.06460121273994446,0.6030045747756958,0.06109505519270897,0.9412218928337097,0.8817570209503174,0.1869865208864212,0.8696405291557312,0.09424431622028351,0.8223956227302551,0.7480613589286804,0.908442497253418,0.9359220862388611,0.5999656915664673,0.7382714748382568,0.6551924347877502,0.9433837532997131,0.3882337212562561,0.11246078461408615,0.9357706904411316,0.04605536162853241,0.7209967970848083,0.1571369171142578,0.5478659868240356,0.9260368943214417,0.7416079044342041,0.0500793382525444,0.8864167928695679,0.9119592308998108,0.6394474506378174,0.7461156845092773,0.06661690771579742,0.08342648297548294,0.9341509342193604,0.6767424941062927,0.5432235598564148,0.9446871280670166,0.057267170399427414,0.7389323115348816,0.927149772644043,0.9652608633041382,0.9466450214385986,0.20884199440479279,0.48305264115333557,0.1803155541419983,0.6451157927513123,0.7476624250411987,0.843915581703186,0.8233970999717712,0.9590121507644653,0.19773106276988983,0.24518492817878723,0.7610183358192444,0.1224537044763565,0.07019595056772232,0.9148505926132202,0.2555682957172394,0.8386254906654358,0.7933174967765808,0.15356841683387756,0.8478567004203796,0.4867485463619232,0.9668745994567871,0.8910166621208191,0.8378475904464722,0.2948984205722809,0.5555121898651123,0.6329130530357361,0.2658010423183441,0.20782767236232758,0.06334889680147171,0.48179277777671814,0.9338757395744324,0.9135794639587402,0.9395966529846191,0.8998000025749207,0.9352732300758362,0.8372915387153625,0.5801140666007996,0.1213110014796257,0.22934572398662567,0.054755646735429764,0.7762110829353333,0.05315486341714859,0.18201948702335358,0.7429190278053284,0.2707709074020386,0.92886883020401,0.5386443734169006,0.9069165587425232,0.9402324557304382,0.05989225581288338,0.30954673886299133,0.9592004418373108,0.7766126394271851,0.9469029903411865,0.9379135966300964,0.3588274419307709,0.046530582010746,0.8512879014015198,0.9567961692810059,0.9365308284759521,0.10143044590950012,0.11151644587516785,0.06293460726737976,0.7131668329238892,0.8289114832878113,0.09775511175394058,0.5193256735801697,0.9012763500213623,0.27010372281074524,0.3142625093460083,0.1512625813484192,0.9314224123954773,0.9626637697219849,0.9243719577789307,0.07100965827703476,0.8251475095748901,0.18687129020690918,0.1095801293849945,0.7991307377815247,0.08189631998538971,0.866504967212677,0.13081295788288116,0.9361091256141663,0.05592336878180504,0.9785115122795105,0.09302143007516861,0.7538305521011353,0.5837286710739136,0.9408089518547058,0.8560580611228943,0.8727142810821533,0.8722611665725708,0.19251365959644318,0.973849356174469,0.0516316182911396,0.17178358137607574,0.6470378041267395,0.7619329690933228,0.0671367421746254,0.055675093084573746,0.8602417707443237,0.09880056232213974,0.8291338086128235,0.49565359950065613,0.9205543994903564,0.20841659605503082,0.574397087097168,0.9484546184539795,0.15364161133766174,0.775540828704834,0.8561344146728516,0.7877108454704285,0.30655723810195923,0.8552945852279663,0.19873909652233124,0.8013047575950623,0.06792011857032776,0.940460741519928,0.716119110584259,0.9469349384307861,0.13341452181339264,0.4421258568763733,0.08186925202608109,0.8637968897819519,0.6686155200004578,0.05441712588071823,0.8610818982124329,0.6742730140686035,0.38748738169670105,0.04858855530619621,0.9384456276893616,0.1493416130542755,0.8967837691307068,0.9158006906509399,0.402496874332428,0.5507477521896362,0.09308303892612457,0.07850475609302521,0.39740023016929626,0.08483925461769104,0.8551640510559082,0.8491129279136658,0.940919816493988,0.9499386548995972,0.961499035358429,0.14979340136051178,0.7077821493148804,0.936251163482666,0.8441528081893921,0.8273400068283081,0.9065074920654297,0.8656537532806396,0.3968763053417206,0.9135011434555054,0.9403337240219116,0.11157646775245667,0.960383415222168,0.40963807702064514,0.07164869457483292,0.45042070746421814,0.4080970287322998,0.953468918800354,0.061946772038936615,0.9304147362709045,0.07093528658151627,0.0660928413271904,0.9055554866790771,0.9045584201812744,0.28464412689208984,0.868806004524231,0.5053316950798035,0.9219005107879639,0.9600469470024109,0.33409807085990906,0.28937187790870667,0.19642846286296844,0.1923009157180786,0.10216984152793884,0.0505615659058094,0.1576240211725235,0.41026821732521057,0.5152388215065002,0.4226077198982239,0.3549664318561554,0.9202710390090942,0.6289896368980408,0.08547379076480865,0.9300019145011902,0.2667236328125,0.6546074151992798,0.8598851561546326,0.8988086581230164,0.07601482421159744,0.5729012489318848,0.14666122198104858,0.0659128949046135,0.6627146601676941,0.8648512959480286,0.06316628307104111,0.6179089546203613,0.7171225547790527,0.9500004053115845,0.483040452003479,0.904744565486908,0.90304034948349,0.06644175946712494,0.7087041735649109,0.06201086938381195,0.11764969676733017,0.07991551607847214,0.15846621990203857,0.20078295469284058,0.5096142292022705,0.6186903119087219,0.5760588645935059],"xaxis":"x","y":[0.20881271362304688,0.9513320326805115,0.8925749659538269,0.949222207069397,0.6896360516548157,0.8895849585533142,0.05748468637466431,0.23685672879219055,0.8105260133743286,0.9072884917259216,0.4535759687423706,0.06037912517786026,0.10190793871879578,0.07938918471336365,0.07048572599887848,0.7259840965270996,0.10137408971786499,0.10267859697341919,0.8252162337303162,0.18450245261192322,0.9413001537322998,0.3393480181694031,0.0853429064154625,0.040955208241939545,0.3694741427898407,0.10838959366083145,0.8949134349822998,0.580194354057312,0.1026880145072937,0.6526398062705994,0.9136612415313721,0.08333364129066467,0.05981060862541199,0.7123024463653564,0.8504348993301392,0.1602715253829956,0.46892139315605164,0.7724337577819824,0.20083819329738617,0.1749444603919983,0.06275565922260284,0.6854019165039062,0.8740319609642029,0.9606456756591797,0.8582000732421875,0.31907618045806885,0.9686936736106873,0.6505436897277832,0.43300899863243103,0.899736225605011,0.2662566900253296,0.19872240722179413,0.8321266770362854,0.6484683156013489,0.9043005108833313,0.8799678683280945,0.08250605314970016,0.9312641024589539,0.7012209296226501,0.7757439613342285,0.8469902873039246,0.6724795699119568,0.4233388900756836,0.4805191457271576,0.7179068922996521,0.7257726192474365,0.715078592300415,0.7721201181411743,0.16145896911621094,0.7748555541038513,0.18249128758907318,0.10541243851184845,0.9118986129760742,0.07713992893695831,0.06325259804725647,0.9431084394454956,0.07858330011367798,0.09076830744743347,0.3858097791671753,0.0740862563252449,0.8612176775932312,0.7250295877456665,0.8421753644943237,0.046599552035331726,0.9294527173042297,0.11704239249229431,0.9220462441444397,0.9278144836425781,0.8292397856712341,0.7606609463691711,0.8133007884025574,0.10532557964324951,0.7741959095001221,0.9083476662635803,0.07693656533956528,0.861452043056488,0.9513100385665894,0.12733499705791473,0.8903295993804932,0.05286671593785286,0.8654205799102783,0.07512307912111282,0.6992356181144714,0.070211261510849,0.9225009083747864,0.07209663838148117,0.6724193692207336,0.8845586776733398,0.8392863273620605,0.07831557095050812,0.9180727601051331,0.07828203588724136,0.9323300719261169,0.18225277960300446,0.18095238506793976,0.04388591647148132,0.8322439789772034,0.7191786766052246,0.06632766127586365,0.04980502277612686,0.9164416193962097,0.08544188737869263,0.9424626231193542,0.30830127000808716,0.04229571670293808,0.885668158531189,0.0788145661354065,0.941144585609436,0.875678539276123,0.46332040429115295,0.07334686070680618,0.2218611240386963,0.3144778311252594,0.1389739066362381,0.29991382360458374,0.5353689789772034,0.07404511421918869,0.8509618043899536,0.7966556549072266,0.24169614911079407,0.3776378035545349,0.8386906981468201,0.9403938055038452,0.04973340034484863,0.04817157983779907,0.8003730177879333,0.25758716464042664,0.9557614326477051,0.07894811034202576,0.21419937908649445,0.8513518571853638,0.0817389190196991,0.7332214713096619,0.8302866220474243,0.06657660007476807,0.8408544063568115,0.06744541227817535,0.94769686460495,0.7754923701286316,0.31508347392082214,0.5106629729270935,0.9586226940155029,0.10555842518806458,0.8249292969703674,0.29977405071258545,0.27405840158462524,0.8852354288101196,0.03992580622434616,0.4455355703830719,0.8770005106925964,0.9587066173553467,0.18435899913311005,0.8997020721435547,0.1157447099685669,0.08832462877035141,0.9007088541984558,0.7757254242897034,0.9024724960327148,0.20340512692928314,0.11284368485212326,0.7531752586364746,0.788374125957489,0.464335173368454,0.8949795961380005,0.9577494859695435,0.9452335834503174,0.951599657535553,0.7713225483894348,0.04682831093668938,0.12560681998729706,0.8753226399421692,0.9071928262710571,0.3477814495563507,0.0735224112868309,0.8862327933311462,0.09767420589923859,0.4398779571056366,0.0657854825258255,0.882890522480011,0.049432359635829926,0.7769089341163635,0.9421652555465698,0.5084729194641113,0.8559197187423706,0.8673926591873169,0.056807782500982285,0.835658073425293,0.878646969795227,0.5347926616668701,0.8478575944900513,0.051395341753959656,0.9469709992408752,0.05152153596282005,0.4290662705898285,0.09105200320482254,0.07524540275335312,0.9688785076141357,0.884742021560669,0.29753297567367554,0.8906642198562622,0.7938673496246338,0.06651300191879272,0.16867515444755554,0.9684572219848633,0.9009934663772583,0.38021084666252136,0.42020559310913086,0.8817282319068909,0.4687666893005371,0.4070727825164795,0.1606479436159134,0.960281491279602,0.9659401774406433,0.9120995402336121,0.9271305799484253,0.10207000374794006,0.160027876496315,0.0738179087638855,0.0944400355219841,0.8645737171173096,0.7684723734855652,0.9311044812202454,0.2677207887172699,0.950743556022644,0.9392867088317871,0.0872737243771553,0.8254914879798889,0.08615461736917496,0.7649087309837341,0.9133500456809998,0.9461485743522644,0.3344389498233795,0.8929979801177979,0.8326436877250671,0.79591304063797,0.39932388067245483,0.8697435855865479,0.5299418568611145,0.05579005181789398,0.05289741978049278,0.9243901968002319,0.9661120772361755,0.9426066279411316,0.9351360201835632,0.15555159747600555,0.8789267539978027,0.2781098484992981,0.9174623489379883,0.7524051666259766,0.8490431904792786,0.7925418615341187,0.0506882481276989,0.1026267409324646,0.8455237150192261,0.060276422649621964,0.24841076135635376,0.532096803188324,0.06745217740535736,0.3636438846588135,0.738609790802002,0.17066770792007446,0.6374011635780334,0.8738792538642883,0.9180273413658142,0.15141861140727997,0.8442221879959106,0.08777330070734024,0.7032155394554138,0.7283612489700317,0.7907013893127441,0.9147962927818298,0.483273983001709,0.7326121926307678,0.15679490566253662,0.23638686537742615,0.6223955750465393,0.05892515555024147,0.6103231906890869,0.9597927927970886,0.34214237332344055,0.13543762266635895,0.9169808030128479,0.9124013781547546,0.1427617371082306,0.9444532990455627,0.04069174453616142,0.7504640817642212,0.6142399311065674,0.9418036937713623,0.14362195134162903,0.9558125734329224,0.10684502124786377,0.7046923041343689,0.1264585554599762,0.047530677169561386,0.91510409116745,0.8286635875701904,0.7521408796310425,0.08001682907342911,0.9413414597511292,0.13272817432880402,0.05907902494072914,0.128291055560112,0.4002157151699066,0.35198289155960083,0.9310389757156372,0.18762661516666412,0.9537710547447205,0.8967505097389221,0.05656983703374863,0.18274475634098053,0.058831989765167236,0.7078648805618286,0.06270206719636917,0.49059727787971497,0.9464336633682251,0.10465537756681442,0.7695614695549011,0.8369042873382568,0.18559573590755463,0.5664185881614685,0.9148639440536499,0.39757591485977173,0.06207308918237686,0.12443456798791885,0.9763500094413757,0.819335401058197,0.31368115544319153,0.6449428796768188,0.23852436244487762,0.879755437374115,0.09529099613428116,0.9541775584220886,0.8904914855957031,0.10893438011407852,0.8957547545433044,0.8374505043029785,0.9726020693778992,0.7146766185760498,0.6141398549079895,0.17929613590240479,0.8387801051139832,0.6043639779090881,0.8113516569137573,0.9853556752204895,0.08084917813539505,0.40754249691963196,0.0694785788655281,0.38532009720802307,0.8369805216789246,0.8491550087928772,0.1570885330438614,0.044212013483047485,0.07451018691062927,0.8256165981292725,0.17060473561286926,0.07288406044244766,0.9611305594444275,0.40147069096565247,0.7884632349014282,0.10026892274618149,0.6081586480140686,0.42590466141700745,0.8568853735923767,0.1926935911178589,0.5207059383392334,0.06460113078355789,0.6031097769737244,0.06117284670472145,0.9412423968315125,0.8818057775497437,0.18701109290122986,0.8695022463798523,0.09427580237388611,0.8223866820335388,0.748016357421875,0.908536434173584,0.9359210729598999,0.6001187562942505,0.7381746768951416,0.6551400423049927,0.9434144496917725,0.38831210136413574,0.11279447376728058,0.9357694387435913,0.04605508968234062,0.7208983302116394,0.15716306865215302,0.5477830767631531,0.9260399341583252,0.7415449023246765,0.0501028411090374,0.8864037990570068,0.9119580984115601,0.6394118666648865,0.7462170124053955,0.06661861389875412,0.08348967134952545,0.9341460466384888,0.6765541434288025,0.5431535840034485,0.9445835947990417,0.057310689240694046,0.7389031648635864,0.9271435737609863,0.9652634859085083,0.9466570019721985,0.20891596376895905,0.48310136795043945,0.18034744262695312,0.645107090473175,0.7476393580436707,0.8439081311225891,0.8234414458274841,0.9590114951133728,0.19773536920547485,0.24527215957641602,0.7610089778900146,0.12256307154893875,0.07020494341850281,0.9148247241973877,0.25555551052093506,0.8386479616165161,0.7933417558670044,0.15357749164104462,0.8478538990020752,0.4868239164352417,0.9668654799461365,0.8910195827484131,0.8378349542617798,0.294893354177475,0.5554808378219604,0.6329167485237122,0.26589328050613403,0.2080051451921463,0.06346342712640762,0.48180535435676575,0.9338594079017639,0.9133750200271606,0.939594566822052,0.8998050689697266,0.9352743029594421,0.8372474312782288,0.5800704956054688,0.12134118378162384,0.22939908504486084,0.054756585508584976,0.7762144207954407,0.05315162613987923,0.1820334792137146,0.7428171038627625,0.27095845341682434,0.9288747906684875,0.540243923664093,0.9069194793701172,0.9402177929878235,0.05991613492369652,0.3097062408924103,0.9591966271400452,0.776609480381012,0.946892499923706,0.9379061460494995,0.3588322401046753,0.04652580991387367,0.8513222932815552,0.9567942023277283,0.9365211129188538,0.10146526247262955,0.11156592518091202,0.06297130882740021,0.7129422426223755,0.8289264440536499,0.0978359505534172,0.5192147493362427,0.9012952446937561,0.2701217830181122,0.31434640288352966,0.151628315448761,0.9314212799072266,0.9626722931861877,0.924365758895874,0.0710282251238823,0.825163722038269,0.18689100444316864,0.10959228128194809,0.7989249229431152,0.08189743012189865,0.8665435910224915,0.13083191215991974,0.9361076951026917,0.05592901632189751,0.9785090088844299,0.09309247881174088,0.7538374066352844,0.5837388038635254,0.940809428691864,0.8560743927955627,0.8727018237113953,0.8722572922706604,0.19256317615509033,0.9738581776618958,0.0516432449221611,0.17181475460529327,0.6470927596092224,0.7619705200195312,0.06719350069761276,0.05569757521152496,0.860224723815918,0.09886189550161362,0.8291257619857788,0.4956566393375397,0.920520544052124,0.2084575891494751,0.5743658542633057,0.9484492540359497,0.15365883708000183,0.775488555431366,0.8561397790908813,0.787706196308136,0.30677440762519836,0.8552928566932678,0.1987571120262146,0.801331102848053,0.06793152540922165,0.9404851198196411,0.7160624265670776,0.9469279050827026,0.13345809280872345,0.442157506942749,0.08188409358263016,0.8637924194335938,0.6685880422592163,0.05442613735795021,0.8610696792602539,0.6739864349365234,0.3874923288822174,0.04859668016433716,0.9384490847587585,0.14936037361621857,0.8968279957771301,0.9157925248146057,0.4027458727359772,0.5510004162788391,0.0931038111448288,0.07852045446634293,0.3974081873893738,0.0849258154630661,0.8550891280174255,0.84912109375,0.9409250020980835,0.949938952922821,0.961517333984375,0.1498233526945114,0.7077810168266296,0.9362486600875854,0.8442588448524475,0.8273375034332275,0.9065294861793518,0.8656604290008545,0.3969230651855469,0.9134256839752197,0.9403350949287415,0.11160767823457718,0.9603689908981323,0.40966880321502686,0.07165078818798065,0.45047590136528015,0.4081386625766754,0.9534816741943359,0.06195290759205818,0.9304134845733643,0.07099467515945435,0.0661480501294136,0.9054683446884155,0.9045064449310303,0.284624308347702,0.8688107132911682,0.5052328705787659,0.921850860118866,0.9600608944892883,0.3341192603111267,0.28937482833862305,0.19646301865577698,0.1923293173313141,0.10219164192676544,0.05056522786617279,0.15764978528022766,0.4103583097457886,0.5153073668479919,0.4224603772163391,0.35501325130462646,0.9202693700790405,0.6290051341056824,0.08550739288330078,0.9300270676612854,0.2667844295501709,0.654553234577179,0.8598834276199341,0.8987990021705627,0.07606564462184906,0.5729049444198608,0.14678891003131866,0.06593304127454758,0.6627298593521118,0.8646998405456543,0.06318028271198273,0.6180554032325745,0.7170581817626953,0.9500036239624023,0.48295825719833374,0.904757559299469,0.9030317664146423,0.06644544005393982,0.7087639570236206,0.062022458761930466,0.11760295927524567,0.07993821799755096,0.15848146378993988,0.2008272260427475,0.5096403956413269,0.6187102198600769,0.5760621428489685],"yaxis":"y","type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"x"}},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"y"}},"legend":{"tracegroupgap":0},"margin":{"t":60}},                        {"responsive": true}                    ).then(function(){
+                            
+var gd = document.getElementById('ecbdd84e-604b-4eb1-9306-ef14fc04ad80');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };                });            </script>        </div>
+</div>
+</div>
+<div id="cell-17" class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb12" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1">px.histogram(y_tilde <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-</span> y_tilde_approx)</span></code></pre></div>
+<div class="cell-output cell-output-display">
+<div>                            <div id="0decf4eb-1ede-4fc3-8740-6aab6bd7bb1c" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                require(["plotly"], function(Plotly) {                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("0decf4eb-1ede-4fc3-8740-6aab6bd7bb1c")) {                    Plotly.newPlot(                        "0decf4eb-1ede-4fc3-8740-6aab6bd7bb1c",                        [{"alignmentgroup":"True","bingroup":"x","hovertemplate":"variable=0\u003cbr\u003evalue=%{x}\u003cbr\u003ecount=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"0","marker":{"color":"#636efa","pattern":{"shape":""}},"name":"0","offsetgroup":"0","orientation":"v","showlegend":true,"x":[-8.1673264503479e-05,-1.1026859283447266e-05,3.159046173095703e-06,6.139278411865234e-06,8.082389831542969e-05,1.0251998901367188e-05,-4.3548643589019775e-06,-2.516806125640869e-05,2.384185791015625e-07,6.377696990966797e-06,9.79304313659668e-05,-4.645437002182007e-05,-5.207955837249756e-05,-2.609938383102417e-05,-0.00013108551502227783,9.5367431640625e-06,-2.028048038482666e-05,-7.437914609909058e-05,-4.76837158203125e-07,-9.804964065551758e-05,-8.165836334228516e-06,5.4836273193359375e-06,-8.66129994392395e-05,-2.5622546672821045e-05,-0.0001176297664642334,-4.979968070983887e-05,-3.3795833587646484e-05,4.851818084716797e-05,-1.0102987289428711e-05,-5.340576171875e-05,-7.450580596923828e-06,-2.259761095046997e-05,-4.735216498374939e-05,-3.528594970703125e-05,5.4836273193359375e-06,-1.5527009963989258e-05,-4.1425228118896484e-06,-2.1219253540039062e-05,-0.0002646893262863159,-3.2007694244384766e-05,-2.7567148208618164e-05,-4.488229751586914e-05,-3.337860107421875e-05,3.2186508178710938e-06,1.430511474609375e-05,-8.32974910736084e-05,5.364418029785156e-06,3.325939178466797e-05,-0.0001640915870666504,-1.245737075805664e-05,-7.697939872741699e-05,-0.00010003149509429932,3.3736228942871094e-05,3.540515899658203e-05,-4.845857620239258e-05,-7.092952728271484e-06,-1.1175870895385742e-06,3.832578659057617e-05,-4.70280647277832e-05,4.2378902435302734e-05,3.612041473388672e-05,5.245208740234375e-05,-0.00016236305236816406,-2.428889274597168e-05,2.1338462829589844e-05,2.4497509002685547e-05,7.152557373046875e-06,-3.331899642944336e-05,-3.427267074584961e-07,-5.412101745605469e-05,-0.0001723766326904297,-6.51925802230835e-06,-1.055002212524414e-05,-6.67572021484375e-05,-1.093745231628418e-05,-2.384185791015625e-07,-5.821138620376587e-05,-4.176795482635498e-05,0.00017002224922180176,-1.35079026222229e-05,2.8014183044433594e-06,8.52346420288086e-06,1.7762184143066406e-05,-2.477318048477173e-06,1.0371208190917969e-05,-0.0004303455352783203,1.6093254089355469e-06,0.00014322996139526367,-9.59634780883789e-06,2.086162567138672e-05,-7.075071334838867e-05,-1.662224531173706e-05,-3.540515899658203e-05,6.020069122314453e-06,-9.611248970031738e-07,3.516674041748047e-06,-2.8014183044433594e-06,4.827976226806641e-06,-2.1755695343017578e-05,-9.227544069290161e-06,-5.900859832763672e-06,-3.926455974578857e-06,-7.742643356323242e-05,-8.169561624526978e-05,-1.3172626495361328e-05,-4.155188798904419e-05,-2.562999725341797e-05,1.6033649444580078e-05,0.00011152029037475586,-3.5293400287628174e-05,0.0001150369644165039,-4.61190938949585e-06,-5.602836608886719e-06,-2.5525689125061035e-05,4.872679710388184e-06,-3.788992762565613e-05,-3.981590270996094e-05,6.0677528381347656e-05,-1.0505318641662598e-05,-7.0892274379730225e-06,1.4901161193847656e-06,-3.30805778503418e-05,-4.649162292480469e-06,2.7954578399658203e-05,-1.1973083019256592e-05,-4.279613494873047e-05,-5.953013896942139e-06,8.344650268554688e-07,-8.535385131835938e-05,7.387995719909668e-05,-2.7135014533996582e-05,-4.7266483306884766e-05,-0.00013059377670288086,-1.7881393432617188e-07,-7.808208465576172e-05,-0.0001138448715209961,-1.496821641921997e-05,2.3245811462402344e-05,2.950429916381836e-05,-1.424551010131836e-05,-5.429983139038086e-05,2.0503997802734375e-05,-3.057718276977539e-05,-5.2381306886672974e-05,-2.022460103034973e-05,-5.4836273193359375e-06,4.369020462036133e-05,2.9206275939941406e-06,-1.55717134475708e-06,-0.00011493265628814697,1.8715858459472656e-05,-0.00013659149408340454,4.9591064453125e-05,1.1086463928222656e-05,-2.633035182952881e-05,-1.1920928955078125e-05,-5.863606929779053e-05,2.980232238769531e-07,-1.1444091796875e-05,1.9669532775878906e-06,-0.00021117925643920898,8.761882781982422e-06,-2.736598253250122e-05,9.417533874511719e-06,-9.98377799987793e-05,-9.104609489440918e-05,-7.987022399902344e-06,-2.405792474746704e-05,0.00013488531112670898,3.5762786865234375e-07,-8.106231689453125e-06,-5.4001808166503906e-05,0.000217437744140625,-1.0207295417785645e-06,-8.59573483467102e-05,-2.568960189819336e-05,-8.881092071533203e-06,1.7881393432617188e-07,-7.036328315734863e-05,2.1606683731079102e-07,-8.410215377807617e-05,4.297494888305664e-05,2.154707908630371e-05,5.960464477539062e-07,3.0994415283203125e-06,-1.3709068298339844e-06,-1.055002212524414e-05,0.00016456842422485352,-2.6479363441467285e-05,-6.635487079620361e-05,-2.2590160369873047e-05,7.152557373046875e-06,0.00012791156768798828,-3.948807716369629e-07,5.346536636352539e-05,-1.8104910850524902e-06,1.3232231140136719e-05,-1.2218952178955078e-06,-1.5676021575927734e-05,-1.9680708646774292e-05,1.5139579772949219e-05,6.67572021484375e-06,5.4836273193359375e-05,2.3484230041503906e-05,-3.2782554626464844e-05,-4.251301288604736e-05,0.00022304058074951172,-3.1113624572753906e-05,5.841255187988281e-06,1.9609928131103516e-05,-3.978610038757324e-06,2.3245811462402344e-06,-2.8442591428756714e-05,-0.00011053681373596191,-3.627687692642212e-05,-8.096545934677124e-05,-2.7418136596679688e-06,3.463029861450195e-05,-0.00013586878776550293,-3.5762786865234375e-07,-6.002187728881836e-05,-1.1354684829711914e-05,-1.7151236534118652e-05,-1.5676021575927734e-05,-1.4007091522216797e-05,-4.32431697845459e-05,1.5497207641601562e-06,0.00018596649169921875,-0.0001729428768157959,-6.961822509765625e-05,-6.571412086486816e-06,1.1086463928222656e-05,-3.5762786865234375e-07,-8.106231689453125e-06,-2.664327621459961e-05,-4.708021879196167e-05,-0.000141829252243042,-6.355345249176025e-06,9.134411811828613e-06,2.2411346435546875e-05,-0.00011259317398071289,2.682209014892578e-06,-4.8488378524780273e-05,1.0192394256591797e-05,-4.827976226806641e-06,-9.37730073928833e-05,7.748603820800781e-05,-2.9809772968292236e-05,0.00011903047561645508,1.4901161193847656e-06,3.0994415283203125e-06,-0.00012320280075073242,2.6524066925048828e-05,1.2993812561035156e-05,3.802776336669922e-05,-5.0067901611328125e-06,6.633996963500977e-05,4.2438507080078125e-05,-2.7604401111602783e-06,-3.100186586380005e-05,1.1920928955078125e-07,-7.033348083496094e-06,1.2814998626708984e-05,-8.225440979003906e-06,-7.203221321105957e-05,5.424022674560547e-06,-1.6689300537109375e-05,-7.68899917602539e-06,-1.8477439880371094e-05,-5.6624412536621094e-05,0.0002925395965576172,-7.450580596923828e-07,-5.391240119934082e-05,-3.898143768310547e-05,-2.6952475309371948e-05,2.5019049644470215e-05,0.00021839141845703125,-3.330409526824951e-06,3.281235694885254e-05,-1.3709068298339844e-06,-4.57763671875e-05,3.325939178466797e-05,-1.823902130126953e-05,-9.059906005859375e-06,-0.00010643899440765381,-3.641843795776367e-05,-1.2218952178955078e-06,-0.00032955408096313477,5.322694778442383e-05,2.3245811462402344e-05,-3.701448440551758e-05,-8.428096771240234e-05,9.936094284057617e-05,-9.59932804107666e-05,-2.3692846298217773e-06,-1.1682510375976562e-05,-3.7401914596557617e-06,3.2007694244384766e-05,5.781650543212891e-06,4.559755325317383e-06,-0.00010232627391815186,8.821487426757812e-06,0.00023156404495239258,-0.00010335445404052734,7.3909759521484375e-06,-4.628673195838928e-05,1.2934207916259766e-05,-4.208087921142578e-05,0.00011646747589111328,-7.253885269165039e-05,-5.424022674560547e-06,-9.998679161071777e-06,2.7000904083251953e-05,-0.00013375282287597656,-5.0362199544906616e-05,-1.6987323760986328e-05,-3.141164779663086e-05,9.822845458984375e-05,-2.3052096366882324e-05,1.9073486328125e-06,-2.6971101760864258e-06,-4.659965634346008e-05,-2.5078654289245605e-05,2.384185791015625e-07,-4.139542579650879e-05,1.5676021575927734e-05,-7.633864879608154e-05,6.9141387939453125e-06,3.5703182220458984e-05,-3.4868717193603516e-06,-2.4139881134033203e-06,-1.564621925354004e-07,6.93202018737793e-05,-4.246830940246582e-06,-0.00010207295417785645,-7.212162017822266e-06,-3.451108932495117e-05,0.0001646876335144043,7.18832015991211e-05,-7.289648056030273e-05,4.214048385620117e-05,-2.562999725341797e-06,0.00018072128295898438,-5.136430263519287e-05,-4.3354928493499756e-05,5.125999450683594e-06,-2.5212764739990234e-05,-0.00010603666305541992,8.404254913330078e-06,3.7223100662231445e-05,5.0067901611328125e-06,-3.501772880554199e-07,-1.8477439880371094e-06,6.4373016357421875e-06,-4.076957702636719e-05,2.8908252716064453e-05,-2.2530555725097656e-05,-2.2649765014648438e-06,-5.960464477539062e-07,-2.4616718292236328e-05,-8.493661880493164e-07,-3.4689903259277344e-05,-3.3795833587646484e-05,5.996227264404297e-05,4.291534423828125e-06,-2.2940337657928467e-05,-9.331107139587402e-05,-3.866851329803467e-06,-4.3898820877075195e-05,-9.518861770629883e-05,-3.653764724731445e-05,-9.365379810333252e-05,-2.0839273929595947e-05,-1.4677643775939941e-05,-7.510185241699219e-06,-1.8328428268432617e-05,-2.1383166313171387e-06,5.7220458984375e-06,-0.00011038780212402344,4.172325134277344e-06,-4.7869980335235596e-05,-0.0001386404037475586,-0.00012624263763427734,2.8014183044433594e-06,-1.5348196029663086e-06,6.854534149169922e-06,8.195638656616211e-08,-0.00010520219802856445,-7.779151201248169e-05,-2.0503997802734375e-05,-4.875659942626953e-05,-2.4572014808654785e-05,0.00013828277587890625,-3.14861536026001e-05,8.940696716308594e-06,4.500150680541992e-05,-9.393692016601562e-05,1.0132789611816406e-06,-0.00015306472778320312,9.679794311523438e-05,5.239248275756836e-05,-3.069639205932617e-05,-7.838010787963867e-05,-0.0003336891531944275,1.2516975402832031e-06,2.7194619178771973e-07,9.846687316894531e-05,-2.6151537895202637e-05,8.291006088256836e-05,-3.039836883544922e-06,6.300210952758789e-05,-2.3502856492996216e-05,1.2993812561035156e-05,1.1324882507324219e-06,3.55839729309082e-05,-0.00010132789611816406,-1.7061829566955566e-06,-6.318837404251099e-05,4.887580871582031e-06,0.00018835067749023438,6.99758529663086e-05,0.00010353326797485352,-4.351884126663208e-05,2.9146671295166016e-05,6.198883056640625e-06,-2.6226043701171875e-06,-1.1980533599853516e-05,-7.396936416625977e-05,-4.8726797103881836e-05,-3.1888484954833984e-05,8.702278137207031e-06,2.3066997528076172e-05,7.450580596923828e-06,-4.4345855712890625e-05,6.556510925292969e-07,-4.306435585021973e-06,-8.723139762878418e-05,9.357929229736328e-06,-0.00010936707258224487,-8.99285078048706e-06,2.586841583251953e-05,1.2785196304321289e-05,-2.2470951080322266e-05,-2.4259090423583984e-05,-9.074807167053223e-06,2.8014183044433594e-06,-7.537007331848145e-05,9.119510650634766e-06,-2.9206275939941406e-06,1.2636184692382812e-05,5.066394805908203e-06,3.135204315185547e-05,-3.6954879760742188e-06,-9.223818778991699e-05,-0.00017747282981872559,-0.00011453032493591309,-1.2576580047607422e-05,1.633167266845703e-05,0.00020444393157958984,2.086162567138672e-06,-5.066394805908203e-06,-1.0728836059570312e-06,4.410743713378906e-05,4.357099533081055e-05,-3.0182301998138428e-05,-5.336105823516846e-05,-9.387731552124023e-07,-3.337860107421875e-06,3.2372772693634033e-06,-1.399219036102295e-05,0.00010192394256591797,-0.0001875460147857666,-5.9604644775390625e-06,-0.0015995502471923828,-2.9206275939941406e-06,1.4662742614746094e-05,-2.387911081314087e-05,-0.0001595020294189453,3.814697265625e-06,3.159046173095703e-06,1.049041748046875e-05,7.450580596923828e-06,-4.798173904418945e-06,4.772096872329712e-06,-3.439188003540039e-05,1.9669532775878906e-06,9.715557098388672e-06,-3.481656312942505e-05,-4.947930574417114e-05,-3.670156002044678e-05,0.00022459030151367188,-1.4960765838623047e-05,-8.083879947662354e-05,0.00011092424392700195,-1.8894672393798828e-05,-1.806020736694336e-05,-8.38935375213623e-05,-0.0003657341003417969,1.1324882507324219e-06,-8.52346420288086e-06,6.198883056640625e-06,-1.856684684753418e-05,-1.621246337890625e-05,-1.971423625946045e-05,-1.2151896953582764e-05,0.00020581483840942383,-1.1101365089416504e-06,-3.8623809814453125e-05,-1.895427703857422e-05,1.430511474609375e-06,-5.647540092468262e-06,2.5033950805664062e-06,-7.104873657226562e-05,-6.854534149169922e-06,-1.0132789611816406e-05,-4.76837158203125e-07,-1.633167266845703e-05,1.245737075805664e-05,3.874301910400391e-06,-4.951655864715576e-05,-8.821487426757812e-06,-1.1626631021499634e-05,-3.11732292175293e-05,-5.4955482482910156e-05,-3.7550926208496094e-05,-5.675852298736572e-05,-2.248212695121765e-05,1.704692840576172e-05,-6.133317947387695e-05,8.046627044677734e-06,-3.039836883544922e-06,3.3855438232421875e-05,-4.09930944442749e-05,3.123283386230469e-05,5.364418029785156e-06,-1.722574234008789e-05,5.227327346801758e-05,-5.364418029785156e-06,4.649162292480469e-06,-0.00021716952323913574,1.7285346984863281e-06,-1.8015503883361816e-05,-2.6345252990722656e-05,-1.1406838893890381e-05,-2.4378299713134766e-05,5.6684017181396484e-05,7.033348083496094e-06,-4.357099533081055e-05,-3.165006637573242e-05,-1.4841556549072266e-05,4.470348358154297e-06,2.7477741241455078e-05,-9.01147723197937e-06,1.2218952178955078e-05,0.0002865791320800781,-4.947185516357422e-06,-8.124858140945435e-06,-3.4570693969726562e-06,-1.87605619430542e-05,-4.4226646423339844e-05,8.165836334228516e-06,-0.00024899840354919434,-0.00025266408920288086,-2.0772218704223633e-05,-1.5698373317718506e-05,-7.957220077514648e-06,-8.656084537506104e-05,7.492303848266602e-05,-8.165836334228516e-06,-5.185604095458984e-06,-2.980232238769531e-07,-1.8298625946044922e-05,-2.995133399963379e-05,1.1324882507324219e-06,2.5033950805664062e-06,-0.00010603666305541992,2.5033950805664062e-06,-2.199411392211914e-05,-6.67572021484375e-06,-4.6759843826293945e-05,7.545948028564453e-05,-1.3709068298339844e-06,-3.1210482120513916e-05,1.4424324035644531e-05,-3.072619438171387e-05,-2.0936131477355957e-06,-5.519390106201172e-05,-4.163384437561035e-05,-1.2755393981933594e-05,-6.1355531215667725e-06,1.2516975402832031e-06,-5.9388577938079834e-05,-5.5208802223205566e-05,8.71419906616211e-05,5.1975250244140625e-05,1.9818544387817383e-05,-4.708766937255859e-06,9.882450103759766e-05,4.965066909790039e-05,-1.3947486877441406e-05,-2.1189451217651367e-05,-2.950429916381836e-06,-3.4555792808532715e-05,-2.8401613235473633e-05,-2.180039882659912e-05,-3.6619603633880615e-06,-2.5764107704162598e-05,-9.009242057800293e-05,-6.854534149169922e-05,0.00014734268188476562,-4.6819448471069336e-05,1.6689300537109375e-06,-1.5497207641601562e-05,-3.3602118492126465e-05,-2.5153160095214844e-05,-6.079673767089844e-05,5.418062210083008e-05,1.7285346984863281e-06,9.655952453613281e-06,-5.082041025161743e-05,-3.6954879760742188e-06,-0.00012768805027008057,-2.014636993408203e-05,-1.519918441772461e-05,0.00015145540237426758,-1.3999640941619873e-05,-0.00014644861221313477,6.437301635742188e-05,-3.2186508178710938e-06,8.219480514526367e-05,-1.2993812561035156e-05,8.58306884765625e-06,-3.680586814880371e-06,-5.97834587097168e-05,-1.1589378118515015e-05,4.6737492084503174e-05,-2.2701919078826904e-05,-1.5243887901306152e-05,-4.427134990692139e-05,-2.6166439056396484e-05,-1.990795135498047e-05,-3.2782554626464844e-06],"xaxis":"x","yaxis":"y","type":"histogram"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"value"}},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"count"}},"legend":{"title":{"text":"variable"},"tracegroupgap":0},"margin":{"t":60},"barmode":"relative"},                        {"responsive": true}                    ).then(function(){
+                            
+var gd = document.getElementById('0decf4eb-1ede-4fc3-8740-6aab6bd7bb1c');
+var x = new MutationObserver(function (mutations, observer) {{
+        var display = window.getComputedStyle(gd).display;
+        if (!display || display === 'none') {{
+            console.log([gd, 'removed!']);
+            Plotly.purge(gd);
+            observer.disconnect();
+        }}
+}});
+
+// Listen for the removal of the full notebook cells
+var notebookContainer = gd.closest('#notebook-container');
+if (notebookContainer) {{
+    x.observe(notebookContainer, {childList: true});
+}}
+
+// Listen for the clearing of the current output cell
+var outputEl = gd.closest('.output');
+if (outputEl) {{
+    x.observe(outputEl, {childList: true});
+}}
+
+                        })                };                });            </script>        </div>
+</div>
+</div>
+<p>The approximation demonstrates high accuracy in this instance. Now, let’s compare the runtimes:</p>
+<div id="cell-19" class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb13" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">print</span>(<span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">f"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>standard_loocv_runtime <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:.1e}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb13-2"><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">print</span>(<span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">f"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>efficient_loocv_runtime <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:.1e}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">"</span>)</span>
+<span id="cb13-3"><span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">print</span>(<span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">f"</span><span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">{</span>standard_loocv_runtime<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span>efficient_loocv_runtime <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="sc" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">:.0f}</span><span class="ss" style="color: #20794D;
+background-color: null;
+font-style: inherit;">."</span>)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>standard_loocv_runtime = 4.7e+01
+efficient_loocv_runtime = 1.3e-01
+standard_loocv_runtime/efficient_loocv_runtime = 357.</code></pre>
+</div>
+</div>
+<p>A significant speedup! However, it’s important to note that there is room for further optimization. For instance, the BFGS iterations could be initialized with a previous solution, or we could <a href="https://tomshlomo.github.io/blog/posts/loocv/loocv_part1.html#python-implementation">utilize JIT compilation as we did in part 1</a>.</p>
+</section>
+<section id="references" class="level1">
+<h1>References</h1>
+<p>Efficient LOOCV for ordinary least squares and ridge regression is mentioned in several well known books like <a href="https://hastie.su.domains/Papers/ESLII.pdf">The Elements of Statistical Learning</a> and <a href="https://www.statlearning.com/">An Introduction to Statistical Learning</a>. I first encountered it in a brief mention in <a href="https://egrcc.github.io/docs/math/all-of-statistics.pdf">All of Statistics</a>.</p>
+<p>The only reference I am aware of that discusses the general quadratic case, and a similar approach for the non-quadratic approximation, is <a href="https://repository.tudelft.nl/islandora/object/uuid:d9b5456d-722a-401d-9f1a-c530c46d6491/datastream/OBJ/download.#:~:text=The%20most%20important%20cross%2Dvalidation,results%20can%20then%20be%20averaged.">this theses by Rosa Meijer</a>.</p>
+
+
+</section>
+
+ ]]></description>
+  <guid>https://tomshlomo.github.io/blog/posts/loocv_part2/loocv_part2.html</guid>
+  <pubDate>Sat, 23 Mar 2024 22:00:00 GMT</pubDate>
+</item>
 <item>
   <title>Efficient leave one out cross validation - part 1</title>
   <dc:creator>Tom Shlomo</dc:creator>
@@ -257,46 +1393,41 @@ background-color: null;
 font-style: inherit;">from</span> sklearn.model_selection <span class="im" style="color: #00769E;
 background-color: null;
 font-style: inherit;">import</span> LeaveOneOut</span>
-<span id="cb2-2"><span class="im" style="color: #00769E;
-background-color: null;
-font-style: inherit;">from</span> time <span class="im" style="color: #00769E;
-background-color: null;
-font-style: inherit;">import</span> time</span>
+<span id="cb2-2"></span>
 <span id="cb2-3"></span>
-<span id="cb2-4"></span>
-<span id="cb2-5"><span class="kw" style="color: #003B4F;
+<span id="cb2-4"><span class="kw" style="color: #003B4F;
 background-color: null;
 font-style: inherit;">def</span> standard_loocv(model, X, y) <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">-&gt;</span> np.ndarray:</span>
-<span id="cb2-6">    y_tilde <span class="op" style="color: #5E5E5E;
+<span id="cb2-5">    y_tilde <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> np.empty_like(y)</span>
-<span id="cb2-7">    <span class="cf" style="color: #003B4F;
+<span id="cb2-6">    <span class="cf" style="color: #003B4F;
 background-color: null;
 font-style: inherit;">for</span> i, (train_index, test_index) <span class="kw" style="color: #003B4F;
 background-color: null;
 font-style: inherit;">in</span> <span class="bu" style="color: null;
 background-color: null;
 font-style: inherit;">enumerate</span>(LeaveOneOut().split(X)):</span>
-<span id="cb2-8">        X_loo <span class="op" style="color: #5E5E5E;
+<span id="cb2-7">        X_loo <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> X[train_index, :]</span>
-<span id="cb2-9">        y_loo <span class="op" style="color: #5E5E5E;
+<span id="cb2-8">        y_loo <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> y[train_index]</span>
-<span id="cb2-10">        model.fit(X_loo, y_loo)</span>
-<span id="cb2-11">        y_tilde[i] <span class="op" style="color: #5E5E5E;
+<span id="cb2-9">        model.fit(X_loo, y_loo)</span>
+<span id="cb2-10">        y_tilde[i] <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> model.predict(X[test_index, :])[<span class="dv" style="color: #AD0000;
 background-color: null;
 font-style: inherit;">0</span>]</span>
-<span id="cb2-12">    <span class="cf" style="color: #003B4F;
+<span id="cb2-11">    <span class="cf" style="color: #003B4F;
 background-color: null;
 font-style: inherit;">return</span> y_tilde</span>
+<span id="cb2-12"></span>
 <span id="cb2-13"></span>
-<span id="cb2-14"></span>
-<span id="cb2-15"><span class="kw" style="color: #003B4F;
+<span id="cb2-14"><span class="kw" style="color: #003B4F;
 background-color: null;
 font-style: inherit;">def</span> gen_random_data(n: <span class="bu" style="color: null;
 background-color: null;
@@ -307,42 +1438,42 @@ background-color: null;
 font-style: inherit;">-&gt;</span> <span class="bu" style="color: null;
 background-color: null;
 font-style: inherit;">tuple</span>[np.ndarray, np.ndarray, np.ndarray]:</span>
-<span id="cb2-16">    rng <span class="op" style="color: #5E5E5E;
+<span id="cb2-15">    rng <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> np.random.default_rng(<span class="dv" style="color: #AD0000;
 background-color: null;
 font-style: inherit;">42</span>)</span>
-<span id="cb2-17">    X <span class="op" style="color: #5E5E5E;
+<span id="cb2-16">    X <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> rng.standard_normal((n, m))</span>
-<span id="cb2-18">    L <span class="op" style="color: #5E5E5E;
+<span id="cb2-17">    L <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> rng.standard_normal((m, m))</span>
-<span id="cb2-19">    theta <span class="op" style="color: #5E5E5E;
+<span id="cb2-18">    theta <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> L <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">@</span> rng.standard_normal(m)</span>
-<span id="cb2-20">    y <span class="op" style="color: #5E5E5E;
+<span id="cb2-19">    y <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> X <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">@</span> theta <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">+</span> rng.standard_normal(n)</span>
-<span id="cb2-21">    R <span class="op" style="color: #5E5E5E;
+<span id="cb2-20">    R <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> L <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">@</span> L.T  <span class="co" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;"># random positive definite matrix</span></span>
-<span id="cb2-22">    <span class="cf" style="color: #003B4F;
+<span id="cb2-21">    <span class="cf" style="color: #003B4F;
 background-color: null;
 font-style: inherit;">return</span> X, y, R</span>
+<span id="cb2-22"></span>
 <span id="cb2-23"></span>
-<span id="cb2-24"></span>
-<span id="cb2-25">X, y, R <span class="op" style="color: #5E5E5E;
+<span id="cb2-24">X, y, R <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> gen_random_data(n<span class="op" style="color: #5E5E5E;
 background-color: null;
@@ -353,15 +1484,15 @@ background-color: null;
 font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
 background-color: null;
 font-style: inherit;">10</span>)</span>
-<span id="cb2-26">model <span class="op" style="color: #5E5E5E;
+<span id="cb2-25">model <span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span> LinearRegressionWithQuadraticRegularization(R<span class="op" style="color: #5E5E5E;
 background-color: null;
 font-style: inherit;">=</span>R)</span>
-<span id="cb2-27"><span class="bu" style="color: null;
+<span id="cb2-26"><span class="bu" style="color: null;
 background-color: null;
 font-style: inherit;">print</span>(</span>
-<span id="cb2-28">    <span class="ss" style="color: #20794D;
+<span id="cb2-27">    <span class="ss" style="color: #20794D;
 background-color: null;
 font-style: inherit;">f"max absolute error: </span><span class="sc" style="color: #5E5E5E;
 background-color: null;
@@ -378,7 +1509,7 @@ background-color: null;
 font-style: inherit;">:.3e}</span><span class="ss" style="color: #20794D;
 background-color: null;
 font-style: inherit;">"</span></span>
-<span id="cb2-29">)</span></code></pre></div>
+<span id="cb2-28">)</span></code></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>max absolute error: 1.243e-14</code></pre>
 </div>
