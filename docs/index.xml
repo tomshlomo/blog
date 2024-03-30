@@ -919,8 +919,8 @@ font-style: inherit;">**</span>study.best_params)</span>
 </div>
 </div>
 </section>
-<section id="verify-our-implementation" class="level1">
-<h1>Verify our implementation</h1>
+<section id="verification-of-implementation" class="level1">
+<h1>Verification of implementation</h1>
 <p>To assess the accuracy of our implementation, we compare the approximated leave-one-out predictions with the actual leave-one-out predictions:</p>
 <div id="cell-16" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb10" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><span class="im" style="color: #00769E;
