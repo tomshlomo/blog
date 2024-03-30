@@ -10,7 +10,7 @@
 <atom:link href="https://tomshlomo.github.io/blog/index.xml" rel="self" type="application/rss+xml"/>
 <description>Tom Shlomo&#39;s blog</description>
 <generator>quarto-1.4.543</generator>
-<lastBuildDate>Sat, 23 Mar 2024 22:00:00 GMT</lastBuildDate>
+<lastBuildDate>Fri, 29 Mar 2024 21:00:00 GMT</lastBuildDate>
 <item>
   <title>Efficient Leave One Out Cross Validation - Part 2</title>
   <dc:creator>Tom Shlomo</dc:creator>
@@ -1145,7 +1145,7 @@ standard_loocv_runtime/efficient_loocv_runtime = 357.</code></pre>
 
  ]]></description>
   <guid>https://tomshlomo.github.io/blog/posts/loocv_part2/loocv_part2.html</guid>
-  <pubDate>Sat, 23 Mar 2024 22:00:00 GMT</pubDate>
+  <pubDate>Fri, 29 Mar 2024 21:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Efficient leave one out cross validation - part 1</title>
