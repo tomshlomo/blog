@@ -43,5 +43,8 @@
   },
   "posts/augmentation_is_regularization/aug.md": {
     "aug.html": "f4b53174"
+  },
+  "posts/omp/omp.ipynb": {
+    "omp.html": "211c2b91"
   }
 }
