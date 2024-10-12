@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.543">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Tom Shlomo">
+<meta name="dcterms.date" content="2024-01-30">
+<meta name="description" content="todo">
+
+<title>Tom Shlomo’s Blog - The greedy algorithms for sparse approximation no one talks about</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/quarto-contrib/academicons-1.9.2/all.css" rel="stylesheet">
+<link href="../../site_libs/quarto-contrib/academicons-1.9.2/size.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Tom Shlomo’s Blog</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/tom-shlomo/"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/tomshlomo"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://scholar.google.com/citations?user=ZJSZgpwAAAAJ&amp;hl=en"> 
+<span class="menu-text"><i class="ai  ai-google-scholar ai-Large"></i></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+          <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">The greedy algorithms for sparse approximation no one talks about</h1>
+                  <div>
+        <div class="description">
+          todo
+        </div>
+      </div>
+                </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Tom Shlomo </p>
+            </div>
+    </div>
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">January 30, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation">Notation</a></li>
+  <li><a href="#support-recovery" id="toc-support-recovery" class="nav-link" data-scroll-target="#support-recovery">Support Recovery</a></li>
+  <li><a href="#greedy-algorithms" id="toc-greedy-algorithms" class="nav-link" data-scroll-target="#greedy-algorithms">Greedy Algorithms</a></li>
+  <li><a href="#matching-pursuit-mp" id="toc-matching-pursuit-mp" class="nav-link" data-scroll-target="#matching-pursuit-mp">Matching Pursuit (MP)</a>
+  <ul class="collapse">
+  <li><a href="#orthogonal-matching-pursuit-omp" id="toc-orthogonal-matching-pursuit-omp" class="nav-link" data-scroll-target="#orthogonal-matching-pursuit-omp">Orthogonal Matching Pursuit (OMP)</a></li>
+  <li><a href="#the-most-obvious-matching-pursuit-momp" id="toc-the-most-obvious-matching-pursuit-momp" class="nav-link" data-scroll-target="#the-most-obvious-matching-pursuit-momp">The Most Obvious Matching Pursuit (MOMP)</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<p>In the problem of sparse approximation, we are trying to approximate a given vector <span class="math inline">\(y\)</span> as a linear combination of few columns of a given matrix <span class="math inline">\(A\)</span>. It is useful in many applications, such as machine learning (e.g.&nbsp;feature selection), image processing (e.g.&nbsp;image denoising, inpainting, deblurring, compression), and signal processing (e.g.&nbsp;compressive sensing).</p>
+<p>In this post, we will discuss greedy algorithms for solving the sparse approximation problem, focusing on the well-known Matching Pursuit (MP) and Orthogonal Matching Pursuit (OMP) algorithms, as well as a “new” algorithm that I call the Most Obvious Matching Pursuit (MOMP).</p>
+<section id="notation" class="level2">
+<h2 class="anchored" data-anchor-id="notation">Notation</h2>
+<p>In this post we will consider the following flavor of the sparse approximation problem: <span class="math display">\[\begin{equation}
+    \begin{array}{ll}
+        \underset{x}{\mbox{minimize}}  &amp; \| Ax - y\|^2 \\
+        \mbox{subject to} &amp; \text{$x$ has at most $k$ non-zero entries}.
+    \end{array}
+    \label{e-opt-prob}
+\end{equation}\]</span> Where</p>
+<ul>
+<li><p><span class="math inline">\(y\)</span> is the <span class="math inline">\(m\)</span>-vector we are trying to approximate,</p></li>
+<li><p><span class="math inline">\(A\)</span> is the <span class="math inline">\(m \times n\)</span> dictionary matrix with columns <span class="math inline">\(a_1, \ldots, a_n\)</span>,</p></li>
+<li><p><span class="math inline">\(x\)</span> is the <span class="math inline">\(n\)</span>-vector of coefficients,</p></li>
+</ul>
+<p>When <span class="math inline">\(S\)</span> is an ordered subset of <span class="math inline">\(1, \ldots, n\)</span>, we denote by <span class="math inline">\(A_S\)</span> the matrix obtained by keeping only the columns of the matrix <span class="math inline">\(A\)</span> that are in <span class="math inline">\(S\)</span>, and by <span class="math inline">\(X_S\)</span> the vector obtained by keeping only the elements of <span class="math inline">\(x\)</span> that are in <span class="math inline">\(S\)</span>.</p>
+<p>When <span class="math inline">\(M\)</span> is a matrix, <span class="math inline">\(\text{Range}(M)\)</span> denotes it’s column space, and <span class="math inline">\(M^H\)</span> denotes it’s conjugate transpose (if you don’t care about complex data, you can think of it as the transpose).</p>
+<!-- Similarly, $I_S$ denotes the $n \times |S|$ matrix obtained by keeping only the columns of the identity matrix that are in $S$.
+$I_S$ is a useful matrix, as it extracts the elements of a vector that are in $S$:
+\begin{align}
+x_S &= I_S x \\
+A_S &= A I_S \\
+\end{align}
+
+Similarly, $I_S^H$ projects an $|S|$-vector to the space of vectors with support $S$, so
+$\text{supp}(x) &= S$
+if and only if
+$x = I_S^H I_S x$. -->
+<!-- Matching Pursuit (MP) is a popular and simple for this problem, which iteratively selects the column of $A$ that is most correlated with the current residual.
+Orthogonal Matching Pursuit (OMP) is a
+One of the most popular algorithms is Orthogonal Matching Pursuit (OMP), which is a greedy algorithm that iteratively selects the column of $A$ that is most correlated with the current residual. -->
+</section>
+<section id="support-recovery" class="level2">
+<h2 class="anchored" data-anchor-id="support-recovery">Support Recovery</h2>
+<p>If the support of <span class="math inline">\(x\)</span> is known and denoted by <span class="math inline">\(S\)</span>, then since <span class="math inline">\(A x = A_S x_S\)</span>, finding the optimal <span class="math inline">\(x_S\)</span> is a simple least squares problem: <span class="math display">\[
+\underset{x_S}{\text{minimize}} \left\{ \| A_S x_S - y \|^2 \right\}.
+\]</span> This means that in practice, the problem is to recover the support of <span class="math inline">\(x\)</span>. The following results will be useful in this context:</p>
+<ul>
+<li><p>An optimal support <span class="math inline">\(S\)</span> maximizes <span class="math inline">\(y^H P_{A_S} y\)</span>, where <span class="math inline">\(P_{A_S}\)</span> is the projection matrix onto <span class="math inline">\(\text{Range}(A_S)\)</span>. <!-- (The intution here is that with an optimal support, $y$ should be approximately in $\text{Range}(A_s)$, so projecting onto it should have little effect). --></p></li>
+<li><p>An optimal <span class="math inline">\(x_S\)</span> is given by any solution to <span class="math inline">\(A_S^H A_S x_S = A_S^H y\)</span> (aka the normal equations).</p></li>
+</ul>
+<div class="callout callout-style-default callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Proof <a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>First, we rewrite <span class="math inline">\(y\)</span> as <span class="math inline">\(y^{||} + y^{\perp}\)</span>, where <span class="math inline">\(y^{||}\)</span> is in <span class="math inline">\(\text{Range}(A_S)\)</span> and <span class="math inline">\(y^{\perp}\)</span> is orthogonal to it. Since <span class="math inline">\(A_S x_S\)</span> is in <span class="math inline">\(\text{Range}(A_S)\)</span>, we can apply the Pythagorean theorem (twice) to get: <span class="math display">\[\begin{align}
+\| A_S x_S - y \|^2 &amp;=
+\| \left(A_S x_S - y^{||}\right) - y^{\perp} \|^2
+\\&amp;=
+  \| A_S x_S - y^{||} \|^2 + \| y^{\perp} \|^2
+  \\&amp;=
+  \| A_S x_S - y^{||} \|^2 + \| y \|^2 - \| y^{||} \|^2 .
+\end{align}\]</span> Minimizing across <span class="math inline">\(x_S\)</span>, the first term vanishes (since <span class="math inline">\(y^{||}\)</span> is in <span class="math inline">\(\text{Range}(A_S)\)</span>, there is by definition an <span class="math inline">\(x_S\)</span> such that <span class="math inline">\(y^{||} = A_S x_S\)</span>).<br>
+Thus, an optimal <span class="math inline">\(S\)</span> maximizes <span class="math inline">\(\| y^{||} \|^2\)</span>.<br>
+Since <span class="math inline">\(P_{A_S}\)</span> is a projection matrix, it is symmetric and idempotent, so <span class="math display">\[
+\| y^{||} \|^2 = \| P_{A_S} y \|^2 = y^H P_{A_S}^H P_{A_S} y = y^H P_{A_S} y
+\]</span> which proves the first item.</p>
+<p>An optimal <span class="math inline">\(x_S\)</span> satisfies <span class="math inline">\(y^{||} = A_S x_S\)</span>.<br>
+As the projection of <span class="math inline">\(y\)</span> onto <span class="math inline">\(\text{Range}(A_S)\)</span>, <span class="math inline">\(y^{||}\)</span> is characterized by <span class="math inline">\(A_S ^H \left(y - y^{||} \right) = 0\)</span>.<br>
+Combining the two, we get the second item.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="greedy-algorithms" class="level2">
+<h2 class="anchored" data-anchor-id="greedy-algorithms">Greedy Algorithms</h2>
+<p>Exactly Solving the sparse approximation problem is NP-hard. It turns out there isn’t a significantly better way than brute force checking all <span class="math inline">\(n \choose k\)</span> possible supports. Thus we often turn to greedy algorithms<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>, which are faster but not guaranteed to find the optimal solution.</p>
+</section>
+<section id="matching-pursuit-mp" class="level1">
+<h1>Matching Pursuit (MP)</h1>
+<p>MP is a simple and popular algorithm for the sparse approximation problem. The algorithm is based on the following observation: When <span class="math inline">\(k=1\)</span>, the problem is equivalent to finding the column of <span class="math inline">\(A\)</span> that is most correlated with <span class="math inline">\(y\)</span>: <span class="math display">\[\begin{align}
+y^H P_{a_i} y &amp;= y^H a_i (a_i^H a_i)^{-1} a_i^H y
+\\&amp;=
+\frac{| a_i^H y |^2}{\| a_i \|^2}.
+\end{align}\]</span></p>
+<p>MP is a greedy iterative algorithm. We start with an empty support. At each iteration: 1. Greedily add the optimal column to the support. 2. Project <span class="math inline">\(y\)</span> onto the space orthogonal to the column (Or, equivalently, subtracts <span class="math inline">\(a_i x_i\)</span> from <span class="math inline">\(y\)</span>, where <span class="math inline">\(a_i\)</span> is the selected column and <span class="math inline">\(x_i\)</span> is the coefficient that minimizes <span class="math inline">\(\| a_i x_i - y \|^2\)</span>).</p>
+<!-- Note tht this is equivalent to subtracting the  of the selected column to $y$. -->
+<p><!-- and then project $y$ onto the the space orthogonal to that column.
+
+In python, the algorithm can be implemented as follows:
+```python
+def mp(A: np.ndarray, y: np.ndarray, K: int) -> set[int]:
+    S = set()
+    A = A / np.linalg.norm(A, axis=0) // normalize columns
+    while len(s) < k:
+        i = np.argmax(np.abs(A.H @ y))
+        S.add(i)
+        x_i = A[:, i].H @ y
+        y -= A[:, i] * x_i
+``` --></p>
+<section id="orthogonal-matching-pursuit-omp" class="level2">
+<h2 class="anchored" data-anchor-id="orthogonal-matching-pursuit-omp">Orthogonal Matching Pursuit (OMP)</h2>
+<p>OMP is a popular variant of MP. While in MP we project <span class="math inline">\(y\)</span> onto the space orthogonal to the selected column in the current iteration, in OMP we project <span class="math inline">\(y\)</span> onto the space orthogonal to all the selected columns so far.</p>
+<p>This is equivalent to subtracting from <span class="math inline">\(y\)</span> <span class="math inline">\(A_S x_S\)</span>, where <span class="math inline">\(S\)</span> is the current support and <span class="math inline">\(x_S\)</span> minimizes <span class="math inline">\(\| A_S x_S - y \|^2\)</span>.</p>
+</section>
+<section id="the-most-obvious-matching-pursuit-momp" class="level2">
+<h2 class="anchored" data-anchor-id="the-most-obvious-matching-pursuit-momp">The Most Obvious Matching Pursuit (MOMP)</h2>
+<p>Start with <span class="math inline">\(S=\emptyset\)</span>. At each iteration add the column <span class="math inline">\(i\)</span> that maximizes <span class="math inline">\(y^H P_{A_{S \cup \left\{ i \right\}}} y\)</span>. That’s it, there are no <span class="math inline">\(y\)</span> updates here.</p>
+<p>OMP tries to improve MP by optimizing the coefficients of all the selected columns at each iteration. However, this coefficient optimization happens only after the new column is added. During the selection of the new column, like MP, OMP still selects the optimal column assuming <span class="math inline">\(k=1\)</span>, affectively optimizing only the coefficient of the selected column.</p>
+<p>In MOMP, we fix that, by simultaneously optimizing both the new column and the coefficients of all the selected columns. That is, we are affectively solving <span class="math display">\[
+\underset{S, x_S}{\text{minimize}}
+\|
+    A_S x_S - y
+\|^2
+\]</span> at each iteration, with the constraint that <span class="math inline">\(S\)</span> is the same as in the previous iteration, except for one additional column.</p>
+<p>The algorithms MP and OMP are well known and widely used. However, I have not seen the algorithm MOMP in the literature (I would be happy to be proven wrong), even though I really think it is the most obvious algorithm to try.</p>
+<p>A possible reason for this is is compuation complexity: at each iteration, MOMP requires solving a least squares problem for each candidate column, as opposed to OMP which requires solving it only for the new column.<br>
+There is however a way to utilize the solution of the previous iteration to speed up the computation (by using incremental Cholesky/QR factorizations). I plan to discuss this in a future post.</p>
+<!-- In OMP, we select the best column assuming $k=1$, but then select the coefficients optimally for the whole support.
+This algorithm can be seen as an improvemnt of OMP, since simulatenously optimiz
+Both MP and OMP update $y$ at each iteration.
+
+
+ that improves the solution by optimizing the coefficients of all the selected columns before subtracting their contribution from $y$.
+OMP improves MP by optimizing the coefficients of all the selected columns before subtracting their contribution from $y$.
+This subtraction is equivalent to projecting $y$ onto 
+
+
+MP can be seen as a greedy algorithm that iteratively adds to the support the column of $A$ tha
+Once the optimal column is found, can substract the subtract from $y$ its projection onto the column. 
+the projection of $y$ onto the column space of the selected column.
+
+\begin{align}
+{\text{\argmin}} \left\{ \| A x - y \|^2 \right\}
+
+\underset{|S| &= 1}{\text{\argmin}} \left\{ \| A x - y \|^2 \right\}
+\\&=
+\underset{|S| &= 1}{\text{\argmin}} \left\{ \| a_i x - y \|^2 \right\}
+\end{align} -->
+<!-- 
+# Matching Pursuit (MP)
+MP is a simple and popular algorithm for the sparse approximation problem.
+The algorithm is based on the following observation:
+When $k=1$, the problem is equivalent to finding the column of $A$ that is most correlated with $y$.
+\begin{align}
+\text{\min} \left\{ \| A x - y \|^2 \,|\, \text{supp}\left(x \right) \leq 1 \right\}
+&=
+\text{\min} \left\{ \| a_i x - y \|^2 \,|\, \text{supp}\left(x \right) \leq 1 \right\}
+\end{align} -->
+<!-- 
+1/2 x'Qx + c'x + d
+
+Qx + c = 0
+x = - inv(Q) c
+
+1/2 c' inv(Q) Q inv(Q) c - c' inv(Q) c + d
+
+- 1/2 c' inv(Q) c + d
+
+
+1/2 | Ax - y | ^2 = 1/2 (Ax - y)' (Ax - y) = 1/2 x' A' A x - y' A x + y' y / 2
+min = -1/2 (- y' A) inv(A' A) (-A' y) + y' y / 2
+    = 1/2 y' A inv(A' A) A' y + y' y / 2 -->
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>While these are standard results for least squares problems, I find that they are not always presented in a clear way. I like proving such results without using gradients (which obscure the intuition, in my opinion) and without inverting matrices (which adds unnecessary caveats about rank and conditioning).<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Convex relaxation (e.g.&nbsp;Basis Pursuit, LASSO) is another approach, but it is not the focus of this post.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

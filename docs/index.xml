@@ -12,7 +12,7 @@
 <generator>quarto-1.4.543</generator>
 <lastBuildDate>Fri, 29 Mar 2024 21:00:00 GMT</lastBuildDate>
 <item>
-  <title>Efficient Leave One Out Cross Validation - Part 2</title>
+  <title>Efficient leave one out cross validation - part 2</title>
   <dc:creator>Tom Shlomo</dc:creator>
   <link>https://tomshlomo.github.io/blog/posts/loocv_part2/loocv_part2.html</link>
   <description><![CDATA[ 
@@ -27,7 +27,7 @@
 <p>We denote the number of samples in the training dataset as <img src="https://latex.codecogs.com/png.latex?n">.</p>
 <p>The <img src="https://latex.codecogs.com/png.latex?m">-dimensional feature vectors are represented as <img src="https://latex.codecogs.com/png.latex?x_1"> to <img src="https://latex.codecogs.com/png.latex?x_n">, forming the rows of matrix <img src="https://latex.codecogs.com/png.latex?X">.</p>
 <p>Targets are denoted as <img src="https://latex.codecogs.com/png.latex?y_1"> to <img src="https://latex.codecogs.com/png.latex?y_n">, forming the vector <img src="https://latex.codecogs.com/png.latex?y">. The model’s prediction for the <img src="https://latex.codecogs.com/png.latex?i">-th training sample is <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D_i%20=%20x_i%5ET%20%5Ctheta">, where <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> is the coefficients vector. <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D%20=%20X%20%5Ctheta"> represents the vector containing all predictions.</p>
-<p>We fit <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> to the training data by minimizing the combined loss and regularization terms: <span id="eq-theta-def"><img src="https://latex.codecogs.com/png.latex?%0A%5Ctheta%20:=%20%5Carg%5Cmin_%7B%5Ctheta'%7D%20f(%5Ctheta').%0A%5Ctag%7B1%7D"></span> where <img src="https://latex.codecogs.com/png.latex?%0Af(%5Ctheta')%20:=%20%5Csum_%7Bi=1%7D%5E%7Bn%7D%20l(x_i%5ET%20%5Ctheta';%20y_i)%20+%20r(%5Ctheta').%0A"> Here, <img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)"> represents the loss function, quantifying the difference between the prediction <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D"> and the true target <img src="https://latex.codecogs.com/png.latex?y_i">, while <img src="https://latex.codecogs.com/png.latex?r"> is the regularization function. We assume <img src="https://latex.codecogs.com/png.latex?l"> (as a function of <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D_i">) and <img src="https://latex.codecogs.com/png.latex?r"> are convex and twice differentiable. Special cases of this model include ordinary least squares (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)%20=%20(%5Chat%7By%7D_i%20-%20y_i)%5E2">, <img src="https://latex.codecogs.com/png.latex?r(%5Ctheta')%20=%200">), ridge regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)%20=%20(%5Chat%7By%7D_i%20-%20y_i)%5E2">, <img src="https://latex.codecogs.com/png.latex?r(%5Ctheta')%20=%20%5Calpha%20%5C%7C%20%5Ctheta'%20%5C%7C%5E2">), logistic regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;y_i)%20=%20%5Clog%20%5Cleft(%201%20+%20e%5E%7B-y_i%20%5Chat%7By%7D_i%7D%5Cright)"> with <img src="https://latex.codecogs.com/png.latex?y_i%20%5Cin%20%5C%7B%20-1,%201%5C%7D">), and Poisson regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;y_i)%20=%20y_i%20%5Chat%7By%7D_i%20-%20e%5E%7B%5Chat%7By%7D_i%7D">).</p>
+<p>We fit <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> to the training data by minimizing the combined loss and regularization terms: <span id="eq-theta-def"><img src="https://latex.codecogs.com/png.latex?%0A%5Ctheta%20:=%20%5Carg%5Cmin_%7B%5Ctheta'%7D%20f(%5Ctheta').%0A%5Ctag%7B1%7D"></span> where <img src="https://latex.codecogs.com/png.latex?%0Af(%5Ctheta')%20:=%20%5Csum_%7Bi=1%7D%5E%7Bn%7D%20l(x_i%5ET%20%5Ctheta';%20y_i)%20+%20r(%5Ctheta').%0A"> Here, <img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)"> represents the loss function, quantifying the difference between the prediction <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D_i"> and the true target <img src="https://latex.codecogs.com/png.latex?y_i">, while <img src="https://latex.codecogs.com/png.latex?r"> is the regularization function. We assume <img src="https://latex.codecogs.com/png.latex?l"> (as a function of <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D_i">) and <img src="https://latex.codecogs.com/png.latex?r"> are convex and twice differentiable. Special cases of this model include ordinary least squares (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)%20=%20(%5Chat%7By%7D_i%20-%20y_i)%5E2">, <img src="https://latex.codecogs.com/png.latex?r(%5Ctheta')%20=%200">), ridge regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)%20=%20(%5Chat%7By%7D_i%20-%20y_i)%5E2">, <img src="https://latex.codecogs.com/png.latex?r(%5Ctheta')%20=%20%5Calpha%20%5C%7C%20%5Ctheta'%20%5C%7C%5E2">), logistic regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;y_i)%20=%20%5Clog%20%5Cleft(%201%20+%20e%5E%7B-y_i%20%5Chat%7By%7D_i%7D%5Cright)"> with <img src="https://latex.codecogs.com/png.latex?y_i%20%5Cin%20%5C%7B%20-1,%201%5C%7D">), and Poisson regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;y_i)%20=%20y_i%20%5Chat%7By%7D_i%20-%20e%5E%7B%5Chat%7By%7D_i%7D">).</p>
 <p>To denote the coefficients obtained by excluding the <img src="https://latex.codecogs.com/png.latex?j">-th example, we use <img src="https://latex.codecogs.com/png.latex?%5Ctheta%5E%7B(j)%7D">: <img src="https://latex.codecogs.com/png.latex?%0A%5Ctheta%5E%7B(j)%7D%20=%20%5Carg%5Cmin_%7B%5Ctheta'%7D%20f%5E%7B(j)%7D%20(%5Ctheta')%0A"> where <img src="https://latex.codecogs.com/png.latex?%20f%5E%7B(j)%7D(%5Ctheta')%20:=%20%5Csum_%7Bi%20%5Cneq%20j%7D%20l(x_i%5ET%20%5Ctheta';%20y_i)%20+%20r(%5Ctheta')%20"> Similarly, <img src="https://latex.codecogs.com/png.latex?X%5E%7B(j)%7D"> and <img src="https://latex.codecogs.com/png.latex?y%5E%7B(j)%7D">, represent <img src="https://latex.codecogs.com/png.latex?X"> and <img src="https://latex.codecogs.com/png.latex?y"> with the <img src="https://latex.codecogs.com/png.latex?j">-th row removed, respectively. We denote by <img src="https://latex.codecogs.com/png.latex?%5Ctilde%7By%7D_j"> the predicted label for sample <img src="https://latex.codecogs.com/png.latex?j"> when it is left out: <span id="eq-y-tilde-j-def"><img src="https://latex.codecogs.com/png.latex?%0A%5Ctilde%7By%7D_j%20:=%20x_j%20%5ET%20%5Ctheta%5E%7B(j)%7D%0A%5Ctag%7B2%7D"></span> Our goal is calculating <img src="https://latex.codecogs.com/png.latex?%5Ctilde%7By%7D_j">, for all <img src="https://latex.codecogs.com/png.latex?j">, efficiently.</p>
 </section>
 <section id="deriving-efficient-loocv-for-the-non-quadratic-case" class="level1">
@@ -1148,6 +1148,390 @@ standard_loocv_runtime/efficient_loocv_runtime = 357.</code></pre>
   <pubDate>Fri, 29 Mar 2024 21:00:00 GMT</pubDate>
 </item>
 <item>
+  <title>OMP is wrong</title>
+  <dc:creator>Tom Shlomo</dc:creator>
+  <link>https://tomshlomo.github.io/blog/posts/omp/omp.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p>In the problem of sparse approximation, we are trying to approximate a given vector <img src="https://latex.codecogs.com/png.latex?y"> as a linear combination of few columns of a given matrix <img src="https://latex.codecogs.com/png.latex?A">. It is useful in many applications, such as machine learning (e.g.&nbsp;feature selection), image processing (e.g.&nbsp;image denoising, inpainting, deblurring, compression), and signal processing (e.g.&nbsp;compressive sensing).</p>
+<p>In this post, we will discuss greedy algorithms for solving the sparse approximation problem, focusing on the well-known Matching Pursuit (MP) and Orthogonal Matching Pursuit (OMP) algorithms, as well as a “new” algorithm that I call the Most Obvious Matching Pursuit (MOMP).</p>
+<section id="notation" class="level1">
+<h1>Notation</h1>
+<p>We will consider the following flavor of the sparse approximation problem: <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Bequation%7D%0A%20%20%20%20%5Cbegin%7Barray%7D%7Bll%7D%0A%20%20%20%20%20%20%20%20%5Cunderset%7Bx%7D%7B%5Cmbox%7Bminimize%7D%7D%20%20&amp;%20%5C%7C%20Ax%20-%20y%5C%7C%5E2%20%5C%5C%0A%20%20%20%20%20%20%20%20%5Cmbox%7Bsubject%20to%7D%20&amp;%20%5Ctext%7B$x$%20has%20at%20most%20$k$%20non-zero%20entries%7D.%0A%20%20%20%20%5Cend%7Barray%7D%0A%20%20%20%20%5Clabel%7Be-opt-prob%7D%0A%5Cend%7Bequation%7D"> Where</p>
+<ul>
+<li><p><img src="https://latex.codecogs.com/png.latex?y"> is the <img src="https://latex.codecogs.com/png.latex?m">-vector we are trying to approximate,</p></li>
+<li><p><img src="https://latex.codecogs.com/png.latex?A"> is the <img src="https://latex.codecogs.com/png.latex?m%20%5Ctimes%20n"> dictionary matrix with columns <img src="https://latex.codecogs.com/png.latex?a_1,%20%5Cldots,%20a_n">,</p></li>
+<li><p><img src="https://latex.codecogs.com/png.latex?x"> is the <img src="https://latex.codecogs.com/png.latex?n">-vector of coefficients,</p></li>
+</ul>
+<p>When <img src="https://latex.codecogs.com/png.latex?S"> is an ordered subset of <img src="https://latex.codecogs.com/png.latex?1,%20%5Cldots,%20n">, we denote by <img src="https://latex.codecogs.com/png.latex?A_S"> the matrix obtained by keeping only the columns of the matrix <img src="https://latex.codecogs.com/png.latex?A"> that are in <img src="https://latex.codecogs.com/png.latex?S">, and by <img src="https://latex.codecogs.com/png.latex?x_S"> the vector obtained by keeping only the elements of <img src="https://latex.codecogs.com/png.latex?x"> that are in <img src="https://latex.codecogs.com/png.latex?S">.</p>
+<p>For a matrix <img src="https://latex.codecogs.com/png.latex?M">, <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(M)"> denotes it’s column space, and <img src="https://latex.codecogs.com/png.latex?M%5EH"> denotes it’s conjugate transpose (if you don’t care about complex data, you can think of it as the transpose).</p>
+</section>
+<section id="support-recovery" class="level1">
+<h1>Support Recovery</h1>
+<p>If the support of <img src="https://latex.codecogs.com/png.latex?x"> is known and denoted by <img src="https://latex.codecogs.com/png.latex?S">, then since <img src="https://latex.codecogs.com/png.latex?A%20x%20=%20A_S%20x_S">, finding the optimal <img src="https://latex.codecogs.com/png.latex?x_S"> is a simple least squares problem: <img src="https://latex.codecogs.com/png.latex?%0A%5Cunderset%7Bx_S%7D%7B%5Ctext%7Bminimize%7D%7D%20%20%5C%7C%20A_S%20x_S%20-%20y%20%5C%7C%5E2.%0A"> This means that in practice, the problem is to recover the support of <img src="https://latex.codecogs.com/png.latex?x">. The following results will be useful in this context:</p>
+<ul>
+<li><p>An optimal support <img src="https://latex.codecogs.com/png.latex?S"> maximizes <img src="https://latex.codecogs.com/png.latex?y%5EH%20P_%7BA_S%7D%20y">, where <img src="https://latex.codecogs.com/png.latex?P_%7BA_S%7D"> is the projection matrix onto <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(A_S)">. <!-- (The intution here is that with an optimal support, $y$ should be approximately in $\text{Range}(A_s)$, so projecting onto it should have little effect). --></p></li>
+<li><p>An optimal <img src="https://latex.codecogs.com/png.latex?x_S"> is given by any solution to <img src="https://latex.codecogs.com/png.latex?A_S%5EH%20A_S%20x_S%20=%20A_S%5EH%20y"> (aka the normal equations).</p></li>
+</ul>
+<div class="callout callout-style-default callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Proof <sup>1</sup>
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>First, we rewrite <img src="https://latex.codecogs.com/png.latex?y"> as <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D%20+%20y%5E%7B%5Cperp%7D">, where <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D"> is in <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(A_S)"> and <img src="https://latex.codecogs.com/png.latex?y%5E%7B%5Cperp%7D"> is orthogonal to it. Since <img src="https://latex.codecogs.com/png.latex?A_S%20x_S"> is in <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(A_S)">, we can apply the Pythagorean theorem (twice) to get: <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Balign%7D%0A%5C%7C%20A_S%20x_S%20-%20y%20%5C%7C%5E2%20&amp;=%0A%5C%7C%20%5Cleft(A_S%20x_S%20-%20y%5E%7B%7C%7C%7D%5Cright)%20-%20y%5E%7B%5Cperp%7D%20%5C%7C%5E2%0A%5C%5C&amp;=%0A%20%20%5C%7C%20A_S%20x_S%20-%20y%5E%7B%7C%7C%7D%20%5C%7C%5E2%20+%20%5C%7C%20y%5E%7B%5Cperp%7D%20%5C%7C%5E2%0A%20%20%5C%5C&amp;=%0A%20%20%5C%7C%20A_S%20x_S%20-%20y%5E%7B%7C%7C%7D%20%5C%7C%5E2%20+%20%5C%7C%20y%20%5C%7C%5E2%20-%20%5C%7C%20y%5E%7B%7C%7C%7D%20%5C%7C%5E2%20.%0A%5Cend%7Balign%7D"> Minimizing across <img src="https://latex.codecogs.com/png.latex?x_S">, the first term vanishes (since <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D"> is in <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(A_S)">, there is by definition an <img src="https://latex.codecogs.com/png.latex?x_S"> such that <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D%20=%20A_S%20x_S">).<br>
+Thus, an optimal <img src="https://latex.codecogs.com/png.latex?S"> maximizes <img src="https://latex.codecogs.com/png.latex?%5C%7C%20y%5E%7B%7C%7C%7D%20%5C%7C%5E2">.<br>
+Since <img src="https://latex.codecogs.com/png.latex?P_%7BA_S%7D"> is a projection matrix, it is symmetric and idempotent, so <img src="https://latex.codecogs.com/png.latex?%0A%5C%7C%20y%5E%7B%7C%7C%7D%20%5C%7C%5E2%20=%20%5C%7C%20P_%7BA_S%7D%20y%20%5C%7C%5E2%20=%20y%5EH%20P_%7BA_S%7D%5EH%20P_%7BA_S%7D%20y%20=%20y%5EH%20P_%7BA_S%7D%20y%0A"> which proves the first item.</p>
+<p>An optimal <img src="https://latex.codecogs.com/png.latex?x_S"> satisfies <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D%20=%20A_S%20x_S">.<br>
+As the projection of <img src="https://latex.codecogs.com/png.latex?y"> onto <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(A_S)">, <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D"> is characterized by <img src="https://latex.codecogs.com/png.latex?A_S%20%5EH%20%5Cleft(y%20-%20y%5E%7B%7C%7C%7D%20%5Cright)%20=%200">.<br>
+Combining the two, we get the second item.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="greedy-algorithms" class="level1">
+<h1>Greedy Algorithms</h1>
+<p>Exactly Solving the sparse approximation problem is NP-hard. It turns out there isn’t a significantly better way than brute force checking all <img src="https://latex.codecogs.com/png.latex?n%20%5Cchoose%20k"> possible supports. Thus we often turn to greedy algorithms<sup>2</sup>, which are faster but not guaranteed to find the optimal solution. We will present 3 such algorithms and their Python implementations. We will rely on the following helper functions:</p>
+<div class="sourceCode" id="cb1" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> solve_x_S(A, y, S):</span>
+<span id="cb1-2">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">"""</span></span>
+<span id="cb1-3"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">    Returns an $x_S$ that minimizes $\| A_S x_S - y \|^2$</span></span>
+<span id="cb1-4"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">    """</span></span>
+<span id="cb1-5">    A_S <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> A[:, S]</span>
+<span id="cb1-6">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> np.linalg.solve(A_S.H <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> A_S, A_S.H <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> y)</span>
+<span id="cb1-7"></span>
+<span id="cb1-8"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> project_y_to_range_A_S(A, y, S):</span>
+<span id="cb1-9">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">"""</span></span>
+<span id="cb1-10"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">    Returns $P_{A_S} y$</span></span>
+<span id="cb1-11"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">    """</span></span>
+<span id="cb1-12">    A_S <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> A[:, S]</span>
+<span id="cb1-13">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> A_S <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> solve_x(A, y, S)</span>
+<span id="cb1-14"></span>
+<span id="cb1-15"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> score_S(A, y, S):</span>
+<span id="cb1-16">    <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">"""</span></span>
+<span id="cb1-17"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">    Returns $y^H P_{A_S} y$</span></span>
+<span id="cb1-18"><span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">    """</span></span>
+<span id="cb1-19">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> np.real(y.H <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> project_to_range(A, y, S))  <span class="co" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;"># real is needed only because of numerical errors</span></span></code></pre></div>
+<section id="matching-pursuit-mp" class="level2">
+<h2 class="anchored" data-anchor-id="matching-pursuit-mp">Matching Pursuit (MP)</h2>
+<p>MP is a simple and popular iterative algorithm for the sparse approximation problem. We start with an empty support. Then, at each iteration:</p>
+<ol type="1">
+<li><p>Add the column <img src="https://latex.codecogs.com/png.latex?i"> that maximizes <img src="https://latex.codecogs.com/png.latex?y%5EH%20P_%7Ba_i%7D%20y"> to the support.</p></li>
+<li><p>Update <img src="https://latex.codecogs.com/png.latex?y"> by projecting it onto the space orthogonal to <img src="https://latex.codecogs.com/png.latex?a_i">.</p></li>
+</ol>
+<p>In Python, it looks like this:</p>
+<div class="sourceCode" id="cb2" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> mp(A: np.ndarray, y: np.ndarray, k: <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">int</span>) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-&gt;</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">set</span>[<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">int</span>]:</span>
+<span id="cb2-2">    S <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">set</span>()</span>
+<span id="cb2-3">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">while</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">len</span>(S) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> k:</span>
+<span id="cb2-4">        i <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">max</span>(<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">range</span>(n), key<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">lambda</span> i: score(A, y, [i]))</span>
+<span id="cb2-5">        S.add(i)</span>
+<span id="cb2-6">        y <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-=</span> project_to_range(A, y, [i])</span></code></pre></div>
+<div class="callout callout-style-default callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+A more efficient implementation
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>In MP, we are always considering a support of size 1, so the normal equations are actually scalar equations: <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Balign*%7D%0Aa_i%5EH%20a_i%20x_i%20=%20a_i%5EH%20y%0A%5Cend%7Balign*%7D"> <!-- \implies &x_i = \frac{a_i^H y}{\| a_i \|^2}, \\ &y^H P_{a_i} y = \frac{| a_i^H y |^2}{\| a_i \|^2}. --> If we normalize the columns of <img src="https://latex.codecogs.com/png.latex?A"> to have unit norm, we get very simple equations for <img src="https://latex.codecogs.com/png.latex?x_i"> and <img src="https://latex.codecogs.com/png.latex?y%5EH%20P_%7Ba_i%7D%20y">: <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Balign*%7D%0Ax_i%20&amp;=%20a_i%5EH%20y,%0A%5C%5C%20&amp;y%5EH%20P_%7Ba_i%7D%20y%20&amp;=%20%7C%20x_i%20%7C%5E2.%0A%5Cend%7Balign*%7D"> In Python, this can be implemented as follows:</p>
+<div class="sourceCode" id="cb3" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> mp(A: np.ndarray, y: np.ndarray, k: <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">int</span>) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-&gt;</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">set</span>[<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">int</span>]:</span>
+<span id="cb3-2">    S <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">set</span>()</span>
+<span id="cb3-3">    A <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> A <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">/</span> np.linalg.norm(A, axis<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="dv" style="color: #AD0000;
+background-color: null;
+font-style: inherit;">0</span>)</span>
+<span id="cb3-4">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">while</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">len</span>(s) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> k:</span>
+<span id="cb3-5">        x <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> A.H <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> y</span>
+<span id="cb3-6">        i <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> np.argmax(np.<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">abs</span>(x))</span>
+<span id="cb3-7">        S.add(i)</span>
+<span id="cb3-8">        y <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-=</span> A[:, i] <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">*</span> x[i]</span></code></pre></div>
+</div>
+</div>
+</div>
+<p>and at each iteration we increase the support by one and update <img src="https://latex.codecogs.com/png.latex?y">.</p>
+<p>and at each iteration we</p>
+<p>and the original <img src="https://latex.codecogs.com/png.latex?y">. Then, at each iteration:</p>
+<p>The algorithm is based on the following observation: When <img src="https://latex.codecogs.com/png.latex?k=1">, the problem is equivalent to finding the column of <img src="https://latex.codecogs.com/png.latex?A"> that is most correlated with <img src="https://latex.codecogs.com/png.latex?y">: <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Balign%7D%0Ay%5EH%20P_%7Ba_i%7D%20y%20&amp;=%20y%5EH%20a_i%20(a_i%5EH%20a_i)%5E%7B-1%7D%20a_i%5EH%20y%0A%5C%5C&amp;=%0A%5Cfrac%7B%7C%20a_i%5EH%20y%20%7C%5E2%7D%7B%5C%7C%20a_i%20%5C%7C%5E2%7D.%0A%5Cend%7Balign%7D"></p>
+<p>MP is a greedy iterative algorithm. At each iteration we increase the support by one and update <img src="https://latex.codecogs.com/png.latex?y">. We start with an empty support and the original <img src="https://latex.codecogs.com/png.latex?y">. Then, at each iteration:</p>
+<ol type="1">
+<li><p>Add the column <img src="https://latex.codecogs.com/png.latex?i"> that maximizes <img src="https://latex.codecogs.com/png.latex?y%5EH%20P_%7Ba_i%7D%20y"> to the support.</p></li>
+<li><p>Update <img src="https://latex.codecogs.com/png.latex?y"> by projecting it onto the space orthogonal to <img src="https://latex.codecogs.com/png.latex?a_i">.</p></li>
+</ol>
+<p>In non efficient Python, it looks like this:</p>
+<div class="sourceCode" id="cb4" style="background: #f1f3f5;"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> solve_x_S(A, y, S):</span>
+<span id="cb4-2">        A_S <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> A[:, S]</span>
+<span id="cb4-3">        <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> np.linalg.solve(A_S.H <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> A_S, A_S.H <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> y)</span>
+<span id="cb4-4"></span>
+<span id="cb4-5"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> project_to_range_A_S(A, y, S):</span>
+<span id="cb4-6">    A_S <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> A[:, S]</span>
+<span id="cb4-7">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> A_S <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> solve_x(A, y, S)</span>
+<span id="cb4-8"></span>
+<span id="cb4-9"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> score_S(A, y, S):</span>
+<span id="cb4-10">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">return</span> y.H <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">@</span> project_to_range(A, y, S)</span>
+<span id="cb4-11"></span>
+<span id="cb4-12"><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">def</span> mp(A: np.ndarray, y: np.ndarray, k: <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">int</span>) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-&gt;</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">list</span>[<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">int</span>]:</span>
+<span id="cb4-13">    S <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> []</span>
+<span id="cb4-14">    <span class="cf" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">while</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">len</span>(S) <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">&lt;</span> k:</span>
+<span id="cb4-15">        i <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span> <span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">max</span>(<span class="bu" style="color: null;
+background-color: null;
+font-style: inherit;">range</span>(n), key<span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">=</span><span class="kw" style="color: #003B4F;
+background-color: null;
+font-style: inherit;">lambda</span> i: score(A, y, [i]))</span>
+<span id="cb4-16">        S.add(i)</span>
+<span id="cb4-17">        y <span class="op" style="color: #5E5E5E;
+background-color: null;
+font-style: inherit;">-=</span> project_to_range(A, y, S)</span></code></pre></div>
+<p>def mp(A: np.ndarray, y: np.ndarray, k: int) -&gt; list[int]: S = [] A = A / np.linalg.norm(A, axis=0) # normalize columns so that the correlation is the same as the inner product m, n = A.shape</p>
+<pre><code>def correlation(i):
+    return np.abs(A[:, i].H @ y) / np.linalg.norm(A[:, i])
+
+while len(s) &lt; k:
+    i = max(range(n), key=correlation)
+    S.add(i)
+
+    for i in range(n):
+        x[i] = np.abs(A[:, i].H @ y) ** 2 / np.linalg.norm(A[:, i]) ** 2
+
+    x = A.H @ y
+    i = np.argmax(np.abs(x))
+    S.add(i)
+    y -= A[:, i] * x[i]  # A[:, i] * x[i] is the projection of y onto the column a_i, so this is the projection of y onto the space orthogonal to a_i</code></pre>
+<pre><code>
+
+&lt;!-- (Or, equivalently, subtracts $a_i x_i$ from $y$, where $a_i$ is the selected column and $x_i$ is the coefficient that minimizes $\| a_i x_i - y \|^2$). --&gt;
+
+&lt;!-- Note tht this is equivalent to subtracting the  of the selected column to $y$. --&gt;
+ &lt;!-- and then project $y$ onto the the space orthogonal to that column.
+
+In python, the algorithm can be implemented as follows:
+```python
+def mp(A: np.ndarray, y: np.ndarray, K: int) -&gt; set[int]:
+    S = set()
+    A = A / np.linalg.norm(A, axis=0) // normalize columns
+    while len(s) &lt; k:
+        i = np.argmax(np.abs(A.H @ y))
+        S.add(i)
+        x_i = A[:, i].H @ y
+        y -= A[:, i] * x_i
+``` --&gt;
+
+## Orthogonal Matching Pursuit (OMP)
+OMP is a popular variant of MP.
+While in MP we project $y$ onto the space orthogonal to the selected column in the current iteration, in OMP we project $y$ onto the space orthogonal to all the selected columns so far.
+
+This is equivalent to subtracting $A_S x_S$ from $y$, where $S$ is the current support and $x_S$ minimizes $\| A_S x_S - y \|^2$.
+
+In code, it looks like this:
+```python
+def omp(A: np.ndarray, y: np.ndarray, k: int) -&gt; set[int]:
+    S = set()
+    A = A / np.linalg.norm(A, axis=0) # normalize columns so that the correlation is the same as the inner product
+    while len(s) &lt; k:
+        x = np.linalg.lstsq(A[:, list(S)], y, rcond=None)[0]
+        i = np.argmax(np.abs(x))
+        S.add(i)
+        y -= A[:, list(S)] @ x</code></pre>
+</section>
+<section id="the-most-obvious-matching-pursuit-momp" class="level2">
+<h2 class="anchored" data-anchor-id="the-most-obvious-matching-pursuit-momp">The Most Obvious Matching Pursuit (MOMP)</h2>
+<p>Start with <img src="https://latex.codecogs.com/png.latex?S=%5Cemptyset">. At each iteration add the column <img src="https://latex.codecogs.com/png.latex?i"> that maximizes <img src="https://latex.codecogs.com/png.latex?y%5EH%20P_%7BA_%7BS%20%5Ccup%20%5Cleft%5C%7B%20i%20%5Cright%5C%7D%7D%7D%20y">. That’s it, there are no <img src="https://latex.codecogs.com/png.latex?y"> updates here.</p>
+<p>OMP tries to improve MP by optimizing the coefficients of all the selected columns at each iteration. However, this coefficient optimization happens only after the new column is added. During the selection of the new column, like MP, OMP still selects the optimal column assuming <img src="https://latex.codecogs.com/png.latex?k=1">, affectively optimizing only the coefficient of the selected column.</p>
+<p>In MOMP, we fix that, by simultaneously optimizing both the new column and the coefficients of all the selected columns. That is, we are affectively solving <img src="https://latex.codecogs.com/png.latex?%0A%5Cunderset%7BS,%20x_S%7D%7B%5Ctext%7Bminimize%7D%7D%0A%5C%7C%0A%20%20%20%20A_S%20x_S%20-%20y%0A%5C%7C%5E2%0A"> at each iteration, with the constraint that <img src="https://latex.codecogs.com/png.latex?S"> is the same as in the previous iteration, except for one additional column.</p>
+<p>The algorithms MP and OMP are well known and widely used. However, I have not seen the algorithm MOMP in the literature (I would be happy to be proven wrong), even though I really think it is the most obvious algorithm to try.</p>
+<p>A possible reason for this is is compuation complexity: at each iteration, MOMP requires solving a least squares problem for each candidate column, as opposed to OMP which requires solving it only for the new column.<br>
+There is however a way to utilize the solution of the previous iteration to speed up the computation (by using incremental Cholesky/QR factorizations). I plan to discuss this in a future post.</p>
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>While these are standard results for least squares problems, I find that they are not always presented in a clear way. I like proving such results without using gradients (which obscure the intuition, in my opinion) and without inverting matrices (which adds unnecessary caveats about rank and conditioning).↩︎</p></li>
+<li id="fn2"><p>Convex relaxation (e.g.&nbsp;Basis Pursuit, LASSO) is another approach, but it is not the focus of this post.↩︎</p></li>
+</ol>
+</section></div> ]]></description>
+  <guid>https://tomshlomo.github.io/blog/posts/omp/omp.html</guid>
+  <pubDate>Fri, 29 Mar 2024 21:00:00 GMT</pubDate>
+</item>
+<item>
   <title>Efficient leave one out cross validation - part 1</title>
   <dc:creator>Tom Shlomo</dc:creator>
   <link>https://tomshlomo.github.io/blog/posts/loocv/loocv_part1.html</link>
@@ -1168,7 +1552,7 @@ standard_loocv_runtime/efficient_loocv_runtime = 357.</code></pre>
 <p>We denote the number of samples in the training dataset as <img src="https://latex.codecogs.com/png.latex?n">.</p>
 <p>The <img src="https://latex.codecogs.com/png.latex?m">-dimensional feature vectors are represented as <img src="https://latex.codecogs.com/png.latex?x_1"> to <img src="https://latex.codecogs.com/png.latex?x_n">, forming the rows of matrix <img src="https://latex.codecogs.com/png.latex?X">.</p>
 <p>Targets are denoted as <img src="https://latex.codecogs.com/png.latex?y_1"> to <img src="https://latex.codecogs.com/png.latex?y_n">, forming the vector <img src="https://latex.codecogs.com/png.latex?y">. The model’s prediction for the <img src="https://latex.codecogs.com/png.latex?i">-th training sample is <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D_i%20=%20x_i%5ET%20%5Ctheta">, where <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> is the coefficients vector. <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D%20=%20X%20%5Ctheta"> represents the vector containing all predictions.</p>
-<p>We fit <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> to the training data by minimizing the combined loss and regularization terms: <span id="eq-theta-def"><img src="https://latex.codecogs.com/png.latex?%0A%5Ctheta%20:=%20%5Carg%5Cmin_%7B%5Ctheta'%7D%20f(%5Ctheta').%0A%5Ctag%7B1%7D"></span> where <img src="https://latex.codecogs.com/png.latex?%0Af(%5Ctheta')%20:=%20%5Csum_%7Bi=1%7D%5E%7Bn%7D%20l(x_i%5ET%20%5Ctheta';%20y_i)%20+%20r(%5Ctheta').%0A"> Here, <img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)"> represents the loss function, quantifying the difference between the prediction <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D"> and the true target <img src="https://latex.codecogs.com/png.latex?y_i">, while <img src="https://latex.codecogs.com/png.latex?r"> is the regularization function. We assume <img src="https://latex.codecogs.com/png.latex?l"> (as a function of <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D_i">) and <img src="https://latex.codecogs.com/png.latex?r"> are convex and twice differentiable. Special cases of this model include ordinary least squares (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)%20=%20(%5Chat%7By%7D_i%20-%20y_i)%5E2">, <img src="https://latex.codecogs.com/png.latex?r(%5Ctheta')%20=%200">), ridge regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)%20=%20(%5Chat%7By%7D_i%20-%20y_i)%5E2">, <img src="https://latex.codecogs.com/png.latex?r(%5Ctheta')%20=%20%5Calpha%20%5C%7C%20%5Ctheta'%20%5C%7C%5E2">), logistic regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;y_i)%20=%20%5Clog%20%5Cleft(%201%20+%20e%5E%7B-y_i%20%5Chat%7By%7D_i%7D%5Cright)"> with <img src="https://latex.codecogs.com/png.latex?y_i%20%5Cin%20%5C%7B%20-1,%201%5C%7D">), and Poisson regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;y_i)%20=%20y_i%20%5Chat%7By%7D_i%20-%20e%5E%7B%5Chat%7By%7D_i%7D">).</p>
+<p>We fit <img src="https://latex.codecogs.com/png.latex?%5Ctheta"> to the training data by minimizing the combined loss and regularization terms: <span id="eq-theta-def"><img src="https://latex.codecogs.com/png.latex?%0A%5Ctheta%20:=%20%5Carg%5Cmin_%7B%5Ctheta'%7D%20f(%5Ctheta').%0A%5Ctag%7B1%7D"></span> where <img src="https://latex.codecogs.com/png.latex?%0Af(%5Ctheta')%20:=%20%5Csum_%7Bi=1%7D%5E%7Bn%7D%20l(x_i%5ET%20%5Ctheta';%20y_i)%20+%20r(%5Ctheta').%0A"> Here, <img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)"> represents the loss function, quantifying the difference between the prediction <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D_i"> and the true target <img src="https://latex.codecogs.com/png.latex?y_i">, while <img src="https://latex.codecogs.com/png.latex?r"> is the regularization function. We assume <img src="https://latex.codecogs.com/png.latex?l"> (as a function of <img src="https://latex.codecogs.com/png.latex?%5Chat%7By%7D_i">) and <img src="https://latex.codecogs.com/png.latex?r"> are convex and twice differentiable. Special cases of this model include ordinary least squares (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)%20=%20(%5Chat%7By%7D_i%20-%20y_i)%5E2">, <img src="https://latex.codecogs.com/png.latex?r(%5Ctheta')%20=%200">), ridge regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;%20y_i)%20=%20(%5Chat%7By%7D_i%20-%20y_i)%5E2">, <img src="https://latex.codecogs.com/png.latex?r(%5Ctheta')%20=%20%5Calpha%20%5C%7C%20%5Ctheta'%20%5C%7C%5E2">), logistic regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;y_i)%20=%20%5Clog%20%5Cleft(%201%20+%20e%5E%7B-y_i%20%5Chat%7By%7D_i%7D%5Cright)"> with <img src="https://latex.codecogs.com/png.latex?y_i%20%5Cin%20%5C%7B%20-1,%201%5C%7D">), and Poisson regression (<img src="https://latex.codecogs.com/png.latex?l(%5Chat%7By%7D_i;y_i)%20=%20y_i%20%5Chat%7By%7D_i%20-%20e%5E%7B%5Chat%7By%7D_i%7D">).</p>
 <p>To denote the coefficients obtained by excluding the <img src="https://latex.codecogs.com/png.latex?j">-th example, we use <img src="https://latex.codecogs.com/png.latex?%5Ctheta%5E%7B(j)%7D">: <img src="https://latex.codecogs.com/png.latex?%0A%5Ctheta%5E%7B(j)%7D%20=%20%5Carg%5Cmin_%7B%5Ctheta'%7D%20f%5E%7B(j)%7D%20(%5Ctheta')%0A"> where <img src="https://latex.codecogs.com/png.latex?%20f%5E%7B(j)%7D(%5Ctheta')%20:=%20%5Csum_%7Bi%20%5Cneq%20j%7D%20l(x_i%5ET%20%5Ctheta';%20y_i)%20+%20r(%5Ctheta')%20"> Similarly, <img src="https://latex.codecogs.com/png.latex?X%5E%7B(j)%7D"> and <img src="https://latex.codecogs.com/png.latex?y%5E%7B(j)%7D">, represent <img src="https://latex.codecogs.com/png.latex?X"> and <img src="https://latex.codecogs.com/png.latex?y"> with the <img src="https://latex.codecogs.com/png.latex?j">-th row removed, respectively. We denote by <img src="https://latex.codecogs.com/png.latex?%5Ctilde%7By%7D_j"> the predicted label for sample <img src="https://latex.codecogs.com/png.latex?j"> when it is left out: <span id="eq-y-tilde-j-def"><img src="https://latex.codecogs.com/png.latex?%0A%5Ctilde%7By%7D_j%20:=%20x_j%20%5ET%20%5Ctheta%5E%7B(j)%7D%0A%5Ctag%7B2%7D"></span> Our goal is calculating <img src="https://latex.codecogs.com/png.latex?%5Ctilde%7By%7D_j">, for all <img src="https://latex.codecogs.com/png.latex?j">, efficiently.</p>
 </section>
 <section id="deriving-efficient-loocv-for-the-quadratic-case" class="level1">
@@ -1944,6 +2328,168 @@ Note
 </ol>
 </section></div> ]]></description>
   <guid>https://tomshlomo.github.io/blog/posts/music/music.html</guid>
+  <pubDate>Mon, 29 Jan 2024 22:00:00 GMT</pubDate>
+</item>
+<item>
+  <title>The greedy algorithms for sparse approximation no one talks about</title>
+  <dc:creator>Tom Shlomo</dc:creator>
+  <link>https://tomshlomo.github.io/blog/posts/omp/wip.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p>In the problem of sparse approximation, we are trying to approximate a given vector <img src="https://latex.codecogs.com/png.latex?y"> as a linear combination of few columns of a given matrix <img src="https://latex.codecogs.com/png.latex?A">. It is useful in many applications, such as machine learning (e.g.&nbsp;feature selection), image processing (e.g.&nbsp;image denoising, inpainting, deblurring, compression), and signal processing (e.g.&nbsp;compressive sensing).</p>
+<p>In this post, we will discuss greedy algorithms for solving the sparse approximation problem, focusing on the well-known Matching Pursuit (MP) and Orthogonal Matching Pursuit (OMP) algorithms, as well as a “new” algorithm that I call the Most Obvious Matching Pursuit (MOMP).</p>
+<section id="notation" class="level2">
+<h2 class="anchored" data-anchor-id="notation">Notation</h2>
+<p>In this post we will consider the following flavor of the sparse approximation problem: <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Bequation%7D%0A%20%20%20%20%5Cbegin%7Barray%7D%7Bll%7D%0A%20%20%20%20%20%20%20%20%5Cunderset%7Bx%7D%7B%5Cmbox%7Bminimize%7D%7D%20%20&amp;%20%5C%7C%20Ax%20-%20y%5C%7C%5E2%20%5C%5C%0A%20%20%20%20%20%20%20%20%5Cmbox%7Bsubject%20to%7D%20&amp;%20%5Ctext%7B$x$%20has%20at%20most%20$k$%20non-zero%20entries%7D.%0A%20%20%20%20%5Cend%7Barray%7D%0A%20%20%20%20%5Clabel%7Be-opt-prob%7D%0A%5Cend%7Bequation%7D"> Where</p>
+<ul>
+<li><p><img src="https://latex.codecogs.com/png.latex?y"> is the <img src="https://latex.codecogs.com/png.latex?m">-vector we are trying to approximate,</p></li>
+<li><p><img src="https://latex.codecogs.com/png.latex?A"> is the <img src="https://latex.codecogs.com/png.latex?m%20%5Ctimes%20n"> dictionary matrix with columns <img src="https://latex.codecogs.com/png.latex?a_1,%20%5Cldots,%20a_n">,</p></li>
+<li><p><img src="https://latex.codecogs.com/png.latex?x"> is the <img src="https://latex.codecogs.com/png.latex?n">-vector of coefficients,</p></li>
+</ul>
+<p>When <img src="https://latex.codecogs.com/png.latex?S"> is an ordered subset of <img src="https://latex.codecogs.com/png.latex?1,%20%5Cldots,%20n">, we denote by <img src="https://latex.codecogs.com/png.latex?A_S"> the matrix obtained by keeping only the columns of the matrix <img src="https://latex.codecogs.com/png.latex?A"> that are in <img src="https://latex.codecogs.com/png.latex?S">, and by <img src="https://latex.codecogs.com/png.latex?X_S"> the vector obtained by keeping only the elements of <img src="https://latex.codecogs.com/png.latex?x"> that are in <img src="https://latex.codecogs.com/png.latex?S">.</p>
+<p>When <img src="https://latex.codecogs.com/png.latex?M"> is a matrix, <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(M)"> denotes it’s column space, and <img src="https://latex.codecogs.com/png.latex?M%5EH"> denotes it’s conjugate transpose (if you don’t care about complex data, you can think of it as the transpose).</p>
+<!-- Similarly, $I_S$ denotes the $n \times |S|$ matrix obtained by keeping only the columns of the identity matrix that are in $S$.
+$I_S$ is a useful matrix, as it extracts the elements of a vector that are in $S$:
+\begin{align}
+x_S &= I_S x \\
+A_S &= A I_S \\
+\end{align}
+
+Similarly, $I_S^H$ projects an $|S|$-vector to the space of vectors with support $S$, so
+$\text{supp}(x) &= S$
+if and only if
+$x = I_S^H I_S x$. -->
+<!-- Matching Pursuit (MP) is a popular and simple for this problem, which iteratively selects the column of $A$ that is most correlated with the current residual.
+Orthogonal Matching Pursuit (OMP) is a
+One of the most popular algorithms is Orthogonal Matching Pursuit (OMP), which is a greedy algorithm that iteratively selects the column of $A$ that is most correlated with the current residual. -->
+</section>
+<section id="support-recovery" class="level2">
+<h2 class="anchored" data-anchor-id="support-recovery">Support Recovery</h2>
+<p>If the support of <img src="https://latex.codecogs.com/png.latex?x"> is known and denoted by <img src="https://latex.codecogs.com/png.latex?S">, then since <img src="https://latex.codecogs.com/png.latex?A%20x%20=%20A_S%20x_S">, finding the optimal <img src="https://latex.codecogs.com/png.latex?x_S"> is a simple least squares problem: <img src="https://latex.codecogs.com/png.latex?%0A%5Cunderset%7Bx_S%7D%7B%5Ctext%7Bminimize%7D%7D%20%5Cleft%5C%7B%20%5C%7C%20A_S%20x_S%20-%20y%20%5C%7C%5E2%20%5Cright%5C%7D.%0A"> This means that in practice, the problem is to recover the support of <img src="https://latex.codecogs.com/png.latex?x">. The following results will be useful in this context:</p>
+<ul>
+<li><p>An optimal support <img src="https://latex.codecogs.com/png.latex?S"> maximizes <img src="https://latex.codecogs.com/png.latex?y%5EH%20P_%7BA_S%7D%20y">, where <img src="https://latex.codecogs.com/png.latex?P_%7BA_S%7D"> is the projection matrix onto <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(A_S)">. <!-- (The intution here is that with an optimal support, $y$ should be approximately in $\text{Range}(A_s)$, so projecting onto it should have little effect). --></p></li>
+<li><p>An optimal <img src="https://latex.codecogs.com/png.latex?x_S"> is given by any solution to <img src="https://latex.codecogs.com/png.latex?A_S%5EH%20A_S%20x_S%20=%20A_S%5EH%20y"> (aka the normal equations).</p></li>
+</ul>
+<div class="callout callout-style-default callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Proof <sup>1</sup>
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>First, we rewrite <img src="https://latex.codecogs.com/png.latex?y"> as <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D%20+%20y%5E%7B%5Cperp%7D">, where <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D"> is in <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(A_S)"> and <img src="https://latex.codecogs.com/png.latex?y%5E%7B%5Cperp%7D"> is orthogonal to it. Since <img src="https://latex.codecogs.com/png.latex?A_S%20x_S"> is in <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(A_S)">, we can apply the Pythagorean theorem (twice) to get: <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Balign%7D%0A%5C%7C%20A_S%20x_S%20-%20y%20%5C%7C%5E2%20&amp;=%0A%5C%7C%20%5Cleft(A_S%20x_S%20-%20y%5E%7B%7C%7C%7D%5Cright)%20-%20y%5E%7B%5Cperp%7D%20%5C%7C%5E2%0A%5C%5C&amp;=%0A%20%20%5C%7C%20A_S%20x_S%20-%20y%5E%7B%7C%7C%7D%20%5C%7C%5E2%20+%20%5C%7C%20y%5E%7B%5Cperp%7D%20%5C%7C%5E2%0A%20%20%5C%5C&amp;=%0A%20%20%5C%7C%20A_S%20x_S%20-%20y%5E%7B%7C%7C%7D%20%5C%7C%5E2%20+%20%5C%7C%20y%20%5C%7C%5E2%20-%20%5C%7C%20y%5E%7B%7C%7C%7D%20%5C%7C%5E2%20.%0A%5Cend%7Balign%7D"> Minimizing across <img src="https://latex.codecogs.com/png.latex?x_S">, the first term vanishes (since <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D"> is in <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(A_S)">, there is by definition an <img src="https://latex.codecogs.com/png.latex?x_S"> such that <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D%20=%20A_S%20x_S">).<br>
+Thus, an optimal <img src="https://latex.codecogs.com/png.latex?S"> maximizes <img src="https://latex.codecogs.com/png.latex?%5C%7C%20y%5E%7B%7C%7C%7D%20%5C%7C%5E2">.<br>
+Since <img src="https://latex.codecogs.com/png.latex?P_%7BA_S%7D"> is a projection matrix, it is symmetric and idempotent, so <img src="https://latex.codecogs.com/png.latex?%0A%5C%7C%20y%5E%7B%7C%7C%7D%20%5C%7C%5E2%20=%20%5C%7C%20P_%7BA_S%7D%20y%20%5C%7C%5E2%20=%20y%5EH%20P_%7BA_S%7D%5EH%20P_%7BA_S%7D%20y%20=%20y%5EH%20P_%7BA_S%7D%20y%0A"> which proves the first item.</p>
+<p>An optimal <img src="https://latex.codecogs.com/png.latex?x_S"> satisfies <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D%20=%20A_S%20x_S">.<br>
+As the projection of <img src="https://latex.codecogs.com/png.latex?y"> onto <img src="https://latex.codecogs.com/png.latex?%5Ctext%7BRange%7D(A_S)">, <img src="https://latex.codecogs.com/png.latex?y%5E%7B%7C%7C%7D"> is characterized by <img src="https://latex.codecogs.com/png.latex?A_S%20%5EH%20%5Cleft(y%20-%20y%5E%7B%7C%7C%7D%20%5Cright)%20=%200">.<br>
+Combining the two, we get the second item.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="greedy-algorithms" class="level2">
+<h2 class="anchored" data-anchor-id="greedy-algorithms">Greedy Algorithms</h2>
+<p>Exactly Solving the sparse approximation problem is NP-hard. It turns out there isn’t a significantly better way than brute force checking all <img src="https://latex.codecogs.com/png.latex?n%20%5Cchoose%20k"> possible supports. Thus we often turn to greedy algorithms<sup>2</sup>, which are faster but not guaranteed to find the optimal solution.</p>
+</section>
+<section id="matching-pursuit-mp" class="level1">
+<h1>Matching Pursuit (MP)</h1>
+<p>MP is a simple and popular algorithm for the sparse approximation problem. The algorithm is based on the following observation: When <img src="https://latex.codecogs.com/png.latex?k=1">, the problem is equivalent to finding the column of <img src="https://latex.codecogs.com/png.latex?A"> that is most correlated with <img src="https://latex.codecogs.com/png.latex?y">: <img src="https://latex.codecogs.com/png.latex?%5Cbegin%7Balign%7D%0Ay%5EH%20P_%7Ba_i%7D%20y%20&amp;=%20y%5EH%20a_i%20(a_i%5EH%20a_i)%5E%7B-1%7D%20a_i%5EH%20y%0A%5C%5C&amp;=%0A%5Cfrac%7B%7C%20a_i%5EH%20y%20%7C%5E2%7D%7B%5C%7C%20a_i%20%5C%7C%5E2%7D.%0A%5Cend%7Balign%7D"></p>
+<p>MP is a greedy iterative algorithm. We start with an empty support. At each iteration: 1. Greedily add the optimal column to the support. 2. Project <img src="https://latex.codecogs.com/png.latex?y"> onto the space orthogonal to the column (Or, equivalently, subtracts <img src="https://latex.codecogs.com/png.latex?a_i%20x_i"> from <img src="https://latex.codecogs.com/png.latex?y">, where <img src="https://latex.codecogs.com/png.latex?a_i"> is the selected column and <img src="https://latex.codecogs.com/png.latex?x_i"> is the coefficient that minimizes <img src="https://latex.codecogs.com/png.latex?%5C%7C%20a_i%20x_i%20-%20y%20%5C%7C%5E2">).</p>
+<!-- Note tht this is equivalent to subtracting the  of the selected column to $y$. -->
+<p><!-- and then project $y$ onto the the space orthogonal to that column.
+
+In python, the algorithm can be implemented as follows:
+```python
+def mp(A: np.ndarray, y: np.ndarray, K: int) -> set[int]:
+    S = set()
+    A = A / np.linalg.norm(A, axis=0) // normalize columns
+    while len(s) < k:
+        i = np.argmax(np.abs(A.H @ y))
+        S.add(i)
+        x_i = A[:, i].H @ y
+        y -= A[:, i] * x_i
+``` --></p>
+<section id="orthogonal-matching-pursuit-omp" class="level2">
+<h2 class="anchored" data-anchor-id="orthogonal-matching-pursuit-omp">Orthogonal Matching Pursuit (OMP)</h2>
+<p>OMP is a popular variant of MP. While in MP we project <img src="https://latex.codecogs.com/png.latex?y"> onto the space orthogonal to the selected column in the current iteration, in OMP we project <img src="https://latex.codecogs.com/png.latex?y"> onto the space orthogonal to all the selected columns so far.</p>
+<p>This is equivalent to subtracting from <img src="https://latex.codecogs.com/png.latex?y"> <img src="https://latex.codecogs.com/png.latex?A_S%20x_S">, where <img src="https://latex.codecogs.com/png.latex?S"> is the current support and <img src="https://latex.codecogs.com/png.latex?x_S"> minimizes <img src="https://latex.codecogs.com/png.latex?%5C%7C%20A_S%20x_S%20-%20y%20%5C%7C%5E2">.</p>
+</section>
+<section id="the-most-obvious-matching-pursuit-momp" class="level2">
+<h2 class="anchored" data-anchor-id="the-most-obvious-matching-pursuit-momp">The Most Obvious Matching Pursuit (MOMP)</h2>
+<p>Start with <img src="https://latex.codecogs.com/png.latex?S=%5Cemptyset">. At each iteration add the column <img src="https://latex.codecogs.com/png.latex?i"> that maximizes <img src="https://latex.codecogs.com/png.latex?y%5EH%20P_%7BA_%7BS%20%5Ccup%20%5Cleft%5C%7B%20i%20%5Cright%5C%7D%7D%7D%20y">. That’s it, there are no <img src="https://latex.codecogs.com/png.latex?y"> updates here.</p>
+<p>OMP tries to improve MP by optimizing the coefficients of all the selected columns at each iteration. However, this coefficient optimization happens only after the new column is added. During the selection of the new column, like MP, OMP still selects the optimal column assuming <img src="https://latex.codecogs.com/png.latex?k=1">, affectively optimizing only the coefficient of the selected column.</p>
+<p>In MOMP, we fix that, by simultaneously optimizing both the new column and the coefficients of all the selected columns. That is, we are affectively solving <img src="https://latex.codecogs.com/png.latex?%0A%5Cunderset%7BS,%20x_S%7D%7B%5Ctext%7Bminimize%7D%7D%0A%5C%7C%0A%20%20%20%20A_S%20x_S%20-%20y%0A%5C%7C%5E2%0A"> at each iteration, with the constraint that <img src="https://latex.codecogs.com/png.latex?S"> is the same as in the previous iteration, except for one additional column.</p>
+<p>The algorithms MP and OMP are well known and widely used. However, I have not seen the algorithm MOMP in the literature (I would be happy to be proven wrong), even though I really think it is the most obvious algorithm to try.</p>
+<p>A possible reason for this is is compuation complexity: at each iteration, MOMP requires solving a least squares problem for each candidate column, as opposed to OMP which requires solving it only for the new column.<br>
+There is however a way to utilize the solution of the previous iteration to speed up the computation (by using incremental Cholesky/QR factorizations). I plan to discuss this in a future post.</p>
+<!-- In OMP, we select the best column assuming $k=1$, but then select the coefficients optimally for the whole support.
+This algorithm can be seen as an improvemnt of OMP, since simulatenously optimiz
+Both MP and OMP update $y$ at each iteration.
+
+
+ that improves the solution by optimizing the coefficients of all the selected columns before subtracting their contribution from $y$.
+OMP improves MP by optimizing the coefficients of all the selected columns before subtracting their contribution from $y$.
+This subtraction is equivalent to projecting $y$ onto 
+
+
+MP can be seen as a greedy algorithm that iteratively adds to the support the column of $A$ tha
+Once the optimal column is found, can substract the subtract from $y$ its projection onto the column. 
+the projection of $y$ onto the column space of the selected column.
+
+\begin{align}
+{\text{\argmin}} \left\{ \| A x - y \|^2 \right\}
+
+\underset{|S| &= 1}{\text{\argmin}} \left\{ \| A x - y \|^2 \right\}
+\\&=
+\underset{|S| &= 1}{\text{\argmin}} \left\{ \| a_i x - y \|^2 \right\}
+\end{align} -->
+<!-- 
+# Matching Pursuit (MP)
+MP is a simple and popular algorithm for the sparse approximation problem.
+The algorithm is based on the following observation:
+When $k=1$, the problem is equivalent to finding the column of $A$ that is most correlated with $y$.
+\begin{align}
+\text{\min} \left\{ \| A x - y \|^2 \,|\, \text{supp}\left(x \right) \leq 1 \right\}
+&=
+\text{\min} \left\{ \| a_i x - y \|^2 \,|\, \text{supp}\left(x \right) \leq 1 \right\}
+\end{align} -->
+<!-- 
+1/2 x'Qx + c'x + d
+
+Qx + c = 0
+x = - inv(Q) c
+
+1/2 c' inv(Q) Q inv(Q) c - c' inv(Q) c + d
+
+- 1/2 c' inv(Q) c + d
+
+
+1/2 | Ax - y | ^2 = 1/2 (Ax - y)' (Ax - y) = 1/2 x' A' A x - y' A x + y' y / 2
+min = -1/2 (- y' A) inv(A' A) (-A' y) + y' y / 2
+    = 1/2 y' A inv(A' A) A' y + y' y / 2 -->
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>While these are standard results for least squares problems, I find that they are not always presented in a clear way. I like proving such results without using gradients (which obscure the intuition, in my opinion) and without inverting matrices (which adds unnecessary caveats about rank and conditioning).↩︎</p></li>
+<li id="fn2"><p>Convex relaxation (e.g.&nbsp;Basis Pursuit, LASSO) is another approach, but it is not the focus of this post.↩︎</p></li>
+</ol>
+</section></div> ]]></description>
+  <guid>https://tomshlomo.github.io/blog/posts/omp/wip.html</guid>
   <pubDate>Mon, 29 Jan 2024 22:00:00 GMT</pubDate>
 </item>
 <item>
