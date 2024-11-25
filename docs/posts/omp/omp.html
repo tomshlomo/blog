@@ -357,7 +357,8 @@ Why QR?
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="bu">len</span>(S) <span class="op">&lt;</span> k:</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        i <span class="op">=</span> <span class="bu">max</span>(<span class="bu">range</span>(n), key<span class="op">=</span><span class="kw">lambda</span> i: score_S(A, y, [i]))</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        S.add(i)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        y <span class="op">-=</span> project_y_onto_range_A_S(A, y, [i])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        y <span class="op">-=</span> project_y_onto_range_A_S(A, y, [i])</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> S</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="callout callout-style-default callout-note no-icon callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-3-contents" aria-controls="callout-3" aria-expanded="false" aria-label="Toggle callout">
@@ -380,11 +381,12 @@ x_i &amp;= a_i^H y,
 <div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mp(A: np.ndarray, y: np.ndarray, k: <span class="bu">int</span>) <span class="op">-&gt;</span> <span class="bu">set</span>[<span class="bu">int</span>]:</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    S <span class="op">=</span> <span class="bu">set</span>()</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> A <span class="op">/</span> np.linalg.norm(A, axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="bu">len</span>(s) <span class="op">&lt;</span> k:</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="bu">len</span>(S) <span class="op">&lt;</span> k:</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> A.H <span class="op">@</span> y</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        i <span class="op">=</span> np.argmax(np.<span class="bu">abs</span>(x))</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        S.add(i)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        y <span class="op">-=</span> A[:, i] <span class="op">*</span> x[i]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        y <span class="op">-=</span> A[:, i] <span class="op">*</span> x[i]</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> S</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -393,13 +395,14 @@ x_i &amp;= a_i^H y,
 <h2 class="anchored" data-anchor-id="orthogonal-matching-pursuit-omp">Orthogonal Matching Pursuit (OMP)</h2>
 <p>OMP is a popular variant of MP. While in MP we project <span class="math inline">\(y\)</span> onto the space orthogonal to the selected column in the current iteration, in OMP we project <span class="math inline">\(y\)</span> onto the space orthogonal to all the selected columns so far:</p>
 <div id="cell-11" class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mp(A: np.ndarray, y: np.ndarray, k: <span class="bu">int</span>) <span class="op">-&gt;</span> <span class="bu">set</span>[<span class="bu">int</span>]:</span>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> omp(A: np.ndarray, y: np.ndarray, k: <span class="bu">int</span>) <span class="op">-&gt;</span> <span class="bu">set</span>[<span class="bu">int</span>]:</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    S <span class="op">=</span> <span class="bu">set</span>()</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> A.shape[<span class="dv">1</span>]</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="bu">len</span>(S) <span class="op">&lt;</span> k:</span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        i <span class="op">=</span> <span class="bu">max</span>(<span class="bu">range</span>(n), key<span class="op">=</span><span class="kw">lambda</span> i: score_S(A, y, [i]))</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        S.add(i)</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        y <span class="op">-=</span> project_y_onto_range_A_S(A, y, <span class="bu">list</span>(S))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        y <span class="op">-=</span> project_y_onto_range_A_S(A, y, <span class="bu">list</span>(S))</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> S</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="callout callout-style-default callout-note no-icon callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
