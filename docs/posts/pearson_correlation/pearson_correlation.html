@@ -38,10 +38,10 @@ ul.task-list li input[type="checkbox"] {
 <script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
 <link href="../../site_libs/quarto-contrib/academicons-1.9.2/all.css" rel="stylesheet">
 <link href="../../site_libs/quarto-contrib/academicons-1.9.2/size.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -197,16 +197,17 @@ window.Quarto = {
 \renewcommand{\E}[1]{\operatorname{E}\left[#1\right]}
 \renewcommand{\var}[1]{\operatorname{Var} \left[#1 \right]}
 \renewcommand{\cov}[1]{\operatorname{Cov} \left[#1 \right] }
-\]</span> My goal is to explain the Pearson correlation coefficient without using the word correlation, which is often used to describe it.<br>
-The Pearson correlation coefficient of two random variables <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> is <span class="math display">\[
+\]</span></p>
+<p>My goal is to explain the Pearson correlation coefficient without using the word “correlation,” which is often used to describe it.</p>
+<p>The Pearson correlation coefficient of two random variables <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> is <span class="math display">\[
 \rho := \frac{\sigma_{XY}}{\sigma_X \sigma_Y},
-\]</span> where <span class="math inline">\(\sigma_X\)</span> and <span class="math inline">\(\sigma_Y\)</span> are the standard deviation of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> respectively, and <span class="math inline">\(\sigma_{XY}\)</span> is their covariance.</p>
-<p>A motivation for the definition <span class="math inline">\(\rho\)</span> comes from the problem of estimating <span class="math inline">\(Y\)</span> from an observation of <span class="math inline">\(X\)</span>. It turns out that in the optimal (lowest MSE) linear estimation, <em>the number of standard deviations <span class="math inline">\(Y\)</span> is above it’s mean is <span class="math inline">\(\rho\)</span> times the number of standard deviations <span class="math inline">\(X\)</span> is above it’s mean.</em><br>
-For example, consider a population of people where height and weight are correlated with <span class="math inline">\(\rho=0.72\)</span>, heights are distributed with mean <span class="math inline">\(170\)</span>cm and a standard deviation of <span class="math inline">\(10\)</span>cm, weights are distributed with mean <span class="math inline">\(70\)</span>Kg and a standard deviation of <span class="math inline">\(20\)</span>Kg. If we know that the height of a certain person is <span class="math inline">\(190\)</span>cm, a good guess for it’s weight is <span class="math inline">\(70 + 2 \cdot 0.72 \cdot 20 = 98.8\)</span>Kg.</p>
-<p>The proof is very simple. Since we are dealing with linear (actually, affine) estimators, we need to show that the <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> that would minimize <span class="math display">\[
+\]</span> where <span class="math inline">\(\sigma_X\)</span> and <span class="math inline">\(\sigma_Y\)</span> are the standard deviations of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> respectively, and <span class="math inline">\(\sigma_{XY}\)</span> is their covariance.</p>
+<p>A motivation for this definition stems from the problem of estimating <span class="math inline">\(Y\)</span> from an observation of <span class="math inline">\(X\)</span>. It turns out that in the optimal (lowest MSE) linear estimation, <em>the number of standard deviations <span class="math inline">\(Y\)</span> is above its mean is <span class="math inline">\(\rho\)</span> times the number of standard deviations <span class="math inline">\(X\)</span> is above its mean.</em></p>
+<p>For example, consider a population where height and weight are correlated with <span class="math inline">\(\rho=0.72\)</span>, heights are distributed with a mean of <span class="math inline">\(170\)</span>cm and a standard deviation of <span class="math inline">\(10\)</span>cm, weights are distributed with a mean of <span class="math inline">\(70\)</span>Kg and a standard deviation of <span class="math inline">\(20\)</span>Kg. If we know that a certain person’s height is <span class="math inline">\(190\)</span>cm, a good estimate for their weight would be <span class="math inline">\(70 + 2 \cdot 0.72 \cdot 20 = 98.8\)</span>Kg.</p>
+<p>The proof is straightforward. Since we are dealing with linear (actually, affine) estimators, we need to show that the <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> that would minimize <span class="math display">\[
 \text{MSE} := \E{ \left( \hat{Y} - Y \right) ^2},
-\]</span> where <span class="math inline">\(\hat{Y} := a (X - \mu_x) + b\)</span>, are <span class="math inline">\(\rho \sigma_Y / \sigma_X\)</span> and <span class="math inline">\(\mu_Y\)</span>.<br>
-The MSE is the sum of bias squared and variance. The variance doesn’t depend on <span class="math inline">\(b\)</span>, and the bias is <span class="math inline">\(\E{  \hat{Y} - Y } = b - \mu_Y\)</span> which doesn’t depend on <span class="math inline">\(a\)</span>, so <span class="math inline">\(b=\mu_Y\)</span>. To minimize the variance, we simplify: <span class="math display">\[
+\]</span> where <span class="math inline">\(\hat{Y} := a (X - \mu_x) + b\)</span>, are <span class="math inline">\(\rho \sigma_Y / \sigma_X\)</span> and <span class="math inline">\(\mu_Y\)</span>.</p>
+<p>The MSE is the sum of the square of the bias and the variance. The variance doesn’t depend on <span class="math inline">\(b\)</span>, and the bias is <span class="math inline">\(\E{  \hat{Y} - Y } = b - \mu_Y\)</span> which doesn’t depend on <span class="math inline">\(a\)</span>, so <span class="math inline">\(b=\mu_Y\)</span>. To minimize the variance, we simplify: <span class="math display">\[
 \begin{align*}
 \var{\hat{Y} - Y}
 &amp;= \var{\hat{Y}} + \var{Y} - 2 \cov{\hat{Y}, Y}
@@ -214,75 +215,74 @@ The MSE is the sum of bias squared and variance. The variance doesn’t depend o
    + \sigma_Y ^2
    -2  \sigma_{XY} a.
 \end{align*}
-\]</span> This is just a parabola in <span class="math inline">\(a\)</span>, so the optimal <span class="math inline">\(a\)</span> is <span class="math display">\[
+\]</span> This is simply a parabola in <span class="math inline">\(a\)</span>, so the optimal <span class="math inline">\(a\)</span> is <span class="math display">\[
 a=\frac{2 \sigma_{XY}} {2 \sigma_X ^2}
 =
 \rho \frac{\sigma_Y } {\sigma_X }
 \]</span> (which is what we wanted to show).</p>
-<p>The estimator is unbiased, so it’s MSE is equal to it’s variance: <span class="math display">\[
+<p>The estimator is unbiased, so its MSE is equal to its variance: <span class="math display">\[
 \text{MSE} = \sigma_Y ^2 (1 - \rho ^ 2).
-\]</span> This equation gives another concrete interpretation of <span class="math inline">\(\rho\)</span>: <em>If <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are correlated with coefficient <span class="math inline">\(\rho\)</span>, observing <span class="math inline">\(X\)</span> will decrease the standard deviation of a <span class="math inline">\(Y\)</span> estimate by a factor of at least <span class="math inline">\(\sqrt{1 - \rho^2}\)</span>.</em><br>
-“at least” since the the optimal linear estimator is equal or worse than the optimal estimator.<br>
-In the example above, knowing the height decreases weight estimation standard deviation from 20Kg to <span class="math inline">\(20  (1 - 0.72^2) = 9.6\)</span>Kg.</p>
+\]</span> This equation provides another concrete interpretation of <span class="math inline">\(\rho\)</span>: *If <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are correlated with coefficient <span class="math inline">\(\rho\)</span>, observing <span class="math inline">\(X\)</span> will decrease the standard deviation of a <span class="math inline">\(Y\)</span> estimate by a factor of at least <span class="math inline">\(\sqrt{1 - \rho^2}\)</span> (“At least” since the optimal linear estimator is equal to or worse than the optimal estimator). In the example above, knowing the height decreases weight estimation standard deviation from 20Kg to <span class="math inline">\(20  \sqrt{1 - 0.72^2} = 13.9\)</span>Kg.</p>
 <p>Randomly ordered notes:</p>
 <ol type="1">
 <li><p>If <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are jointly Gaussian, the optimal linear estimator is also the optimal estimator.</p></li>
-<li><p>The “mean” in “MSE” is an average over the joint distribution of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, which is different than over the distribution of <span class="math inline">\(Y\)</span> given <span class="math inline">\(X\)</span>, for which our estimator is not the optimal linear estimator (and biased).<br>
-In our example, we estimated the weight to be <span class="math inline">\(98.8\)</span>Kg with variance <span class="math inline">\(9.6^2\)</span>. It doesn’t mean that if we will sample random people with height <span class="math inline">\(190\)</span>cm, we would get a mean weight of <span class="math inline">\(98.8\)</span>Kg and variance smaller than <span class="math inline">\(9.6^2\)</span>. It means that if we sample random people, and estimate their weight from their height using the optimal linear estimator, our error will be zero on average, and with variance <span class="math inline">\(9.6^2\)</span>. If we use the optimal estimator, the <span class="math inline">\(9.6^2\)</span> is an upper bound on the variance.</p></li>
-<li><p>The sentence “<span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are not correlated” now has a concrete meaning: it means that the optimal linear estimator of <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> will be the mean of <span class="math inline">\(Y\)</span>, ignoring <span class="math inline">\(X\)</span> completely.</p></li>
-<li><p>The discussion above is “Bayesian”, in the sense that it assumes you have some knowledge about the distribution of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. In practice we usually get <span class="math inline">\(n\)</span> samples of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> pairs, and we use plug-in estimators to estimate the means, variances, and covariance, which we will then use build our <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> linear estimator.<br>
-Machine learning people would say: we can use the samples to train a linear regression model to predict <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> directly. Sounds better, more “end-to-end”y, but actually it gives exactly the same result<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. Proof:<br>
-We denote by <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> be the vectors of samples of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, by <span class="math inline">\(\mathbf{1}\)</span> a vector of ones, and by <span class="math inline">\(A\)</span> the matrix whose first column is <span class="math inline">\(x\)</span> and the second column is <span class="math inline">\(\mathbf{1}\)</span>. The coefficients of the linear model are given by: <span class="math display">\[
+<li><p>The “mean” in “MSE” represents an average over the joint distribution of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, which differs from the distribution of <span class="math inline">\(Y\)</span> given <span class="math inline">\(X\)</span>, for which our estimator is not the optimal linear estimator (and is biased).</p>
+<p>In our example, we estimated the weight to be <span class="math inline">\(98.8\)</span>Kg with variance <span class="math inline">\(9.6^2\)</span>. This doesn’t mean that if we sample random people with a height of <span class="math inline">\(190\)</span>cm, we would get a mean weight of <span class="math inline">\(98.8\)</span>Kg and variance smaller than <span class="math inline">\(9.6^2\)</span>. Instead, it means that if we sample random people and estimate their weight from their height using the optimal linear estimator, our error will be zero on average, with a variance of <span class="math inline">\(9.6^2\)</span>. If we use the optimal estimator, <span class="math inline">\(9.6^2\)</span> is an upper bound on the variance.</p></li>
+<li><p>The statement “<span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> are not correlated” now has a concrete meaning: it means the optimal linear estimator of <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> will be the mean of <span class="math inline">\(Y\)</span>, completely ignoring <span class="math inline">\(X\)</span>.</p></li>
+<li><p>The discussion above is “Bayesian” in the sense that it assumes prior knowledge about the distribution of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. In practice, we typically obtain <span class="math inline">\(n\)</span> samples of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> pairs and use plug-in estimators to estimate the means, variances, and covariance, which we then use to construct a linear estimator of <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span>.</p>
+<p>Machine learning practitioners would say: we can use the samples to train a linear regression model to predict <span class="math inline">\(Y\)</span> from <span class="math inline">\(X\)</span> directly. This sounds more “end-to-end,” but it actually yields exactly the same result<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
+<p>Proof:<br>
+Let <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> denote the vectors of samples of <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>, <span class="math inline">\(\mathbf{1}\)</span> a vector of ones, and <span class="math inline">\(A\)</span> as the matrix whose first column is <span class="math inline">\(x\)</span> and the second column is <span class="math inline">\(\mathbf{1}\)</span>. The coefficients of the linear model are given by: <span class="math display">\[
 \begin{align*}
-\begin{bmatrix}
-     \theta_{\text{slope}} \\
-     \theta_{\text{intercept}}
-\end{bmatrix}
-&amp;:=
-\text{argmin}_\theta \| A \theta - y \|^2
-\\&amp;=
-\left( A ^T A \right)^{-1} A^T y
-\\&amp;=
-\begin{bmatrix}
-     \|x\|^2 &amp;&amp; \mathbf{1}^Tx \\
-     \mathbf{1}^T x  &amp;&amp; \mathbf{1}^T \mathbf{1}
-\end{bmatrix}
-^{-1}
-\begin{bmatrix}
-     x^T y \\
-     \mathbf{1} ^T y
-\end{bmatrix}
-\\&amp;=
-\begin{bmatrix}
-     \sigma_X^2 + \mu_X^2 &amp;&amp; \mu_X \\
-     \mu_X  &amp;&amp; 1
-\end{bmatrix}
-^{-1}
-\begin{bmatrix}
-     \sigma_{XY} + \mu_X \mu_Y \\
-     \mu_Y
-\end{bmatrix}
-\\&amp;=
-\frac{1}{\sigma_X ^2}
-\begin{bmatrix}
-     1 &amp;&amp; -\mu_X \\
-     -\mu_X  &amp;&amp; \sigma_X^2 + \mu_X^2
-\end{bmatrix}
-\begin{bmatrix}
-     \sigma_{XY} + \mu_X \mu_Y \\
-     \mu_Y
-\end{bmatrix}
-\\&amp;=
-\frac{1}{\sigma_X ^2}
-\begin{bmatrix}
-     \sigma_{XY} \\
-     -\mu_X \sigma_{XY} + \sigma_X^2 \mu_Y
-\end{bmatrix}
-\\&amp;=
-\begin{bmatrix}
-     a \\
-     -\mu_X a + b
-\end{bmatrix}.
+    \begin{bmatrix}
+        \theta_{\text{slope}} \\
+        \theta_{\text{intercept}}
+    \end{bmatrix}
+    &amp;:=
+    \text{argmin}_\theta \| A \theta - y \|^2
+    \\&amp;=
+    \left( A ^T A \right)^{-1} A^T y
+    \\&amp;=
+    \begin{bmatrix}
+        \|x\|^2 &amp;&amp; \mathbf{1}^Tx \\
+        \mathbf{1}^T x  &amp;&amp; \mathbf{1}^T \mathbf{1}
+    \end{bmatrix}
+    ^{-1}
+    \begin{bmatrix}
+        x^T y \\
+        \mathbf{1} ^T y
+    \end{bmatrix}
+    \\&amp;=
+    \begin{bmatrix}
+        \sigma_X^2 + \mu_X^2 &amp;&amp; \mu_X \\
+        \mu_X  &amp;&amp; 1
+    \end{bmatrix}
+    ^{-1}
+    \begin{bmatrix}
+        \sigma_{XY} + \mu_X \mu_Y \\
+        \mu_Y
+    \end{bmatrix}
+    \\&amp;=
+    \frac{1}{\sigma_X ^2}
+    \begin{bmatrix}
+        1 &amp;&amp; -\mu_X \\
+        -\mu_X  &amp;&amp; \sigma_X^2 + \mu_X^2
+    \end{bmatrix}
+    \begin{bmatrix}
+        \sigma_{XY} + \mu_X \mu_Y \\
+        \mu_Y
+    \end{bmatrix}
+    \\&amp;=
+    \frac{1}{\sigma_X ^2}
+    \begin{bmatrix}
+        \sigma_{XY} \\
+        -\mu_X \sigma_{XY} + \sigma_X^2 \mu_Y
+    \end{bmatrix}
+    \\&amp;=
+    \begin{bmatrix}
+        a \\
+        -\mu_X a + b
+    \end{bmatrix}.
 \end{align*}
 \]</span> Note also that the r2-score of this fit is equal to <span class="math inline">\(\rho^2\)</span>: <span class="math display">\[
 r^2 := 1 - \frac{\text{MSE}}{\sigma_Y^2} = 1 - \frac{\sigma_Y ^2 \left(1-\rho^2\right)}{\sigma_Y ^2} = \rho^2.
