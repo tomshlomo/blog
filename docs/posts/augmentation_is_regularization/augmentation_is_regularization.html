@@ -233,6 +233,7 @@ window.Quarto = {
   <li><a href="#ridge-regression" id="toc-ridge-regression" class="nav-link" data-scroll-target="#ridge-regression">Ridge regression</a></li>
   <li><a href="#example" id="toc-example" class="nav-link" data-scroll-target="#example">Example</a></li>
   <li><a href="#beyond-least-squares" id="toc-beyond-least-squares" class="nav-link" data-scroll-target="#beyond-least-squares">Beyond least squares</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
 </nav>
     </div>
@@ -287,7 +288,7 @@ To fit an OLS model, we find a vector of coefficients <span class="math inline">
             \right)^T\theta
         \right) ^2
     \right]
-\end{align*}\]</span> Note that the first term $ ( _i^T - y_i ) $ is deterministic, while the second term $ ( a(x_i, p_i) - _i )^T $ has zero mean. Therefore <span class="math display">\[\begin{align*}
+\end{align*}\]</span> Note that the first term <span class="math inline">\(\mu_i^T \theta - y_i\)</span> is deterministic, while the second term <span class="math inline">\(\left(a\left(x_i, p_i\right) - \mu_i\right)^T\theta\)</span> has zero mean. Therefore <span class="math display">\[\begin{align*}
     \theta_\text{ALS} &amp;= \text{argmin} _\theta
     \sum_{i=0} ^{n-1}
         \left(
@@ -305,25 +306,25 @@ To fit an OLS model, we find a vector of coefficients <span class="math inline">
     \tag{3}
 \end{align*}\]</span> where <span class="math inline">\(M\)</span> is the <span class="math inline">\(n\)</span>-by-<span class="math inline">\(d\)</span> matrix whose rows are <span class="math inline">\(\mu_0^T, \dots, \mu_{n-1}^T\)</span>, and <span class="math display">\[
 R := \sum_{i=0} ^{n-1} R_i.
-\]</span> Equation (3) shows exactly what we set to prove - fitting a model on augmented training dataset, is equivalent to fitting a non-augmented, but quadratically regularized, least squares model. We just replace <span class="math inline">\(X\)</span> with it’s mean, and use the sum of all covariances as the regularization matrix.</p>
+\]</span> Equation (3) shows exactly what we set to prove - fitting a model on an augmented training dataset is equivalent to fitting a non-augmented, but quadratically regularized, least squares model. We just replace <span class="math inline">\(X\)</span> with it’s mean, and use the sum of all the covariances as the regularization matrix.</p>
 <p>To solve the optimization problem (3), we solve the equation <span class="math inline">\((X^T X + R) \theta_\text{ALS} = X^T y\)</span>, which has the same <span class="math inline">\(O(n d^2)\)</span> complexity as OLS.</p>
 </section>
 <section id="ridge-regression" class="level2">
 <h2 class="anchored" data-anchor-id="ridge-regression">Ridge regression</h2>
 <p>Ride regression (aka Tykhonov regularization) has the form (3) with <span class="math inline">\(M=X\)</span> and <span class="math inline">\(R=\lambda I\)</span>. As an augmentation, it can be interpreted as follows: perturb each feature vector by a zero mean noise, with variance <span class="math inline">\(\lambda/n\)</span>, uncorrelated across features.<br>
 This interpretation of <span class="math inline">\(\lambda\)</span> can be used to set it (at least roughly): just think what level of perturbation <span class="math inline">\(\sigma\)</span> is reasonable for your features, and set <span class="math inline">\(\lambda = n \sigma^2\)</span>.<br>
-This also shows that when different feature are scaled differently, ridge regression is perhaps not the best fit. A standard deviation of 100 might be reasonable for a feature with values in the order of millions, but it is probably not suitable for a feature with values in the order of 1. In these cases, we may use a diagonal <span class="math inline">\(R\)</span>: <span class="math display">\[\begin{align*}
+This also shows that when different features are scaled differently, ridge regression is perhaps not the suitable. A standard deviation of 100 might be reasonable for perturbing a feature with values in the order of millions, but it is probably not suitable for a feature with values in the order of 1. In these cases, we may use a diagonal <span class="math inline">\(R\)</span>: <span class="math display">\[\begin{align*}
     R= n \, \text{diag} \left(
         \sigma_0^2, \dots, \sigma_{d-1}^2
     \right)
 \end{align*}\]</span> where <span class="math inline">\(\sigma_i\)</span> is the standard deviation of the perturbation of feature <span class="math inline">\(i\)</span>.</p>
-<p>Another option is to scale the transformations before fit, e.g using sklearn’s <code>StandardScaler</code>. With all features scaled to have unit variance, setting <span class="math inline">\(\lambda = n \, 10 ^{-6}\)</span> is a sensible rule of thumb, as it is often reasonable to assume a <span class="math inline">\(0.1\%\)</span> perturbation.</p>
+<p>Another option is to scale the features before fitting, e.g using sklearn’s <code>StandardScaler</code> transformer. With all features scaled to have unit variance, setting <span class="math inline">\(\lambda = n \, 10 ^{-6}\)</span> is sensible as rule of thumb, as it is often reasonable to assume at least <span class="math inline">\(0.1\%\)</span> perturbation.</p>
 <p>Note that often the model includes an intercept (aka constant) term by adding a column of ones to <span class="math inline">\(X\)</span>. Since this column remain unchanged through any augmenting transformation, the corresponding row and column of <span class="math inline">\(R\)</span> should be all zeros.</p>
 </section>
 <section id="example" class="level2">
 <h2 class="anchored" data-anchor-id="example">Example</h2>
-<p>For the example we are gonna use the <a href="https://www.kaggle.com/datasets/harlfoxem/housesalesprediction/data">House Sales in King County, USA dataset</a>. Each row describes a house, sold between May 2014 and May 2015. Our goal will be to predict the log price given features like number of rooms, area, and geography.</p>
-<p>Note: several decisions outlined below weren’t necessarily the most effective,;, rather, they were chosen to showcase different modelling techniques in the context of augmentation via regularization.</p>
+<p>For the example we are gonna use the <a href="https://www.kaggle.com/datasets/harlfoxem/housesalesprediction/data">House Sales in King County, USA dataset</a>. Each row describes a house sold between May 2014 and May 2015. Our goal will be to predict the log price given features like number of rooms, area, and location.</p>
+<p>Note: several decisions outlined below weren’t necessarily the most effective; rather, they were chosen to showcase different modelling techniques in the context of augmentation via regularization.</p>
 <p>Let’s begin by importing everything we will need, loading our data, and adding some columns.</p>
 <div id="cell-7" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Callable, Hashable, Self</span>
@@ -722,8 +723,8 @@ One way to model this is to cluster the data geographically, and tag each house 
 <p>That didn’t really help. That makes sense since using a diagonal regularization matrix doesn’t make sense for our correlated features.<br>
 Let’s see if we can do better by using augmentations that are more appropriate for our data.</p>
 <p>First let’s build a class for linear models with augmentation via regularization.<br>
-We will pass to the constructor a callable that takes the input features and returns their mean and (sum of) covariance after the augmentation, since as we shown above these are all we need from the augmentations.<br>
-Since often the transformations of different features are uncorrelated, it is convenient to specify features in groups, and assume zero covariance for features that are not in the same group (i.e a block diagonal covariance matrix).</p>
+We will pass to the constructor a callable that takes the input features and returns their mean and (sum of) covariance after the augmentation, since as we showed above these are all we need from the augmentations.<br>
+Since often the transformations of different features are uncorrelated, it is convenient to specify features in groups, and assume zero covariance for features that are not in the same group (i.e.&nbsp;a block diagonal covariance matrix).</p>
 <div id="cell-21" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> AugmentedLinearModel:</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(</span>
@@ -754,8 +755,8 @@ Since often the transformations of different features are uncorrelated, it is co
 <span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>        cols <span class="op">=</span> [col <span class="cf">for</span> cols, _ <span class="kw">in</span> <span class="va">self</span>.augmentation_moments <span class="cf">for</span> col <span class="kw">in</span> cols]</span>
 <span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> X.loc[:, cols] <span class="op">@</span> <span class="va">self</span>.theta_</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Here are the augmentations we are gonna use:<br>
-With 10% probability, a bathroom is counted as half a bedroom.</p>
+<p>Now we will use this class to fit a model, but with a more appropriate regularization.</p>
+<p>For the bathrooms and bedrooms features, we set a 10% probability that a bathroom is counted as half a bedroom.</p>
 <div id="cell-23" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bedrooms_bathrooms_moments(X: pd.DataFrame) <span class="op">-&gt;</span> <span class="bu">tuple</span>[Array, Array]:</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> <span class="fl">0.1</span></span>
@@ -768,7 +769,7 @@ With 10% probability, a bathroom is counted as half a bedroom.</p>
 <span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>augmentation_moments <span class="op">=</span> [([<span class="st">"bedrooms"</span>, <span class="st">"bathrooms"</span>], bedrooms_bathrooms_moments)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>A 5% perturbation for the features<br>
+<p>Next we set a 5% perturbation for the features<br>
 <code>sqft_living, sqft_lot, sqft_above, sqft_basement, sqft_lot15, sqft_living15</code>, uncorrelated across the features.</p>
 <div id="cell-25" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> relative_perturbation_moments(X: pd.DataFrame) <span class="op">-&gt;</span> <span class="bu">tuple</span>[Array, Array]:</span>
@@ -787,7 +788,7 @@ With 10% probability, a bathroom is counted as half a bedroom.</p>
 <span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    ]</span>
 <span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>A perturbation of 0.01 for the features <code>floors, waterfront, view, condition, grade</code>, uncorrelated across the features</p>
+<p>Next, we set a perturbation of 0.01 for the features <code>floors, waterfront, view, condition, grade</code>, uncorrelated across the features.</p>
 <div id="cell-27" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> absolute_perturbation_moments(X: pd.DataFrame) <span class="op">-&gt;</span> <span class="bu">tuple</span>[Array, Array]:</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> X.values, X.shape[<span class="dv">0</span>] <span class="op">*</span> <span class="fl">0.01</span><span class="op">**</span><span class="dv">2</span></span>
@@ -798,7 +799,7 @@ With 10% probability, a bathroom is counted as half a bedroom.</p>
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> column <span class="kw">in</span> [<span class="st">"floors"</span>, <span class="st">"waterfront"</span>, <span class="st">"view"</span>, <span class="st">"condition"</span>, <span class="st">"grade"</span>]</span>
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>perturbing <code>age</code> with a uniform distribution between -1 and 1. We need to calculate the moments for the power of age accordingly.</p>
+<p>Next, we perturb <code>age</code> with a uniform distribution between -1 and 1. We need to calculate the moments for the different powers of age accordingly.</p>
 <div id="cell-29" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> age_moments(X: pd.DataFrame) <span class="op">-&gt;</span> <span class="bu">tuple</span>[Array, Array]:</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> X[[<span class="st">"age"</span>]].values <span class="op">-</span> <span class="dv">1</span></span>
@@ -844,7 +845,7 @@ With 10% probability, a bathroom is counted as half a bedroom.</p>
 </section>
 <section id="beyond-least-squares" class="level2">
 <h2 class="anchored" data-anchor-id="beyond-least-squares">Beyond least squares</h2>
-<p>Is it possible to extend the result to models that use a non-quadratic loss (e.g logistic regression)? Well the proof heavily relies on that, so probably not, but let’s if we can at least can an approximate result using a 2nd order taylor approximation for the loss.</p>
+<p>In this section we will extend the result to models that use a non-quadratic loss (e.g.&nbsp;logistic regression). The proof above doesn’t work for non-quadratic losses, but we can get an approximate result using a 2nd order taylor approximation for the loss.</p>
 <p>The goal is to (approximately) express <span class="math display">\[\begin{align*}
     \mathrm{E}  
     \left[
@@ -852,24 +853,62 @@ With 10% probability, a bathroom is counted as half a bedroom.</p>
     a\left(x_i, p_i\right) ^T \theta \,;\, y_i
     \right)
     \right],
-\end{align*}\]</span> as a sum of a non-augmented loss term, and a regularization term. Here, <span class="math inline">\(l(\hat{y}\,;\,y)\)</span> measures how bad is the prediction <span class="math inline">\(\hat{y}\)</span>, given the true value <span class="math inline">\(y\)</span> (the loss).<br>
+\end{align*}\]</span> as a sum of a non-augmented loss term, and a regularization term. Here, <span class="math inline">\(l(\hat{y}_i\,;\,y_i)\)</span> is the loss function that measures how bad is the prediction <span class="math inline">\(\hat{y}_i\)</span>, given the true <span class="math inline">\(y_i\)</span>.<br>
 For example, for logistic regression we use the logistic loss <span class="math display">\[
 l(\hat{y}; y) = \log \left( 1 + \exp \left(-y \, \hat{y} \right) \right)
 \]</span> (with <span class="math inline">\(y \in \{ -1, 1 \}\)</span>).<br>
-Let’s expand <span class="math inline">\(l \left(
-a\left(x_i, p_i\right) ^T \theta\,;\,y_i
-\right)\)</span> around <span class="math inline">\(\mu_i ^T \theta\)</span> and simplify: <span class="math display">\[\begin{align*}
-\mathrm{E}  
-\left[
-\sum_{i=0} ^{n-1} l \left(
-a\left(x_i, p_i\right) ^T \theta \,;\, y_i
-\right)
+</p>
+<p>First, we expand each loss term around <span class="math inline">\(\mu_i ^T \theta\)</span>: <span class="math display">\[\begin{align*}
+l(\hat{y}_i; y_i) \approx
+l(\mu_i ^T \theta\,;\,y_i)
++ l'(\mu_i ^T \theta\,;\,y_i) \left( \hat{y}_i - \mu_i ^T \theta \right)
++ \frac{1}{2} l''('mu_i^T \theta\,;\,y_i) \left( \hat{y}_i - \mu_i ^T \theta \right)^2
+\end{align*}\]</span> (The derivatives here are with respect to the first argument of <span class="math inline">\(l\)</span>).</p>
+<p>Substitute this into the expectation, we get: <span class="math display">\[\begin{align*}
+\mathrm{E}  \left[
+    \sum_{i=0} ^{n-1}
+        l \left(
+            a\left(x_i, p_i\right) ^T \theta \,;\, y_i
+        \right)
 \right]
-\approx
-\sum_{i=0} ^{n-1} l(\mu_i ^T \theta\,;\,y_i) + \frac{1}{2}  l'' \left( \mu_i ^T \theta\,;\,y_i \right) \theta^T R \theta
-\end{align*}\]</span> (the order-1 term vanishes as it has zero mean, similar to <a href="https://en.wikipedia.org/wiki/Delta_method#">the delta method</a>).<br>
-So like in the least squares case, in the loss term we just replace each <span class="math inline">\(x\)</span> with it’s mean. But, the regularization term is not quadratic, since we have the second derivative factor which is not constant (unless the loss is quadratic…).</p>
-<p>I use this result to tell myself that it is ok to select an <span class="math inline">\(R\)</span> for a quadratic regularization based on the covariance of an augmentation, as long as the covariance is small (usually correct for augmentations), and <span class="math inline">\(l''\)</span> is bounded (correct for logistic regression).</p>
+&amp;\approx
+\mathrm{E}  \left[
+    \sum_{i=0} ^{n-1}
+        l(\mu_i ^T \theta\,;\,y_i)
+        + l'(\mu_i ^T \theta\,;\,y_i) \left(
+             a\left(x_i, p_i\right) ^T \theta - \mu_i ^T \theta
+        \right)
+        + \frac{1}{2} l''(\mu_i^T \theta\,;\,y_i) \left(
+            a \left(x_i, p_i \right) ^T \theta
+            - \mu_i ^T \theta
+        \right)^2
+\right]
+\\&amp;=
+\sum_{i=0} ^{n-1}
+    l(\mu_i ^T \theta\,;\,y_i)
+    + l'(\mu_i ^T \theta\,;\,y_i) \mathrm{E}\left[
+        a\left(x_i, p_i\right)
+        - \mu_i
+    \right] ^T \theta
+    + \frac{1}{2} l''(\mu_i^T \theta\,;\,y_i) \mathrm{E} \left[
+        \left(
+            \left(
+                a\left(x_i, p_i\right)
+                - \mu_i
+            \right) ^T \theta
+        \right)^2
+    \right]
+\\&amp;=
+\sum_{i=0} ^{n-1}
+    l(\mu_i ^T \theta\,;\,y_i)
+    + \frac{1}{2} l''(\mu_i^T \theta\,;\,y_i)
+      \theta^T R_i \theta
+\end{align*}\]</span> So like in the least squares case, in the loss term we just replace each <span class="math inline">\(x_i\)</span> with it’s mean. But, the regularization term is not quadratic, since we have the second derivative factor which is not constant (unless the loss is quadratic).</p>
+<p>I use this result to tell myself that it is reasonable to design a quadratic regularizer based on augmentation covariances, even for non-least squares models, as long as the covariances are small, and <span class="math inline">\(l''\)</span> is bounded (like in logistic regression).</p>
+</section>
+<section id="references" class="level1">
+<h1>References</h1>
+<p>I actually don’t know of any reference that discusses this connection between augmentation and regularization, although I’m sure it’s out there. Let me know if you know of one!</p>
 
 
 </section>

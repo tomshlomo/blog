@@ -6,8 +6,11 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Tom Shlomo">
+<meta name="dcterms.date" content="2024-01-15">
+<meta name="description" content="On the equivalence of training data augmentation and quadratic regularization for linear models - a very useful (but not well known) result.">
 
-<title>Tom Shlomo’s Blog - All posts</title>
+<title>Tom Shlomo’s Blog - Augmentation is Regularization</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,26 +26,24 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-listing/list.min.js"></script>
-<script src="site_libs/quarto-listing/quarto-listing.js"></script>
-<script src="site_libs/quarto-html/quarto.js"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/quarto-contrib/academicons-1.9.2/all.css" rel="stylesheet">
-<link href="site_libs/quarto-contrib/academicons-1.9.2/size.css" rel="stylesheet">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/quarto-contrib/academicons-1.9.2/all.css" rel="stylesheet">
+<link href="../../site_libs/quarto-contrib/academicons-1.9.2/size.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -70,35 +71,6 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script>
-
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: ['listing-date','listing-title','listing-author','listing-image','listing-description',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
-      
-      searchColumns: ["listing-date","listing-title","listing-author","listing-image","listing-description"],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -130,8 +102,8 @@ window.Quarto = {
 };
 </script>
 
-<link rel="stylesheet" href="styles.css">
-<link rel="alternate" type="application/rss+xml" title="Tom Shlomo's Blog" href="index.xml" data-external="1"></head>
+<link rel="stylesheet" href="../../styles.css">
+</head>
 
 <body class="nav-fixed">
 
@@ -140,7 +112,7 @@ window.Quarto = {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="../../index.html">
     <span class="navbar-title">Tom Shlomo’s Blog</span>
     </a>
   </div>
@@ -165,7 +137,7 @@ window.Quarto = {
 <span class="menu-text"><i class="ai  ai-google-scholar ai-Large"></i></span></a>
   </li>  
   <li class="nav-item compact">
-    <a class="nav-link" href="./index.xml"> <i class="bi bi-rss" role="img">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img">
 </i> 
 <span class="menu-text"></span></a>
   </li>  
@@ -179,210 +151,140 @@ window.Quarto = {
 <!-- content -->
 <header id="title-block-header" class="quarto-title-block default page-columns page-full">
   <div class="quarto-title-banner page-columns page-full">
-    <div class="quarto-title column-page">
-      <h1 class="title">All posts</h1>
-                      </div>
+    <div class="quarto-title column-body">
+      <h1 class="title">Augmentation is Regularization</h1>
+                  <div>
+        <div class="description">
+          On the equivalence of training data augmentation and quadratic regularization for linear models - a very useful (but not well known) result.
+        </div>
+      </div>
+                </div>
   </div>
     
   
-  <div class="quarto-title-meta column-page">
+  <div class="quarto-title-meta">
 
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Tom Shlomo </p>
+            </div>
+    </div>
       
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">January 15, 2024</p>
+      </div>
+    </div>
     
       
     </div>
     
   
-  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full page-navbar">
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#notation" id="toc-notation" class="nav-link active" data-scroll-target="#notation">Notation</a></li>
+  <li><a href="#ordinary-least-squares-ols" id="toc-ordinary-least-squares-ols" class="nav-link" data-scroll-target="#ordinary-least-squares-ols">Ordinary least squares (OLS)</a></li>
+  <li><a href="#augmented-least-squares" id="toc-augmented-least-squares" class="nav-link" data-scroll-target="#augmented-least-squares">Augmented least squares</a></li>
+  <li><a href="#ridge-regression" id="toc-ridge-regression" class="nav-link" data-scroll-target="#ridge-regression">Ridge regression</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
-<main class="content quarto-banner-title-block column-page" id="quarto-document-content">
+<main class="content quarto-banner-title-block" id="quarto-document-content">
 
 
 
 
 
+<p>Training data augmentation enhances the training dataset by applying transformations to existing training data instances. The specific transformations vary depending on the type of data involved, and this flexibility allows to leverage domain knowledge, such as known invariants, effectively. The goal is to introduce variability and increase the diversity of the training set, allowing the model to better generalize to unseen data and exhibit improved robustness. Despite the advantages, training data augmentation introduces an inherent computational cost: the increased volume of data requires additional computational resources, impacting both training time and memory requirements.</p>
+<p>As we will show below, for linear models with the sum of squares loss, training data augmentation is equivalent to adding quadratic regularization term, which implies that the computational cost of fitting a model to an augmented dataset is the same as using no augmentation at all!</p>
+<p>This link between augmentation and regularization is useful in the other direction as well: it gives a concrete interpretation to the value of regularization hyperparameters, and can be used to avoid costly hyperparameters tuning (<code>np.logspace(-6, 6, 100)</code> much?), and to design regularizers that are more appropriate to the data than the simple ones (i.e sum of squares regularization used in ridge regression).</p>
+<section id="notation" class="level2">
+<h2 class="anchored" data-anchor-id="notation">Notation</h2>
+<p>Suppose we have a training data set comprised of <span class="math inline">\(n\)</span> pairs <span class="math inline">\(x_i,\,y_i\)</span> for <span class="math inline">\(i=0, \dots, n-1\)</span>, where <span class="math inline">\(x_i\)</span> is the <span class="math inline">\(d\)</span> dimensional feature vector of the <span class="math inline">\(i\)</span>’th training data, and <span class="math inline">\(y_i\)</span> is the corresponding label. Here we will assume <span class="math inline">\(y_i \in \mathrm{R}\)</span>, however our results can be easily extended to the vector-labeled (aka multi-output) case. We will also denote by <span class="math inline">\(X\)</span> the <span class="math inline">\(n\)</span>-by-<span class="math inline">\(d\)</span> matrix with rows <span class="math inline">\(x_0^T, \dots, x_{n-1}^T\)</span> and by <span class="math inline">\(y\)</span> the <span class="math inline">\(n\)</span>-vector with entries <span class="math inline">\(y_0, \dots, y_{n-1}\)</span>.</p>
+<p>Let <span class="math inline">\(a:\mathrm{R}^d \times \mathcal{P}  \mapsto \mathrm{R}^d\)</span> denote the augmentation function that given the augmentation params <span class="math inline">\(p \in \mathcal{P}\)</span>, maps a feature vector <span class="math inline">\(x\)</span> to a transformed feature vector. The augmentation parameters <span class="math inline">\(p\)</span> are usually sampled randomly from a given distribution. For example, for image data, <span class="math inline">\(a\)</span> is often a composition of small shifts, rotations, brightness changes, etc. while <span class="math inline">\(p\)</span> specifies the amount of shifting, rotation and brightness change.</p>
+</section>
+<section id="ordinary-least-squares-ols" class="level2">
+<h2 class="anchored" data-anchor-id="ordinary-least-squares-ols">Ordinary least squares (OLS)</h2>
+<p>Let’s quickly discuss OLS so we can compare it’s equations with the augmented version we will derive after.<br>
+To fit an OLS model, we find a vector of coefficients <span class="math inline">\(\theta_\text{OLS}\)</span> that minimizes the sum of squared training errors: <span class="math display">\[\begin{align*}
+    \theta_\text{OLS} &amp;:= \text{argmin} _\theta \sum_{i=0} ^{n-1} \left(
+    x_i ^T \theta - y_i
+    \right) ^2
+    \\&amp;= \text{argmin} _\theta \| X \theta - y \|^2 \tag{1}
+\end{align*}\]</span> To solve the optimization problem (1), we solve the equation <span class="math inline">\(X^TX \theta_\text{OLS} = X^T y\)</span>, which has time complexity <span class="math inline">\(O(n d^2)\)</span>.</p>
+</section>
+<section id="augmented-least-squares" class="level2">
+<h2 class="anchored" data-anchor-id="augmented-least-squares">Augmented least squares</h2>
+<p>We will now fit a model by finding coefficients <span class="math inline">\(\theta_\text{ALS}\)</span> that minimize the expected error over the augmented training dataset: <span class="math display">\[\begin{align*}
+    \theta_\text{ALS} &amp;:= \text{argmin} _\theta \mathrm{E}  
+    \left[
+    \sum_{i=0} ^{n-1} \left(
+    a\left(x_i, p_i\right) ^T \theta - y_i
+    \right) ^2
+    \right], \tag{2}
+\end{align*}\]</span> where the expectation is over <span class="math inline">\(p_0,\dots, p_{n-1}\)</span>, the random augmentation parameters. As we will see below, <span class="math inline">\(\theta_\text{ALS}\)</span> depends on <span class="math inline">\(a\)</span> and the distribution of <span class="math inline">\(p\)</span> only through the 2nd order moments, which we denote by <span class="math display">\[\begin{align*}
+    \mu_i &amp;:= \mathrm{E} \left[a(x_i, p_i) \right]\\
+    R_i &amp;:= \mathrm{C}\text{ov} \left[ a(x_i, p_i) \right].
+\end{align*}\]</span></p>
+<p>Continuing from (2), we use the standard trick of subtracting and adding the mean: <span class="math display">\[\begin{align*}
+    \theta_\text{ALS} &amp;= \text{argmin} _\theta \mathrm{E}  
+    \left[
+        \sum_{i=0} ^{n-1} \left(
+            \left(
+                \mu_i^T \theta - y_i
+            \right)
+            + \left(
+                a\left(x_i, p_i\right) -
+                \mu_i
+            \right)^T\theta
+        \right) ^2
+    \right]
+\end{align*}\]</span> Note that the first term $ ( _i^T - y_i ) $ is deterministic, while the second term $ ( a(x_i, p_i) - _i )^T $ has zero mean. Therefore <span class="math display">\[\begin{align*}
+    \theta_\text{ALS} &amp;= \text{argmin} _\theta
+    \sum_{i=0} ^{n-1}
+        \left(
+            \mu_i^T \theta - y_i
+        \right)
+        +
+        \mathrm{E} \left[\left(
+            \left(
+                a\left(x_i, p_i\right) -
+                \mu_i
+            \right)^T\theta
+        \right)^2 \right] \\
+    &amp;= \text{argmin} _\theta
+    \| M \theta - y\|^2 + \theta ^T R \theta,
+    \tag{3}
+\end{align*}\]</span> where <span class="math inline">\(M\)</span> is the <span class="math inline">\(n\)</span>-by-<span class="math inline">\(d\)</span> matrix whose rows are <span class="math inline">\(\mu_0^T, \dots, \mu_{n-1}^T\)</span>, and <span class="math display">\[
+R := \sum_{i=0} ^{n-1} R_i.
+\]</span> Equation (3) shows exactly what we set to prove - fitting a model on augmented training dataset, is equivalent to fitting a non-augmented, but quadratically regularized, least squares model. We just replace <span class="math inline">\(X\)</span> with it’s mean, and use the sum of all covariances as the regularization matrix.</p>
+<p>To solve the optimization problem (3), we solve the equation <span class="math inline">\((X^T X + R) \theta_\text{ALS} = X^T y\)</span>, which has the same <span class="math inline">\(O(n d^2)\)</span> complexity as OLS.</p>
+</section>
+<section id="ridge-regression" class="level2">
+<h2 class="anchored" data-anchor-id="ridge-regression">Ridge regression</h2>
+<p>Ride regression (aka Tykhonov regularization) has the form (3) with <span class="math inline">\(M=X\)</span> and <span class="math inline">\(R=\lambda I\)</span>. As an augmentation, it can be interpreted as follows: perturb each feature vector by a zero mean noise, with variance <span class="math inline">\(\lambda/n\)</span>, uncorrelated across features.<br>
+This interpretation of <span class="math inline">\(\lambda\)</span> can be used to set it (at least roughly): just think what level of perturbation <span class="math inline">\(\sigma\)</span> is reasonable for your features, and set <span class="math inline">\(\lambda = n \sigma^2\)</span>.<br>
+This also shows that when different feature are scaled differently, ridge regression is perhaps not the best fit. A standard deviation of 100 might be reasonable for a feature with values in the order of millions, but it is probably not suitable for a feature with values in the order of 1. In these cases, we may use a diagonal <span class="math inline">\(R\)</span>: <span class="math display">\[\begin{align*}
+    R= n \, \text{diag} \left(
+        \sigma_0^2, \dots, \sigma_{d-1}^2
+    \right)
+\end{align*}\]</span> where <span class="math inline">\(\sigma_i\)</span> is the standard deviation of the perturbation of feature <span class="math inline">\(i\)</span>.</p>
+<p>Another option is to scale the transformations before fit, e.g using sklearn’s <code>StandardScaler</code>. With all features scaled to have unit variance, setting <span class="math inline">\(\lambda = n \, 10 ^{-6}\)</span> is a sensible rule of thumb, as it is often reasonable to assume a <span class="math inline">\(0.1\%\)</span> perturbation.</p>
+<p>Note that often the model includes an intercept (aka constant) term by adding a column of ones to <span class="math inline">\(X\)</span>. Since this column remain unchanged through any augmenting transformation, the corresponding row and column of <span class="math inline">\(R\)</span> should be all zeros.</p>
 
 
+</section>
 
-
-<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
-<div class="list quarto-listing-default">
-<div class="quarto-post image-right" data-index="0" data-listing-date-sort="1711746000000" data-listing-file-modified-sort="1724832144110" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="5" data-listing-word-count-sort="976">
-<div class="thumbnail">
-<p><a href="./posts/loocv_part2/loocv_part2.html" class="no-external"></a></p><a href="./posts/loocv_part2/loocv_part2.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/loocv_part2/loocv_part2.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/loocv_part2/loocv_part2.html" class="no-external">Efficient leave one out cross validation - part 2</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/loocv_part2/loocv_part2.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/loocv_part2/loocv_part2.html" class="no-external">The non quadratic case</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/loocv_part2/loocv_part2.html" class="no-external">
-<div class="listing-date">
-Mar 30, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="1" data-listing-date-sort="1708984800000" data-listing-file-modified-sort="1724832232585" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1324">
-<div class="thumbnail">
-<p><a href="./posts/loocv/loocv_part1.html" class="no-external"></a></p><a href="./posts/loocv/loocv_part1.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/loocv/loocv_part1.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/loocv/loocv_part1.html" class="no-external">Efficient leave one out cross validation - part 1</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/loocv/loocv_part1.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/loocv/loocv_part1.html" class="no-external">The derivation and implementation of a method for leave one out cross validation with neglible extra runtime compared to fitting alone.</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/loocv/loocv_part1.html" class="no-external">
-<div class="listing-date">
-Feb 27, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="2" data-listing-date-sort="1706565600000" data-listing-file-modified-sort="1710003350087" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="9" data-listing-word-count-sort="1678">
-<div class="thumbnail">
-<p><a href="./posts/music/music.html" class="no-external"></a></p><a href="./posts/music/music.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/music/music.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/music/music.html" class="no-external">MUSIC as a sparse decomposition method</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/music/music.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/music/music.html" class="no-external">A unique introduction to the MUSIC algorithm, as a general method to solve the multisnapshot sparse decomposition problem.</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/music/music.html" class="no-external">
-<div class="listing-date">
-Jan 30, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="3" data-listing-date-sort="1705701600000" data-listing-file-modified-sort="1732650878757" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="8" data-listing-word-count-sort="1531">
-<div class="thumbnail">
-<p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a></p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">A practical interpertation of the Pearson correlation coefficient</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external"><span class="math inline">\(\rho=1\)</span> means perfect positive correlation, <span class="math inline">\(\rho=-1\)</span> means perfect negative correlation, <span class="math inline">\(\rho=0\)</span> means no correlation. But what does <span class="math inline">\(\rho=0.72\)</span> mean?</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/pearson_correlation/pearson_correlation.html" class="no-external">
-<div class="listing-date">
-Jan 20, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="4" data-listing-date-sort="1705269600000" data-listing-file-modified-sort="1732651347585" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="7" data-listing-word-count-sort="1214">
-<div class="thumbnail">
-<p><a href="./posts/augmentation_is_regularization/aug.html" class="no-external"></a></p><a href="./posts/augmentation_is_regularization/aug.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/augmentation_is_regularization/aug.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/augmentation_is_regularization/aug.html" class="no-external">Augmentation is Regularization</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/augmentation_is_regularization/aug.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/augmentation_is_regularization/aug.html" class="no-external">On the equivalence of training data augmentation and quadratic regularization for linear models - a very useful (but not well known) result.</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/augmentation_is_regularization/aug.html" class="no-external">
-<div class="listing-date">
-Jan 15, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-<div class="quarto-post image-right" data-index="5" data-listing-date-sort="1705269600000" data-listing-file-modified-sort="1732860677532" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2316">
-<div class="thumbnail">
-<p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a></p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">
-<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
-</a><p><a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a></p>
-</div>
-<div class="body">
-<h3 class="no-anchor listing-title">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">Augmentation is Regularization</a>
-</h3>
-<div class="listing-subtitle">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external"></a>
-</div>
-<div class="listing-description">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">On the equivalence of training data augmentation and quadratic regularization for linear models - a very useful (but not well known) result.</a>
-</div>
-</div>
-<div class="metadata">
-<a href="./posts/augmentation_is_regularization/augmentation_is_regularization.html" class="no-external">
-<div class="listing-date">
-Jan 15, 2024
-</div>
-<div class="listing-author">
-Tom Shlomo
-</div>
-</a>
-</div>
-</div>
-</div>
-<div class="listing-no-matching d-none">
-No matching items
-</div>
-</div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
