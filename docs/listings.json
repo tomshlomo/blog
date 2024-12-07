@@ -2,6 +2,7 @@
   {
     "listing": "/index.html",
     "items": [
+      "/posts/rust_with_via/rust_with_via.html",
       "/posts/omp/omp.html",
       "/posts/loocv_part2/loocv_part2.html",
       "/posts/loocv/loocv_part1.html",

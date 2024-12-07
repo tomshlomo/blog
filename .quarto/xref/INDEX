@@ -46,5 +46,8 @@
   },
   "posts/omp/omp.ipynb": {
     "omp.html": "211c2b91"
+  },
+  "posts/rust_with_via/rust_with_via.md": {
+    "rust_with_via.html": "225d2ad4"
   }
 }

@@ -10,7 +10,32 @@
 <atom:link href="https://tomshlomo.github.io/blog/index.xml" rel="self" type="application/rss+xml"/>
 <description>Tom Shlomo&#39;s blog</description>
 <generator>quarto-1.4.543</generator>
-<lastBuildDate>Thu, 05 Dec 2024 22:00:00 GMT</lastBuildDate>
+<lastBuildDate>Fri, 06 Dec 2024 22:00:00 GMT</lastBuildDate>
+<item>
+  <title>Teaching Rust to Python Developers</title>
+  <dc:creator>Tom Shlomo</dc:creator>
+  <link>https://tomshlomo.github.io/blog/posts/rust_with_via/rust_with_via.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p>Over the last two years, I have developed a strong interest in Rust.<br>
+While my day-to-day work primarily involves Python, I have been exploring ways to leverage Rust in our projects.</p>
+<p>A few months ago, I had the opportunity to teach Rust to our algorithms team in a 4-day workshop.<br>
+We based the workshop on Google’s excellent <a href="https://google.github.io/comprehensive-rust/">Comprehensive Rust</a> course but made several modifications.<br>
+Most notably, we replaced some exercises and added a new section on using PyO3 to write Python extensions in Rust.</p>
+<p>I was very happy with the results, and I think the team was too.</p>
+<p>We have since <a href="https://tomshlomo.github.io/rust-with-via/index.html">published all the materials</a> and shared a <a href="https://medium.com/@tomshlomo/teaching-rust-to-python-developers-65709cf4babb">blog post</a> detailing the experience.</p>
+<p>I hope you find these resources valuable!</p>
+
+
+
+ ]]></description>
+  <guid>https://tomshlomo.github.io/blog/posts/rust_with_via/rust_with_via.html</guid>
+  <pubDate>Fri, 06 Dec 2024 22:00:00 GMT</pubDate>
+</item>
 <item>
   <title>The sparse approximation algorithm no one talks about</title>
   <dc:creator>Tom Shlomo</dc:creator>
