@@ -2,42 +2,38 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://tomshlomo.github.io/blog/index.html</loc>
-    <lastmod>2024-03-09T06:33:12.910Z</lastmod>
+    <lastmod>2026-06-14T17:10:25.044Z</lastmod>
   </url>
   <url>
-    <loc>https://tomshlomo.github.io/blog/posts/loocv/loocv_part1.html</loc>
-    <lastmod>2024-03-21T19:37:15.937Z</lastmod>
+    <loc>https://tomshlomo.github.io/blog/posts/bilinear_muon/bilinear_muon.html</loc>
+    <lastmod>2026-06-14T18:48:57.746Z</lastmod>
   </url>
   <url>
     <loc>https://tomshlomo.github.io/blog/posts/augmentation_is_regularization/augmentation_is_regularization.html</loc>
-    <lastmod>2024-12-06T11:52:36.543Z</lastmod>
-  </url>
-  <url>
-    <loc>https://tomshlomo.github.io/blog/posts/pearson_correlation/pearson_correlation.html</loc>
-    <lastmod>2024-12-06T11:52:23.700Z</lastmod>
-  </url>
-  <url>
-    <loc>https://tomshlomo.github.io/blog/posts/music/music.html</loc>
-    <lastmod>2024-12-06T11:52:23.699Z</lastmod>
+    <lastmod>2026-06-14T17:10:25.045Z</lastmod>
   </url>
   <url>
     <loc>https://tomshlomo.github.io/blog/posts/loocv_part2/loocv_part2.html</loc>
-    <lastmod>2024-03-30T09:01:05.719Z</lastmod>
+    <lastmod>2026-06-14T17:10:25.051Z</lastmod>
   </url>
   <url>
-    <loc>https://tomshlomo.github.io/blog/posts/augmentation_is_regularization copy/augmentation_is_regularization.html</loc>
-    <lastmod>2024-03-30T10:31:30.473Z</lastmod>
+    <loc>https://tomshlomo.github.io/blog/posts/pearson_correlation/pearson_correlation.html</loc>
+    <lastmod>2026-06-14T17:10:25.057Z</lastmod>
   </url>
   <url>
-    <loc>https://tomshlomo.github.io/blog/posts/augmentation_is_regularization/aug.html</loc>
-    <lastmod>2024-11-26T20:02:27.585Z</lastmod>
-  </url>
-  <url>
-    <loc>https://tomshlomo.github.io/blog/posts/omp/omp.html</loc>
-    <lastmod>2024-12-06T11:57:48.014Z</lastmod>
+    <loc>https://tomshlomo.github.io/blog/posts/music/music.html</loc>
+    <lastmod>2026-06-14T17:10:25.052Z</lastmod>
   </url>
   <url>
     <loc>https://tomshlomo.github.io/blog/posts/rust_with_via/rust_with_via.html</loc>
-    <lastmod>2024-12-07T17:45:40.257Z</lastmod>
+    <lastmod>2026-06-14T17:10:25.057Z</lastmod>
+  </url>
+  <url>
+    <loc>https://tomshlomo.github.io/blog/posts/omp/omp.html</loc>
+    <lastmod>2026-06-14T17:10:25.057Z</lastmod>
+  </url>
+  <url>
+    <loc>https://tomshlomo.github.io/blog/posts/loocv/loocv_part1.html</loc>
+    <lastmod>2026-06-14T17:10:25.046Z</lastmod>
   </url>
 </urlset>
