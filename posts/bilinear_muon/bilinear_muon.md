@@ -67,7 +67,7 @@ By treating $W_Q$ and $W_K$ as completely independent linear operators, current 
 
 ## 4. The Low-Rank Constraint
 
-In practice, we do not search over the entire ambient space of bilinear forms. Neural networks use bilinear forms of the structure $x_i W_Q W_K^T x_j^T$, which correspond to a strictly low-rank subset. Specifically, the intermediate projection space has a dimension $d_k$ (the attention head dimension), which is typically much smaller than the hidden dimension $d$ (e.g., $d_k = 128$ while $d = 4096$). This limits the rank of the associated matrix to at most $d_k$.
+In practice, we do not search over the entire space of bilinear forms. Neural networks use bilinear forms of the structure $x_i W_Q W_K^T x_j^T$, which correspond to a strictly low-rank subset. Specifically, the intermediate projection space has a dimension $d_k$ (the attention head dimension), which is typically much smaller than the hidden dimension $d$ (e.g., $d_k = 128$ while $d = 4096$). This limits the rank of the associated matrix to at most $d_k$.
 
 This architectural constraint is highly deliberate and provides three major benefits:
 
@@ -93,7 +93,7 @@ How do we actually enforce this rank constraint? By the mathematical definition 
 
 $$W_{QK} + \Delta W_{QK} = A B^T$$ {#eq-factor}
 
-Since our current weights $W_Q$ and $W_K$ are fixed, we can reparameterize our search. Instead of searching for the ambient step $\Delta W_{QK}$, we search for the difference between these new ideal factors and our current weights:
+Since our current weights $W_Q$ and $W_K$ are fixed, we can reparameterize our search. Instead of searching for the step $\Delta W_{QK}$, we search for the difference between these new ideal factors and our current weights:
 
 
 $$
@@ -110,12 +110,12 @@ Expanding the right side yields:
 
 $$W_{QK} + \Delta W_{QK} = W_Q W_K^T + \Delta W_Q W_K^T + W_Q \Delta W_K^T + \Delta W_Q \Delta W_K^T$$ {#eq-expand}
 
-Since we defined our current state as $W_{QK} = W_Q W_K^T$, we can subtract it from both sides to isolate the exact step taken in the ambient space of bilinear forms:
+Since we defined our current state as $W_{QK} = W_Q W_K^T$, we can subtract it from both sides to isolate the exact step taken in the space of bilinear forms:
 
 
 $$\Delta W_{QK} = \Delta W_Q W_K^T + W_Q \Delta W_K^T + \Delta W_Q \Delta W_K^T$$ {#eq-exact-step}
 
-This is a useful geometric fact. Searching over the abstract, non-convex rank constraint of @eq-rank-sd in the ambient space is **mathematically identical** to searching over the unconstrained factors $\Delta W_Q$ and $\Delta W_K$ and applying this exact polynomial expansion. There is no rank-$d_k$ matrix reachable in the ambient space that cannot be reached natively through the factors. The architectural constraint forces the algebraic form.
+This is a useful geometric fact. Searching over the abstract, non-convex rank constraint of @eq-rank-sd in the ambient space is **mathematically identical** to searching over the unconstrained factors $\Delta W_Q$ and $\Delta W_K$ and applying this exact polynomial expansion. There is no rank-$d_k$ matrix that cannot be reached natively through the factors. The architectural constraint forces the algebraic form.
 
 ## 5. The Tangent Approximation
 
@@ -166,17 +166,17 @@ This is the key simplification. We don't need to ever form the large $d \times d
 
 There is a clean geometric reading of the linearized step. The tangent approximation @eq-tangent says precisely that $\Delta W_{QK}$ is constrained to the **tangent space** of the rank-$d_k$ manifold at the current point $W_{QK} = W_Q W_K^T$.
 
-This tangent space admits an equivalent characterization stated directly in the ambient step $\Delta W_{QK}$, with no reference to the factors:[^tangent-proof]
+This tangent space admits an equivalent characterization stated directly in the step $\Delta W_{QK}$, with no reference to the factors:[^tangent-proof]
 
 $$\mathcal{T} = \{\, \Delta W_Q W_K^T + W_Q \Delta W_K^T \,\} = \{\, Z : (I - P_Q)\, Z\, (I - P_K) = 0 \,\}$$ {#eq-tangent-space}
 
 where $P_Q$ and $P_K$ are the orthogonal projectors onto the column spaces of $W_Q$ and $W_K$. Read as a bilinear form $x_i\, Z\, x_j^T$, the constraint says the update may create *no* new interaction between a query direction invisible to $W_Q$ ($x_i \perp \operatorname{col}(W_Q)$) and a key direction invisible to $W_K$ ($x_j \perp \operatorname{col}(W_K)$). Reaching that doubly-invisible corner is precisely the second-order move carried by the quadratic term $\Delta W_Q \Delta W_K^T$ we dropped.
 
-This hands us a second, fully equivalent way to write the steepest-descent step, now in the single ambient variable $\Delta W_{QK}$, with the tangent constraint stated explicitly:
+This hands us a second, fully equivalent way to write the steepest-descent step, now in the single variable $\Delta W_{QK}$, with the tangent constraint stated explicitly:
 
 $$\min_{\Delta W_{QK}} \;\langle G_{QK}, \Delta W_{QK} \rangle \quad \text{s.t.} \quad \|\Delta W_{QK}\| \le \epsilon, \quad (I - P_Q)\, \Delta W_{QK}\, (I - P_K) = 0$$ {#eq-geom-sd}
 
-Although this uses the large $d \times d$ variable, the norm bound is now a clean norm of a *single* matrix rather than of a coupled sum of factor steps, which is what makes the upcoming derivations tractable. And despite being written with the ambient gradient $G_{QK}$, the resulting update rules will need neither $G_{QK}$ nor any other $d \times d$ matrix: everything reduces to the cheap factor gradients $G_Q$, $G_K$ and small $d_k \times d_k$ operations, as we will see.
+Although this uses the large $d \times d$ variable, the norm bound is now a clean norm of a *single* matrix rather than of a coupled sum of factor steps, which is what makes the upcoming derivations tractable. And despite being written with the $d \times d$ gradient $G_{QK}$, the resulting update rules will need neither $G_{QK}$ nor any other $d \times d$ matrix: everything reduces to the cheap factor gradients $G_Q$, $G_K$ and small $d_k \times d_k$ operations, as we will see.
 
 This tangent-space viewpoint is not just a convenience. Optimizing along the tangent space of a structured weight manifold is the organizing principle behind recent work on modular manifolds (see for example this [blog post](https://thinkingmachines.ai/blog/modular-manifolds/) or the [modula library](https://docs.modula.systems/)). Here it falls out automatically from considering the space of low-rank bilinear forms in attention.
 
@@ -231,7 +231,7 @@ Steepest descent with a Frobenius penalty over a linear subspace is nothing but 
 
 $$\mathcal{P}_{\mathcal{T}}(X) = P_Q X + X P_K - P_Q X P_K,$$ {#eq-proj}
 
-so the solution is $\Delta W_{QK} = -\eta\, \mathcal{P}_{\mathcal{T}}(G_{QK})$. Using the chain-rule identities $G_{QK} W_K = G_Q$ and $W_Q^T G_{QK} = G_K^T$ to eliminate every appearance of the ambient gradient, and writing $W_Q^+, W_K^+$ for the Moore-Penrose pseudo-inverses, this becomes:
+so the solution is $\Delta W_{QK} = -\eta\, \mathcal{P}_{\mathcal{T}}(G_{QK})$. Using the chain-rule identities $G_{QK} W_K = G_Q$ and $W_Q^T G_{QK} = G_K^T$ to eliminate every appearance of $G_{QK}$, and writing $W_Q^+, W_K^+$ for the Moore-Penrose pseudo-inverses, this becomes:
 
 $$\Delta W_{QK} = -\eta\left[\, (W_Q^+)^T G_K^T + G_Q W_K^+ - (W_Q^+)^T (W_Q^T G_Q)\, W_K^+ \,\right]$$ {#eq-l2-sol}
 
