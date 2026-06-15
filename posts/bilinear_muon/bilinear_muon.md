@@ -1,6 +1,6 @@
 ---
 title: "Bilinear Muon"
-description: "Adam, and even Muon, optimize attention's query and key matrices as if they were independent. Treating them as the single bilinear form they jointly define yields a family of new Muon-style update rules."
+description: "Adam, and even Muon, optimize attention's query and key matrices as if they were independent. Treating them as the single bilinear form they jointly define yields a family of Muon-style update rules."
 author: "Tom Shlomo"
 date: "2026-06-14"
 format:
@@ -32,7 +32,7 @@ Specifically, Muon computes the steepest descent step bounded by the spectral no
 $$\min_{\Delta W} \langle G, \Delta W \rangle \quad \text{s.t.} \quad \|\Delta W\|_2 \le \epsilon$$ {#eq-muon}
 
 
-The analytical solution to this problem is $\Delta W = -\epsilon \cdot \text{Orth}(G)$, where $\text{Orth}(G)$ is the orthogonalized gradient, an operation that flattens all non-zero singular values of $G$ to exactly $1$. By applying orthogonalization, Muon forces the update to be well-conditioned, making the learning process invariant to the dominant singular values of the gradient. This proves that respecting the metric space of linear operators yields faster, more stable training.
+The analytical solution to this problem is $\Delta W = -\epsilon \cdot \text{Orth}(G)$, where $\text{Orth}(G)$ is the orthogonalized gradient, an operation that flattens all non-zero singular values of $G$ to exactly $1$. By applying orthogonalization, Muon forces the update to be well-conditioned, making the learning process invariant to the dominant singular values of the gradient. Muon's empirical track record suggests that respecting the geometry of linear operators yields faster, more stable training.
 
 ## 3. Attention as a Bilinear Form
 
@@ -115,7 +115,7 @@ Since we defined our current state as $W_{QK} = W_Q W_K^T$, we can subtract it f
 
 $$\Delta W_{QK} = \Delta W_Q W_K^T + W_Q \Delta W_K^T + \Delta W_Q \Delta W_K^T$$ {#eq-exact-step}
 
-This is a profound geometric realization. Searching over the abstract, non-convex rank constraint of @eq-rank-sd in the ambient space is **mathematically identical** to searching over the unconstrained factors $\Delta W_Q$ and $\Delta W_K$ and applying this exact polynomial expansion. There is no rank-$d_k$ matrix reachable in the ambient space that cannot be reached natively through the factors. The architectural constraint forces the algebraic form.
+This is a useful geometric fact. Searching over the abstract, non-convex rank constraint of @eq-rank-sd in the ambient space is **mathematically identical** to searching over the unconstrained factors $\Delta W_Q$ and $\Delta W_K$ and applying this exact polynomial expansion. There is no rank-$d_k$ matrix reachable in the ambient space that cannot be reached natively through the factors. The architectural constraint forces the algebraic form.
 
 ## 5. The Tangent Approximation
 
@@ -160,7 +160,7 @@ $$
 \end{aligned}
 $$ {#eq-factor-sd}
 
-This is beautiful. We don't need to ever form the large $d \times d$ gradient $G_{QK}$. The downstream gradients of $W_Q$ and $W_K$ (which we would effortlessly get from a naive PyTorch implementation) are sufficient to optimize natively in the space of bilinear forms.
+This is the key simplification. We don't need to ever form the large $d \times d$ gradient $G_{QK}$. The downstream gradients of $W_Q$ and $W_K$ (which we would effortlessly get from a naive PyTorch implementation) are sufficient to optimize natively in the space of bilinear forms.
 
 ### An Explicit Characterization of the Tangent Space
 
@@ -196,12 +196,12 @@ This tangent-space viewpoint is not just a convenience. Optimizing along the tan
 
 Now let's commit to a norm and derive the update, starting with the $L^2$ (Frobenius) norm. Rather than the hard norm-ball constraint of @eq-factor-sd, we use the equivalent **penalty** (Lagrangian) form: for a fixed norm the two share the same optimal *direction* and differ only in how the step is scaled, and the penalty form is far easier to differentiate. The natural first attempt is to optimize the factors directly:
 
-$$\max_{\Delta W_Q, \Delta W_K} \quad \langle G_Q, \Delta W_Q \rangle + \langle G_K, \Delta W_K \rangle - \frac{1}{2\eta} \| \Delta W_Q W_K^T + W_Q \Delta W_K^T \|_F^2$$ {#eq-l2-factor}
+$$\min_{\Delta W_Q, \Delta W_K} \quad \langle G_Q, \Delta W_Q \rangle + \langle G_K, \Delta W_K \rangle + \frac{1}{2\eta} \| \Delta W_Q W_K^T + W_Q \Delta W_K^T \|_F^2$$ {#eq-l2-factor}
 
 Taking partial derivatives with respect to $\Delta W_Q$ and $\Delta W_K$ and setting them to zero yields the following coupled optimality conditions:
 
-1. $\Delta W_Q (W_K^T W_K) + W_Q (\Delta W_K^T W_K) = \eta G_Q$
-2. $\Delta W_K (W_Q^T W_Q) + W_K (\Delta W_Q^T W_Q) = \eta G_K$
+1. $\Delta W_Q (W_K^T W_K) + W_Q (\Delta W_K^T W_K) = -\eta G_Q$
+2. $\Delta W_K (W_Q^T W_Q) + W_K (\Delta W_Q^T W_Q) = -\eta G_K$
 
 This system consists of $2 d \cdot d_k$ unknowns defined by $2 d \cdot d_k$ linear equations. At first glance, this is a well-determined square system. However, the system is fundamentally underdetermined: it possesses a non-trivial null space. For any arbitrary $d_k \times d_k$ matrix $S$, consider the update:
 
@@ -223,7 +223,7 @@ The non-uniqueness, then, is not in *what* step we take in the space of bilinear
 
 This is exactly why we built the geometric formulation @eq-geom-sd: it is written directly in the one object that *is* pinned down, $\Delta W_{QK}$, and never refers to the split. Committing to the $L^2$ norm, its penalty form reads:
 
-$$\max_{\Delta W_{QK}} \;\langle G_{QK}, \Delta W_{QK} \rangle - \frac{1}{2\eta}\|\Delta W_{QK}\|_F^2 \quad \text{s.t.} \quad (I - P_Q)\, \Delta W_{QK}\, (I - P_K) = 0$$ {#eq-l2-geom}
+$$\min_{\Delta W_{QK}} \;\langle G_{QK}, \Delta W_{QK} \rangle + \frac{1}{2\eta}\|\Delta W_{QK}\|_F^2 \quad \text{s.t.} \quad (I - P_Q)\, \Delta W_{QK}\, (I - P_K) = 0$$ {#eq-l2-geom}
 
 This is no longer underdetermined: the objective is strictly convex on the tangent subspace, so it has a unique minimizer.
 
@@ -231,21 +231,21 @@ Steepest descent with a Frobenius penalty over a linear subspace is nothing but 
 
 $$\mathcal{P}_{\mathcal{T}}(X) = P_Q X + X P_K - P_Q X P_K,$$ {#eq-proj}
 
-so the solution is $\Delta W_{QK} = \eta\, \mathcal{P}_{\mathcal{T}}(G_{QK})$. Using the chain-rule identities $G_{QK} W_K = G_Q$ and $W_Q^T G_{QK} = G_K^T$ to eliminate every appearance of the ambient gradient, and writing $W_Q^+, W_K^+$ for the Moore-Penrose pseudo-inverses, this becomes:
+so the solution is $\Delta W_{QK} = -\eta\, \mathcal{P}_{\mathcal{T}}(G_{QK})$. Using the chain-rule identities $G_{QK} W_K = G_Q$ and $W_Q^T G_{QK} = G_K^T$ to eliminate every appearance of the ambient gradient, and writing $W_Q^+, W_K^+$ for the Moore-Penrose pseudo-inverses, this becomes:
 
-$$\Delta W_{QK} = \eta\left[\, (W_Q^+)^T G_K^T + G_Q W_K^+ - (W_Q^+)^T (W_Q^T G_Q)\, W_K^+ \,\right]$$ {#eq-l2-sol}
+$$\Delta W_{QK} = -\eta\left[\, (W_Q^+)^T G_K^T + G_Q W_K^+ - (W_Q^+)^T (W_Q^T G_Q)\, W_K^+ \,\right]$$ {#eq-l2-sol}
 
 Each pseudo-inverse hides only a tiny $d_k \times d_k$ inversion, and, just as promised, only the cheap factor gradients $G_Q$ and $G_K$ appear. The $d \times d$ gradient $G_{QK}$ never has to be formed.
 
 All that remains is to hand the optimizer *some* factorization of this step: a pair $(\Delta W_Q, \Delta W_K)$ with $\Delta W_Q W_K^T + W_Q \Delta W_K^T = \Delta W_{QK}$. This is precisely the gauge freedom we met earlier, the null space of the factor system, resurfacing exactly where it is harmless: any valid split produces the same $\Delta W_{QK}$. A simple, immediate choice is:
 
 $$
-\Delta W_Q = \eta\, G_Q (W_K^T W_K)^{-1}, \qquad \Delta W_K = \eta\,(I - P_K)\, G_K (W_Q^T W_Q)^{-1}
+\Delta W_Q = -\eta\, G_Q (W_K^T W_K)^{-1}, \qquad \Delta W_K = -\eta\,(I - P_K)\, G_K (W_Q^T W_Q)^{-1}
 $$ {#eq-l2-split}
 
-These rules deserve a name: we'll call this update **Bilinear SGD**, the $L^2$ steepest-descent step in the bilinear geometry, the direct sibling of ordinary SGD in flat parameter space (which is itself nothing but $L^2$ steepest descent). It is worth pausing on what the rules say. Vanilla SGD would update each factor with its own gradient, $\Delta W_Q = \eta\, G_Q$ and $\Delta W_K = \eta\, G_K$, treating the two matrices as independent. Our rules instead right-multiply each factor gradient by the inverse Gram matrix of the *other* factor: $(W_K^T W_K)^{-1}$ for the query step, $(W_Q^T W_Q)^{-1}$ for the key step. The bilinear geometry couples them: the natural scale of a step in $W_Q$ is set by the size of $W_K$, and vice versa, so whichever factor currently carries more of the product's magnitude moves proportionally less.
+These rules deserve a name: we'll call this update **Bilinear SGD**, the $L^2$ steepest-descent step in the bilinear geometry, the direct sibling of ordinary SGD in flat parameter space (which is itself nothing but $L^2$ steepest descent). It is worth pausing on what the rules say. Vanilla SGD would update each factor with its own gradient, $\Delta W_Q = -\eta\, G_Q$ and $\Delta W_K = -\eta\, G_K$, treating the two matrices as independent. Our rules instead right-multiply each factor gradient by the inverse Gram matrix of the *other* factor: $(W_K^T W_K)^{-1}$ for the query step, $(W_Q^T W_Q)^{-1}$ for the key step. The bilinear geometry couples them: the natural scale of a step in $W_Q$ is set by the size of $W_K$, and vice versa, so whichever factor currently carries more of the product's magnitude moves proportionally less.
 
-This coupling is also what makes the step insensitive to the factorization's scale ambiguity. The reparameterization $W_Q \to W_Q R,\ W_K \to W_K R^{-T}$ leaves the product $W_{QK}$, and hence the loss, unchanged, yet it would alter the bare SGD step. Here the induced update $\Delta W_{QK} = \eta\, \mathcal{P}_{\mathcal{T}}(G_{QK})$ depends on the factors only through their column spaces, which the gauge preserves, so it is invariant by construction. SGD descends on the two matrices, while this descends on the bilinear form they define.
+This coupling is also what makes the step insensitive to the factorization's scale ambiguity. The reparameterization $W_Q \to W_Q R,\ W_K \to W_K R^{-T}$ leaves the product $W_{QK}$, and hence the loss, unchanged, yet it would alter the bare SGD step. Here the induced update $\Delta W_{QK} = -\eta\, \mathcal{P}_{\mathcal{T}}(G_{QK})$ depends on the factors only through their column spaces, which the gauge preserves, so it is invariant by construction. SGD descends on the two matrices, while this descends on the bilinear form they define.
 
 Stepping back: by linearizing onto the tangent space and solving for the gauge-invariant step $\Delta W_{QK}$ rather than the redundant factors, the entire $L^2$ derivation collapsed to a handful of $d_k \times d_k$ operations, with no ill-posed coupled solve and no $d \times d$ matrix ever formed.
 
@@ -352,9 +352,9 @@ Each optimizer in this post comes down to a single steepest-descent step, fixed 
 
 | Name | Update rule | Space | Norm | Approximations |
 |---|---|---|---|---|
-| SGD | $\Delta W = \eta\,G$ | flattened params | $L^2$ | none |
+| SGD | $\Delta W = -\eta\,G$ | flattened params | $L^2$ | none |
 | Muon | $\Delta W = -\epsilon\,\mathrm{Orth}(G)$ | linear operators | $L^\infty$ | none |
-| Bilinear SGD | $\Delta W_Q = \eta\,G_Q (W_K^T W_K)^{-1}$<br>$\Delta W_K = \eta\,(I-P_K)\,G_K (W_Q^T W_Q)^{-1}$ | low-rank bilinear forms | $L^2$ | tangent space |
+| Bilinear SGD | $\Delta W_Q = -\eta\,G_Q (W_K^T W_K)^{-1}$<br>$\Delta W_K = -\eta\,(I-P_K)\,G_K (W_Q^T W_Q)^{-1}$ | low-rank bilinear forms | $L^2$ | tangent space |
 | Winner-take-all preconditioned Muon | if $\lVert G_Q W_K^+\rVert_* \ge \lVert G_K W_Q^+\rVert_*$:<br>$\Delta W_Q = -\epsilon\,\mathrm{Orth}(G_Q W_K^+)(W_K^T)^+$<br>$\Delta W_K = 0$<br>otherwise:<br>$\Delta W_Q = 0$<br>$\Delta W_K = -\epsilon\,\mathrm{Orth}(G_K W_Q^+)(W_Q^T)^+$ | low-rank bilinear forms | $L^\infty$ | tangent space, triangle inequality |
 | Symmetric preconditioned Muon | $\Delta W_Q = -\tfrac{\epsilon}{2}\,\mathrm{Orth}(G_Q W_K^+)(W_K^T)^+$<br>$\Delta W_K = -\tfrac{\epsilon}{2}\,\mathrm{Orth}(G_K W_Q^+)(W_Q^T)^+$ | low-rank bilinear forms | $L^\infty$ | tangent space, triangle inequality, symmetric split ($t=\tfrac12$) |
 | Winner-take-all cross-scaled Muon | if $\lVert G_Q\rVert_*/\lVert W_K\rVert_2 \ge \lVert G_K\rVert_*/\lVert W_Q\rVert_2$:<br>$\Delta W_Q = -\epsilon\,\mathrm{Orth}(G_Q)/\lVert W_K\rVert_2$<br>$\Delta W_K = 0$<br>otherwise:<br>$\Delta W_Q = 0$<br>$\Delta W_K = -\epsilon\,\mathrm{Orth}(G_K)/\lVert W_Q\rVert_2$ | low-rank bilinear forms | $L^\infty$ | tangent space, triangle inequality, sub-multiplicative norm |
@@ -368,12 +368,12 @@ A few days before I posted this, Tilde Research published [Compositional Muon](h
 
 The correspondence runs deep. Their derivation passes through the same first-order expansion, the same observation that the achievable steps form the tangent space to the rank-$d_k$ manifold, and the same gauge freedom in how a step is split between the factors. More concretely, two of the practical rules I land on are theirs as well. My symmetric *preconditioned Muon*, $\Delta W_Q = -\tfrac{\epsilon}{2}\,\mathrm{Orth}(G_Q W_K^+)(W_K^T)^+$, is algebraically identical to their half-split rule $\Delta W_Q = -\tfrac{\epsilon}{2}\,\mathrm{msign}(G_Q C_K^{-1})\,C_K^{-1}$ (with $C_K = (W_K^T W_K)^{1/2}$, the two coincide because $\mathrm{Orth}(G_Q W_K^+)(W_K^T)^+ = \mathrm{Orth}(G_Q C_K^{-1})\,C_K^{-1}$), and my *cross-scaled Muon* is their isotropic approximation up to whether the partner is measured by its spectral norm or its RMS scale. They also go further than I do here: they treat the $W_O W_V$ pathway, work out how the gauge interacts with momentum, and, most importantly, actually run the thing, reporting consistent gains over Muon at scale and a new state of the art on the nanoGPT speedrun.
 
-Two pieces of this post have no counterpart in theirs. The first is the $L^2$ side entirely: Compositional Muon works only under the spectral norm, so there is nothing there like *Bilinear SGD*, the closed-form Frobenius step I get from orthogonal projection onto the tangent space. The second is the budget split. Their half-split fixes the $t=\tfrac12$ allocation from the start and notes only that it is arbitrary; I keep $t$ free, show the achievable descent is linear in it, and conclude that the optimum is **winner-take-all**, spending the whole budget on a single factor each step. And this is not merely the best split among the boxes $\mathcal{F}_t$: as I prove, it is optimal over the entire sum-of-norms set $\mathcal{F}_\triangle$ that the triangle inequality hands us, so no allocation of any kind does better under that relaxation. So their two rules sit inside my taxonomy as the symmetric $L^\infty$ entries, with the $L^2$ row and the winner-take-all row genuinely new here. The rest of what this post adds is framing: the explicit bilinear-form view, under which the two relevant norms (the sup norm as the spectral norm of the form, the energy as its Frobenius norm) fall out naturally, and the organization of the $L^\infty$ variants as a single nested chain of inner approximations (exact $\subseteq$ triangle $\subseteq$ sub-multiplicative), each trading approximation budget for GPU-friendliness
+Two pieces of this post have no counterpart in theirs. The first is the $L^2$ side entirely: Compositional Muon works only under the spectral norm, so there is nothing there like *Bilinear SGD*, the closed-form Frobenius step I get from orthogonal projection onto the tangent space. The second is the budget split. Their half-split fixes the $t=\tfrac12$ allocation from the start and notes only that it is arbitrary; I keep $t$ free, show the achievable descent is linear in it, and conclude that the optimum is **winner-take-all**, spending the whole budget on a single factor each step. And this is not merely the best split among the boxes $\mathcal{F}_t$: as I prove, it is optimal over the entire sum-of-norms set $\mathcal{F}_\triangle$ that the triangle inequality hands us, so no allocation of any kind does better under that relaxation. So their two rules sit inside my taxonomy as the symmetric $L^\infty$ entries, with the $L^2$ row and the winner-take-all row genuinely new here. The rest of what this post adds is framing: the explicit bilinear-form view, under which the two relevant norms (the sup norm as the spectral norm of the form, the energy as its Frobenius norm) fall out naturally, and the organization of the $L^\infty$ variants as a single nested chain of inner approximations (exact $\subseteq$ triangle $\subseteq$ sub-multiplicative), each trading approximation budget for GPU-friendliness.
 
 ## 10. Future Work
 
 The most obvious next step is to actually run these optimizers and measure how they perform. The analysis here says nothing about which variant wins in practice, or whether the winner-take-all split really does hurt as much as I suspect.
 
-A second direction is to look for better solutions to the exact sup-norm problem on the tangent space (@eq-linf). The closed-form variants in this post all lean on the triangle inequality, which is a fairly crude inner approximation. I suspect there is room for a method that stays GPU-friendly yet gives up far less of the budget, perhaps through a dual decomposition of the coupled spectral norm that keeps each inner step cheap. This is the direction I plan to explore next.
+A second direction is to look for better solutions to the exact sup-norm problem on the tangent space (@eq-linf). The closed-form variants in this post all lean on the triangle inequality, which is a fairly crude inner approximation. I suspect there is room for a method that stays GPU-friendly yet gives up far less of the budget, perhaps through a dual decomposition of the coupled spectral norm that keeps each inner step cheap, or through the single-loop, warm-started ADMM scheme sketched in [section 7](#i-the-exact-convex-problem) that folds the solver state into the optimizer and takes one iteration per step. This is the direction I plan to explore next.
 
 A third direction is regularization. Decoupled weight decay (AdamW) is a near-universal improvement over plain Adam, which motivates adding a regularization term to the steepest-descent problems above. That turns each update into a proximal step, a shrinkage operation, but now one that acts on the bilinear form itself (say, Frobenius of $W_{QK}$) rather than on the raw factor parameters, which is arguably the more natural object to penalize.
