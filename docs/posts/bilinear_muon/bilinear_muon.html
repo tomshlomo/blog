@@ -195,10 +195,17 @@ window.Quarto = {
   <li><a href="#the-tangent-approximation" id="toc-the-tangent-approximation" class="nav-link" data-scroll-target="#the-tangent-approximation">5. The Tangent Approximation</a>
   <ul class="collapse">
   <li><a href="#a-beautiful-consequence" id="toc-a-beautiful-consequence" class="nav-link" data-scroll-target="#a-beautiful-consequence">A Beautiful Consequence</a></li>
+  <li><a href="#the-tangent-space-made-explicit" id="toc-the-tangent-space-made-explicit" class="nav-link" data-scroll-target="#the-tangent-space-made-explicit">The Tangent Space, Made Explicit</a></li>
   </ul></li>
   <li><a href="#the-l2-crown-jewel-analytical-frobenius-optimization" id="toc-the-l2-crown-jewel-analytical-frobenius-optimization" class="nav-link" data-scroll-target="#the-l2-crown-jewel-analytical-frobenius-optimization">6. The <span class="math inline">\(L^2\)</span> Crown Jewel: Analytical Frobenius Optimization</a>
   <ul class="collapse">
-  <li><a href="#exploiting-the-redundancy" id="toc-exploiting-the-redundancy" class="nav-link" data-scroll-target="#exploiting-the-redundancy">Exploiting the Redundancy</a></li>
+  <li><a href="#switching-to-the-gauge-free-variable" id="toc-switching-to-the-gauge-free-variable" class="nav-link" data-scroll-target="#switching-to-the-gauge-free-variable">Switching to the Gauge-Free Variable</a></li>
+  </ul></li>
+  <li><a href="#the-linfty-pareto-frontier-a-spectrum-of-tractability" id="toc-the-linfty-pareto-frontier-a-spectrum-of-tractability" class="nav-link" data-scroll-target="#the-linfty-pareto-frontier-a-spectrum-of-tractability">7. The <span class="math inline">\(L^\infty\)</span> Pareto Frontier: A Spectrum of Tractability</a>
+  <ul class="collapse">
+  <li><a href="#i.-the-exact-convex-formulation" id="toc-i.-the-exact-convex-formulation" class="nav-link" data-scroll-target="#i.-the-exact-convex-formulation">I. The Exact Convex Formulation</a></li>
+  <li><a href="#ii.-the-triangle-inequality-relaxation" id="toc-ii.-the-triangle-inequality-relaxation" class="nav-link" data-scroll-target="#ii.-the-triangle-inequality-relaxation">II. The Triangle Inequality Relaxation</a></li>
+  <li><a href="#iii.-the-sub-multiplicative-relaxation-cross-scaled-muon" id="toc-iii.-the-sub-multiplicative-relaxation-cross-scaled-muon" class="nav-link" data-scroll-target="#iii.-the-sub-multiplicative-relaxation-cross-scaled-muon">III. The Sub-Multiplicative Relaxation (Cross-Scaled Muon)</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -270,7 +277,7 @@ window.Quarto = {
 <p>The first approach is to keep the quadratic term and employ control-theoretic techniques, such as Linear Matrix Inequality (LMI) or Semidefinite Programming (SDP) relaxations, to bound the non-convex objective. While mathematically intriguing, these iterative solvers are not well-suited for the massive parallelism of modern GPUs, so we will not pursue them here.</p>
 <p>The second approach is to ignore the quadratic term. Assuming our step size bound <span class="math inline">\(\epsilon\)</span> is sufficiently small, the quadratic term <span class="math inline">\(\Delta W_Q \Delta W_K^T\)</span> (which scales with <span class="math inline">\(\epsilon^2\)</span>) is negligible compared to the linear terms. Dropping it yields the approximation:</p>
 <p><span class="math display">\[\Delta W_{QK} \approx \Delta W_Q W_K^T + W_Q \Delta W_K^T\]</span></p>
-<p>Geometrically, this can be interpreted as constraining our step to lie strictly on the tangent space of the low-rank manifold at our current weights. As an aside, if you are interested in how this exact geometric perspective is being used to rethink neural network architectures, this connects nicely to some great recent works on modular manifolds from <a href="https://thinkingmachines.ai/blog/modular-manifolds/">Thinking Machines</a> and <a href="https://www.google.com/search?q=https://docs.modula.systems//">Modula Systems</a>.</p>
+<p>Geometrically, this is the statement that our step lies strictly on the <em>tangent space</em> of the low-rank manifold at our current weights—a perspective we make precise, and then exploit, below.</p>
 <p>This first-order tangent approximation captures the optimal descent direction while converting the intractable non-convex constraint into a strictly linear operator, unlocking exact, hardware-friendly analytical solutions.</p>
 <section id="a-beautiful-consequence" class="level3">
 <h3 class="anchored" data-anchor-id="a-beautiful-consequence">A Beautiful Consequence</h3>
@@ -280,14 +287,28 @@ window.Quarto = {
 <p><span class="math display">\[\langle G_{QK}, \Delta W_Q W_K^T \rangle = \text{tr}(G_{QK}^T \Delta W_Q W_K^T) = \text{tr}(W_K^T G_{QK}^T \Delta W_Q) = \text{tr}((G_{QK} W_K)^T \Delta W_Q) = \langle G_{QK} W_K, \Delta W_Q \rangle\]</span></p>
 <p>Similarly, for the second term:</p>
 <p><span class="math display">\[\langle G_{QK}, W_Q \Delta W_K^T \rangle = \text{tr}(G_{QK}^T W_Q \Delta W_K^T) = \text{tr}((G_{QK}^T W_Q)^T \Delta W_K) = \langle G_{QK}^T W_Q, \Delta W_K \rangle\]</span></p>
-<p>By the chain rule, <span class="math inline">\(G_Q = \nabla_{W_Q} \mathcal{L} = G_{QK} W_K\)</span> and <span class="math inline">\(G_K = \nabla_{W_K} \mathcal{L} = G_{QK}^T W_Q\)</span>. Substituting these gives us the simplified objective:</p>
-<p><span class="math display">\[ \langle G_Q, \Delta W_Q \rangle + \langle G_K, \Delta W_K \rangle\]</span></p>
+<p>By the chain rule, <span class="math inline">\(G_Q = \nabla_{W_Q} \mathcal{L} = G_{QK} W_K\)</span> and <span class="math inline">\(G_K = \nabla_{W_K} \mathcal{L} = G_{QK}^T W_Q\)</span>. Substituting these gives us the simplified steepest descent rule:</p>
+<p><span class="math display">\[\min_{\Delta W_Q, \Delta W_K} \langle G_Q, \Delta W_Q \rangle + \langle G_K, \Delta W_K \rangle\]</span></p>
+<p><span class="math display">\[\text{s.t.} \quad \|\Delta W_Q W_K^T + W_Q \Delta W_K^T\| \le \epsilon\]</span></p>
 <p>This is beautiful—we don’t need to ever form the large <span class="math inline">\(d \times d\)</span> gradient <span class="math inline">\(G_{QK}\)</span>. The downstream gradients of <span class="math inline">\(W_Q\)</span> and <span class="math inline">\(W_K\)</span> (which we would effortlessly get from a naive PyTorch implementation) are sufficient to optimize natively in the space of bilinear transformations.</p>
+</section>
+<section id="the-tangent-space-made-explicit" class="level3">
+<h3 class="anchored" data-anchor-id="the-tangent-space-made-explicit">The Tangent Space, Made Explicit</h3>
+<p>There is a clean geometric reading of the linearized step. The approximation</p>
+<p><span class="math display">\[\Delta W_{QK} \approx \Delta W_Q W_K^T + W_Q \Delta W_K^T\]</span></p>
+<p>says precisely that <span class="math inline">\(\Delta W_{QK}\)</span> is constrained to the <strong>tangent space</strong> of the rank-<span class="math inline">\(d_k\)</span> manifold at the current point <span class="math inline">\(W_{QK} = W_Q W_K^T\)</span>.</p>
+<p>This tangent space admits an equivalent characterization stated directly in the ambient step <span class="math inline">\(\Delta W_{QK}\)</span>, with no reference to the factors:<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p><span class="math display">\[\mathcal{T} = \{\, \Delta W_Q W_K^T + W_Q \Delta W_K^T \,\} = \{\, Z : (I - P_Q)\, Z\, (I - P_K) = 0 \,\}\]</span></p>
+<p>where <span class="math inline">\(P_Q\)</span> and <span class="math inline">\(P_K\)</span> are the orthogonal projectors onto the column spaces of <span class="math inline">\(W_Q\)</span> and <span class="math inline">\(W_K\)</span>. Read as a bilinear form <span class="math inline">\(x_i\, Z\, x_j^T\)</span>, the constraint says the update may create <em>no</em> new interaction between a query direction invisible to <span class="math inline">\(W_Q\)</span> (<span class="math inline">\(x_i \perp \operatorname{col}(W_Q)\)</span>) and a key direction invisible to <span class="math inline">\(W_K\)</span> (<span class="math inline">\(x_j \perp \operatorname{col}(W_K)\)</span>); reaching that doubly-invisible corner is precisely the second-order move carried by the quadratic term <span class="math inline">\(\Delta W_Q \Delta W_K^T\)</span> we dropped.</p>
+<p>This hands us a second, fully equivalent way to write the steepest-descent step—now in the single ambient variable <span class="math inline">\(\Delta W_{QK}\)</span>, with the tangent constraint stated explicitly:</p>
+<p><span class="math display">\[\min_{\Delta W_{QK}} \;\langle G_{QK}, \Delta W_{QK} \rangle \quad \text{s.t.} \quad \|\Delta W_{QK}\| \le \epsilon, \quad (I - P_Q)\, \Delta W_{QK}\, (I - P_K) = 0\]</span></p>
+<p>Although this uses the large <span class="math inline">\(d \times d\)</span> variable, the norm bound is now a clean norm of a <em>single</em> matrix rather than of a coupled sum of factor steps—which is what makes the upcoming derivations tractable. And despite being written with the ambient gradient <span class="math inline">\(G_{QK}\)</span>, the resulting update rules will need neither <span class="math inline">\(G_{QK}\)</span> nor any other <span class="math inline">\(d \times d\)</span> matrix: everything reduces to the cheap factor gradients <span class="math inline">\(G_Q\)</span>, <span class="math inline">\(G_K\)</span> and small <span class="math inline">\(d_k \times d_k\)</span> operations, as we will see.</p>
+<p>This tangent-space viewpoint is not just a convenience. Optimizing along the tangent space of a structured weight manifold is the organizing principle behind recent work on modular manifolds (see for example this <a href="https://thinkingmachines.ai/blog/modular-manifolds/">blog post</a> or the <a href="https://docs.modula.systems/">modula library</a>); here it falls out automatically from considering the space of low-rank bilinear transformations in attention.</p>
 </section>
 </section>
 <section id="the-l2-crown-jewel-analytical-frobenius-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="the-l2-crown-jewel-analytical-frobenius-optimization">6. The <span class="math inline">\(L^2\)</span> Crown Jewel: Analytical Frobenius Optimization</h2>
-<p>Now let’s commit to a norm and derive the update. We will begin with the <span class="math inline">\(L^2\)</span> norm. We derive the update using the Lagrangian form:</p>
+<p>Now let’s commit to a norm and derive the update, starting with the <span class="math inline">\(L^2\)</span> (Frobenius) norm. Rather than the hard norm-ball constraint, we use the equivalent <strong>penalty</strong> (Lagrangian) form: for a fixed norm the two share the same optimal <em>direction</em> and differ only in how the step is scaled, and the penalty form is far easier to differentiate. The natural first attempt is to optimize the factors directly:</p>
 <p><span class="math display">\[\max_{\Delta W_Q, \Delta W_K} \quad \langle G_Q, \Delta W_Q \rangle + \langle G_K, \Delta W_K \rangle - \frac{1}{2\eta} \| \Delta W_Q W_K^T + W_Q \Delta W_K^T \|_F^2\]</span></p>
 <p>Taking partial derivatives with respect to <span class="math inline">\(\Delta W_Q\)</span> and <span class="math inline">\(\Delta W_K\)</span> and setting them to zero yields the following coupled optimality conditions:</p>
 <ol type="1">
@@ -299,30 +320,66 @@ window.Quarto = {
 <p>If we substitute these into the homogeneous part of the first optimality condition, we get:</p>
 <p><span class="math display">\[(W_Q S)(W_K^T W_K) + W_Q ((-W_K S^T)^T W_K) = W_Q S (W_K^T W_K) + W_Q (S W_K^T W_K) = W_Q S W_K^T W_K - W_Q S W_K^T W_K = 0\]</span></p>
 <p>The same substitution holds for the second condition. This proves that there is an entire affine subspace of optimal solutions.</p>
-<section id="exploiting-the-redundancy" class="level3">
-<h3 class="anchored" data-anchor-id="exploiting-the-redundancy">Exploiting the Redundancy</h3>
-<p>At first glance this null space looks like a defect: there is no unique pair <span class="math inline">\((\Delta W_Q, \Delta W_K)\)</span> for the optimizer to return. But look at what the gauge mode actually does to the bilinear step. Substituting <span class="math inline">\(\Delta W_Q = W_Q S\)</span> and <span class="math inline">\(\Delta W_K = -W_K S^T\)</span> into the tangent update gives:</p>
+<section id="switching-to-the-gauge-free-variable" class="level3">
+<h3 class="anchored" data-anchor-id="switching-to-the-gauge-free-variable">Switching to the Gauge-Free Variable</h3>
+<p>While an under-determinacy is not in itself a problem—a linear solver handles it fine, for example by returning the minimum-norm solution—it often signals that a more insightful re-parameterization is available. That is the case here. The objective depends on the factors only through the tangent step <span class="math inline">\(\Delta W_Q W_K^T + W_Q \Delta W_K^T\)</span> (the penalty is its squared norm, and as shown above the linear part is <span class="math inline">\(\langle G_{QK}, \cdot\rangle\)</span> of it), so any direction that leaves this step fixed leaves the objective unchanged. And there are many—for any <span class="math inline">\(d_k \times d_k\)</span> matrix <span class="math inline">\(S\)</span>, substituting <span class="math inline">\(\Delta W_Q = W_Q S\)</span> and <span class="math inline">\(\Delta W_K = -W_K S^T\)</span> gives</p>
 <p><span class="math display">\[\Delta W_Q W_K^T + W_Q \Delta W_K^T = W_Q S W_K^T - W_Q S W_K^T = 0\]</span></p>
-<p>Every direction in the null space leaves the actual update to <span class="math inline">\(W_{QK}\)</span> completely unchanged. The freedom is not in <em>what</em> step we take in the space of bilinear forms—it is only in <em>how we split</em> that single step between the two factors. Since the loss (to first order) only ever sees the product <span class="math inline">\(W_{QK}\)</span>, we should stop trying to solve for <span class="math inline">\(\Delta W_Q\)</span> and <span class="math inline">\(\Delta W_K\)</span> directly, and instead solve for the one quantity that is actually pinned down: the tangent step itself,</p>
-<p><span class="math display">\[T := \Delta W_Q W_K^T + W_Q \Delta W_K^T\]</span></p>
-<p>This is how we turn the singularity to our advantage. The two optimality conditions are coupled and <span class="math inline">\(2 d \cdot d_k\)</span>-dimensional only because they are written in the redundant factors. Rewritten in terms of <span class="math inline">\(T\)</span>, they collapse into something trivial. Since <span class="math inline">\(\Delta W_Q (W_K^T W_K) + W_Q (\Delta W_K^T W_K) = T W_K\)</span> (and symmetrically for the second), the conditions are simply:</p>
-<p><span class="math display">\[T W_K = \eta\, G_Q, \qquad T^T W_Q = \eta\, G_K\]</span></p>
-<p>We can now read off <span class="math inline">\(T\)</span> in closed form, with no linear solve at all. Because <span class="math inline">\(T\)</span> lies in the tangent space, it satisfies the projection identity <span class="math inline">\(T = P_Q T + T P_K - P_Q T P_K\)</span>, where</p>
-<p><span class="math display">\[P_Q = W_Q (W_Q^T W_Q)^{-1} W_Q^T, \qquad P_K = W_K (W_K^T W_K)^{-1} W_K^T\]</span></p>
-<p>are the orthogonal projectors onto the column spaces of the two factors. The conditions above supply each piece directly—<span class="math inline">\(W_Q^T T = \eta\, G_K^T\)</span> from the second and <span class="math inline">\(T W_K = \eta\, G_Q\)</span> from the first—yielding:</p>
-<p><span class="math display">\[T = \eta\left[\, W_Q (W_Q^T W_Q)^{-1} G_K^T + G_Q (W_K^T W_K)^{-1} W_K^T - W_Q (W_Q^T W_Q)^{-1}(W_Q^T G_Q)(W_K^T W_K)^{-1} W_K^T \,\right]\]</span></p>
-<p>Every inverse here is a tiny <span class="math inline">\(d_k \times d_k\)</span> matrix, and we never form the <span class="math inline">\(d \times d\)</span> gradient <span class="math inline">\(G_{QK}\)</span>—only the cheap factor gradients <span class="math inline">\(G_Q\)</span> and <span class="math inline">\(G_K\)</span> appear.</p>
-<p>All that remains is to hand the optimizer <em>some</em> factorization of <span class="math inline">\(T\)</span>. This last choice is precisely the leftover gauge freedom, and by the argument above it does not affect the update to <span class="math inline">\(W_{QK}\)</span>. A simple, immediate split is:</p>
+<p>The non-uniqueness, then, is not in <em>what</em> step we take in the space of bilinear forms—only in <em>how we split</em> it between the two factors. The factors are simply the wrong variable to solve for.</p>
+<p>This is exactly why we built the geometric formulation in the previous section: it is written directly in the one object that <em>is</em> pinned down, <span class="math inline">\(\Delta W_{QK}\)</span>, and never refers to the split. Committing to the <span class="math inline">\(L^2\)</span> norm, its penalty form reads:</p>
+<p><span class="math display">\[\max_{\Delta W_{QK}} \;\langle G_{QK}, \Delta W_{QK} \rangle - \frac{1}{2\eta}\|\Delta W_{QK}\|_F^2 \quad \text{s.t.} \quad (I - P_Q)\, \Delta W_{QK}\, (I - P_K) = 0\]</span></p>
+<p>This is no longer underdetermined: the objective is strictly convex on the tangent subspace, so it has a unique minimizer.</p>
+<p>Steepest descent with a Frobenius penalty over a linear subspace is nothing but the orthogonal projection of the unconstrained gradient step onto that subspace. The projector onto the tangent space is</p>
+<p><span class="math display">\[\mathcal{P}_{\mathcal{T}}(X) = P_Q X + X P_K - P_Q X P_K,\]</span></p>
+<p>so the solution is <span class="math inline">\(\Delta W_{QK} = \eta\, \mathcal{P}_{\mathcal{T}}(G_{QK})\)</span>. Using the chain-rule identities <span class="math inline">\(G_{QK} W_K = G_Q\)</span> and <span class="math inline">\(W_Q^T G_{QK} = G_K^T\)</span> to eliminate every appearance of the ambient gradient—and writing <span class="math inline">\(W_Q^+, W_K^+\)</span> for the Moore–Penrose pseudo-inverses—this becomes:</p>
+<p><span class="math display">\[\Delta W_{QK} = \eta\left[\, (W_Q^+)^T G_K^T + G_Q W_K^+ - (W_Q^+)^T (W_Q^T G_Q)\, W_K^+ \,\right]\]</span></p>
+<p>Each pseudo-inverse hides only a tiny <span class="math inline">\(d_k \times d_k\)</span> inversion, and—just as promised—only the cheap factor gradients <span class="math inline">\(G_Q\)</span> and <span class="math inline">\(G_K\)</span> appear; the <span class="math inline">\(d \times d\)</span> gradient <span class="math inline">\(G_{QK}\)</span> never has to be formed.</p>
+<p>All that remains is to hand the optimizer <em>some</em> factorization of this step: a pair <span class="math inline">\((\Delta W_Q, \Delta W_K)\)</span> with <span class="math inline">\(\Delta W_Q W_K^T + W_Q \Delta W_K^T = \Delta W_{QK}\)</span>. This is precisely the gauge freedom we met earlier—the null space of the factor system—resurfacing exactly where it is harmless: any valid split produces the same <span class="math inline">\(\Delta W_{QK}\)</span>. A simple, immediate choice is:</p>
 <p><span class="math display">\[\Delta W_Q = \eta\, G_Q (W_K^T W_K)^{-1}\]</span></p>
 <p><span class="math display">\[\Delta W_K = \eta\,(I - P_K)\, G_K (W_Q^T W_Q)^{-1}\]</span></p>
-<p>(If the conditioning of the factors matters across many steps, one can instead solve for the minimum-norm, balanced split—but the resulting step in the space of bilinear forms is identical.)</p>
-<p>This gives the exact, closed-form steepest-descent step on the tangent space. By recognizing that the under-determinacy is pure factorization redundancy rather than a genuine ambiguity, we reduced a massive, ill-posed coupled system to a handful of <span class="math inline">\(d_k \times d_k\)</span> operations—no Sylvester equation, no <span class="math inline">\(d \times d\)</span> inversion, nothing to iterate.</p>
+<p>It is worth pausing on what these rules say. Vanilla SGD would update each factor with its own gradient, <span class="math inline">\(\Delta W_Q = \eta\, G_Q\)</span> and <span class="math inline">\(\Delta W_K = \eta\, G_K\)</span>, treating the two matrices as independent. Our rules instead right-multiply each factor gradient by the inverse Gram matrix of the <em>other</em> factor—<span class="math inline">\((W_K^T W_K)^{-1}\)</span> for the query step, <span class="math inline">\((W_Q^T W_Q)^{-1}\)</span> for the key step. The bilinear geometry couples them: the natural scale of a step in <span class="math inline">\(W_Q\)</span> is set by the size of <span class="math inline">\(W_K\)</span>, and vice versa, so whichever factor currently carries more of the product’s magnitude moves proportionally less.</p>
+<p>This coupling is also what makes the step insensitive to the factorization’s scale ambiguity. The reparameterization <span class="math inline">\(W_Q \to W_Q R,\ W_K \to W_K R^{-T}\)</span> leaves the product <span class="math inline">\(W_{QK}\)</span>—and hence the loss—unchanged, yet it would alter the bare SGD step; here the induced update <span class="math inline">\(\Delta W_{QK} = \eta\, \mathcal{P}_{\mathcal{T}}(G_{QK})\)</span> depends on the factors only through their column spaces, which the gauge preserves, so it is invariant by construction. SGD descends on the two matrices; this descends on the bilinear form they define.</p>
+<p>Stepping back: by linearizing onto the tangent space and solving for the gauge-invariant step <span class="math inline">\(\Delta W_{QK}\)</span> rather than the redundant factors, the entire <span class="math inline">\(L^2\)</span> derivation collapsed to a handful of <span class="math inline">\(d_k \times d_k\)</span> operations—no ill-posed coupled solve, and no <span class="math inline">\(d \times d\)</span> matrix ever formed.</p>
+<p>Frobenius was only the first norm we could have chosen. The geometric formulation—a linear objective minimized over the tangent space under a norm bound—is norm-agnostic; only the inner solve changes. Next we take the norm the bilinear picture really calls for: the sup norm, which (as we saw earlier) is the spectral norm of the form. There the clean projection no longer applies, but the steepest-descent step still does—and it leads us back to Muon.</p>
+</section>
+</section>
+<section id="the-linfty-pareto-frontier-a-spectrum-of-tractability" class="level2">
+<h2 class="anchored" data-anchor-id="the-linfty-pareto-frontier-a-spectrum-of-tractability">7. The <span class="math inline">\(L^\infty\)</span> Pareto Frontier: A Spectrum of Tractability</h2>
+<p>If we instead choose the supremum norm to bound the spectral behavior of the composite matrix (<span class="math inline">\(\| \Delta W_{QK} \|_2 \le \epsilon\)</span>), the rigid <span class="math inline">\(L^\infty\)</span> geometry shatters into a spectrum of approximations. We can map these from the most mathematically precise (and intractable) down to the most hardware-friendly.</p>
+<section id="i.-the-exact-convex-formulation" class="level3">
+<h3 class="anchored" data-anchor-id="i.-the-exact-convex-formulation">I. The Exact Convex Formulation</h3>
+<p>Because the step <span class="math inline">\(\Delta W_Q W_K^T + W_Q \Delta W_K^T\)</span> is strictly linear, bounding its spectral norm defines a perfectly convex set. While this convex problem can be solved directly (e.g., using a Factorized Alternating Direction Method of Multipliers, or ADMM), iteratively projecting onto the spectral ball still requires repeated Singular Value Decompositions in the inner loop, creating significant computational friction.</p>
+</section>
+<section id="ii.-the-triangle-inequality-relaxation" class="level3">
+<h3 class="anchored" data-anchor-id="ii.-the-triangle-inequality-relaxation">II. The Triangle Inequality Relaxation</h3>
+<p>To bypass iterative solvers, we relax the bound using the triangle inequality:</p>
+<p><span class="math display">\[\| \Delta W_Q W_K^T + W_Q \Delta W_K^T \|_2 \le \| \Delta W_Q W_K^T \|_2 + \| W_Q \Delta W_K^T \|_2 \le \epsilon\]</span></p>
+<p>By allocating an <span class="math inline">\(\epsilon\)</span> budget to each term, the problem decouples cleanly. For the query matrix, the steepest descent maps through the pseudo-inverse:</p>
+<p><span class="math display">\[\Delta W_Q \propto - \text{Orth}(G_Q W_K^+) (W_K^T)^+\]</span></p>
+<p>Interestingly, if we try to analytically optimize the allocation of <span class="math inline">\(\epsilon\)</span> between the two matrices by parameterizing it as <span class="math inline">\(t\epsilon\)</span> and <span class="math inline">\((1-t)\epsilon\)</span>, the <span class="math inline">\(L^\infty\)</span> geometry forces a “bang-bang” solution: the optimal path allocates 100% of the budget to the steepest matrix and freezes the other. In practice, a fixed symmetric split avoids this extreme coordinate descent while preserving the mathematically beautiful Riemannian preconditioning of the pseudo-inverse.</p>
+</section>
+<section id="iii.-the-sub-multiplicative-relaxation-cross-scaled-muon" class="level3">
+<h3 class="anchored" data-anchor-id="iii.-the-sub-multiplicative-relaxation-cross-scaled-muon">III. The Sub-Multiplicative Relaxation (Cross-Scaled Muon)</h3>
+<p>The final, most tractable point on the frontier applies the sub-multiplicative property of the spectral norm to the previous bounds:</p>
+<p><span class="math display">\[\| \Delta W_Q W_K^T \|_2 \le \| \Delta W_Q \|_2 \| W_K \|_2\]</span></p>
+<p>This completely decouples the norms into scalars. The optimization resolves exactly into standard, independent Muon steps—but with a critical, theoretically justified correction. The step size for each matrix must be inversely proportional to the scalar spectral norm of the <em>other</em> matrix:</p>
+<p><span class="math display">\[\Delta W_Q \propto - \left( \frac{1}{\| W_K \|_2} \right) \text{Orth}(G_Q)\]</span></p>
+<p>This final relaxation recovers the distributed speed of the standard Muon optimizer while mathematically re-injecting the vital cross-matrix coupling that respects the true bilinear geometry of attention.</p>
 
 
 </section>
 </section>
 
-</main> <!-- /main -->
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>Proof. Here <span class="math inline">\(W_Q^+\)</span> and <span class="math inline">\(W_K^+\)</span> denote the Moore–Penrose pseudo-inverses, so that <span class="math inline">\(P_Q = W_Q W_Q^+\)</span> and <span class="math inline">\(P_K = W_K W_K^+\)</span>. Both inclusions are direct. For “<span class="math inline">\(\subseteq\)</span>”, note that <span class="math inline">\((I - P_Q) W_Q = 0\)</span> and <span class="math inline">\(W_K^T (I - P_K) = 0\)</span>, so applying the double projection to any factorized step annihilates both of its terms. For “<span class="math inline">\(\supseteq\)</span>”, take any <span class="math inline">\(Z\)</span> with <span class="math inline">\((I - P_Q)\, Z\, (I - P_K) = 0\)</span> and split it twice—once on the left by <span class="math inline">\(P_Q\)</span>, then the remainder on the right by <span class="math inline">\(P_K\)</span>:</p>
+<p><span class="math display">\[Z = P_Q Z + (I - P_Q) Z = P_Q Z + (I - P_Q) Z P_K + \underbrace{(I - P_Q)\, Z\, (I - P_K)}_{=\,0}\]</span></p>
+<p>The two surviving terms are each <em>already</em> in factorized form,</p>
+<p><span class="math display">\[P_Q Z = W_Q \underbrace{W_Q^+ Z}_{\Delta W_K^T}, \qquad (I - P_Q) Z P_K = \underbrace{(I - P_Q) Z\, (W_K^+)^T}_{\Delta W_Q}\, W_K^T,\]</span></p>
+<p>so <span class="math inline">\(Z = \Delta W_Q W_K^T + W_Q \Delta W_K^T \in \mathcal{T}\)</span>. Whenever the orthogonality condition holds, projecting onto the two factor subspaces hands you the factors directly.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";
