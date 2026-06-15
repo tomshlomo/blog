@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Tom Shlomo">
+<meta name="dcterms.date" content="2026-06-14">
+<meta name="description" content="Adam, and even Muon, optimize attention’s query and key matrices as if they were independent. Treating them as the single bilinear form they jointly define yields a family of Muon-style update rules.">
+
+<title>Bilinear Muon – Tom Shlomo’s Blog</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-0a6b7249c26820e032cb0bd839ff02b1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-4360c678b5099ca041644eb02eaa1bfe.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/quarto-contrib/academicons-1.9.2/all.css" rel="stylesheet">
+<link href="../../site_libs/quarto-contrib/academicons-1.9.2/size.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Tom Shlomo’s Blog</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/tom-shlomo/"> <i class="bi bi-linkedin" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/tomshlomo"> <i class="bi bi-github" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://scholar.google.com/citations?user=ZJSZgpwAAAAJ&amp;hl=en"> 
+<span class="menu-text"><i class="ai  ai-google-scholar ai-Large"></i></span></a>
+  </li>  
+  <li class="nav-item compact">
+    <a class="nav-link" href="../../index.xml"> <i class="bi bi-rss" role="img">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Bilinear Muon</h1>
+                  <div>
+        <div class="description">
+          Adam, and even Muon, optimize attention’s query and key matrices as if they were independent. Treating them as the single bilinear form they jointly define yields a family of Muon-style update rules.
+        </div>
+      </div>
+                </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      <div>
+      <div class="quarto-title-meta-heading">Author</div>
+      <div class="quarto-title-meta-contents">
+               <p>Tom Shlomo </p>
+            </div>
+    </div>
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">June 14, 2026</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#adam-treats-weight-matrices-as-flat-arrays" id="toc-adam-treats-weight-matrices-as-flat-arrays" class="nav-link" data-scroll-target="#adam-treats-weight-matrices-as-flat-arrays">1. Adam Treats Weight Matrices as Flat Arrays</a></li>
+  <li><a href="#muon-steepest-descent-under-the-spectral-norm" id="toc-muon-steepest-descent-under-the-spectral-norm" class="nav-link" data-scroll-target="#muon-steepest-descent-under-the-spectral-norm">2. Muon: Steepest Descent Under the Spectral Norm</a></li>
+  <li><a href="#attention-as-a-bilinear-form" id="toc-attention-as-a-bilinear-form" class="nav-link" data-scroll-target="#attention-as-a-bilinear-form">3. Attention as a Bilinear Form</a></li>
+  <li><a href="#the-low-rank-constraint" id="toc-the-low-rank-constraint" class="nav-link" data-scroll-target="#the-low-rank-constraint">4. The Low-Rank Constraint</a></li>
+  <li><a href="#the-tangent-approximation" id="toc-the-tangent-approximation" class="nav-link" data-scroll-target="#the-tangent-approximation">5. The Tangent Approximation</a>
+  <ul class="collapse">
+  <li><a href="#reducing-the-objective-to-the-factor-gradients" id="toc-reducing-the-objective-to-the-factor-gradients" class="nav-link" data-scroll-target="#reducing-the-objective-to-the-factor-gradients">Reducing the Objective to the Factor Gradients</a></li>
+  <li><a href="#an-explicit-characterization-of-the-tangent-space" id="toc-an-explicit-characterization-of-the-tangent-space" class="nav-link" data-scroll-target="#an-explicit-characterization-of-the-tangent-space">An Explicit Characterization of the Tangent Space</a></li>
+  </ul></li>
+  <li><a href="#the-l2-case-analytical-frobenius-optimization" id="toc-the-l2-case-analytical-frobenius-optimization" class="nav-link" data-scroll-target="#the-l2-case-analytical-frobenius-optimization">6. The <span class="math inline">\(L^2\)</span> Case: Analytical Frobenius Optimization</a>
+  <ul class="collapse">
+  <li><a href="#switching-to-the-gauge-free-variable" id="toc-switching-to-the-gauge-free-variable" class="nav-link" data-scroll-target="#switching-to-the-gauge-free-variable">Switching to the Gauge-Free Variable</a></li>
+  </ul></li>
+  <li><a href="#the-linfty-case-from-the-exact-problem-to-closed-form-restrictions" id="toc-the-linfty-case-from-the-exact-problem-to-closed-form-restrictions" class="nav-link" data-scroll-target="#the-linfty-case-from-the-exact-problem-to-closed-form-restrictions">7. The <span class="math inline">\(L^\infty\)</span> Case: From the Exact Problem to Closed-Form Restrictions</a>
+  <ul class="collapse">
+  <li><a href="#i.-the-exact-convex-problem" id="toc-i.-the-exact-convex-problem" class="nav-link" data-scroll-target="#i.-the-exact-convex-problem">I. The exact convex problem</a></li>
+  <li><a href="#ii.-the-triangle-inequality-restriction-preconditioned-muon" id="toc-ii.-the-triangle-inequality-restriction-preconditioned-muon" class="nav-link" data-scroll-target="#ii.-the-triangle-inequality-restriction-preconditioned-muon">II. The triangle-inequality restriction: preconditioned Muon</a></li>
+  <li><a href="#iii.-the-sub-multiplicative-restriction-cross-scaled-muon" id="toc-iii.-the-sub-multiplicative-restriction-cross-scaled-muon" class="nav-link" data-scroll-target="#iii.-the-sub-multiplicative-restriction-cross-scaled-muon">III. The sub-multiplicative restriction: cross-scaled Muon</a></li>
+  <li><a href="#computing-the-norms" id="toc-computing-the-norms" class="nav-link" data-scroll-target="#computing-the-norms">Computing the norms</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">8. Summary</a></li>
+  <li><a href="#related-work" id="toc-related-work" class="nav-link" data-scroll-target="#related-work">9. Related Work</a></li>
+  <li><a href="#future-work" id="toc-future-work" class="nav-link" data-scroll-target="#future-work">10. Future Work</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>Optimizers have been getting steadily more geometry-aware. Adam treats every weight as an independent scalar. Muon takes a step further by treating a weight matrix as a linear operator and taking its steepest-descent step in the spectral norm. This post pushes one step further still, into the geometry that attention actually computes in.</p>
+<p>The key observation is that the query and key matrices <span class="math inline">\(W_Q\)</span> and <span class="math inline">\(W_K\)</span> are never used on their own. What an attention score sees is the bilinear form <span class="math inline">\(x_i\, W_Q W_K^T x_j^T\)</span>, governed by the single matrix <span class="math inline">\(W_{QK} = W_Q W_K^T\)</span>. So instead of optimizing <span class="math inline">\(W_Q\)</span> and <span class="math inline">\(W_K\)</span> as two independent operators, we should run Muon on the bilinear form they jointly define. That one shift in perspective is the heart of the post.</p>
+<p>Carried out properly, it leads not to a single optimizer but to a family of them. Working in the space of low-rank bilinear forms, I derive the steepest-descent update under two different norms. The Frobenius (<span class="math inline">\(L^2\)</span>) norm gives a clean closed form I call Bilinear SGD, in which each factor’s gradient is preconditioned by the geometry of the other factor. The spectral (<span class="math inline">\(L^\infty\)</span>) norm, the one the bilinear picture really calls for, has no exact closed form, so I trade exactness for GPU-friendliness through a sequence of progressively cheaper approximations. These produce two practical Muon variants, preconditioned Muon and cross-scaled Muon, each in a winner-take-all and a symmetric flavor. A summary table at the end lays them all out by the design choices that separate them: the space they descend in, the norm that bounds the step, and the approximations that buy a closed form. Much of this overlaps with Tilde Research’s <a href="https://blog.tilderesearch.com/blog/compositional-muon">Compositional Muon</a>, published a few days earlier; the <a href="#related-work">Related Work</a> section spells out what coincides and what is new.</p>
+<p>A caveat up front. This is a theory-first post. I derive these update rules but have not yet benchmarked them, so I make no claim about which one wins in practice. The aim is to show that the bilinear view is the natural one for attention, and to map out the design space it opens up.</p>
+</section>
+<section id="adam-treats-weight-matrices-as-flat-arrays" class="level2">
+<h2 class="anchored" data-anchor-id="adam-treats-weight-matrices-as-flat-arrays">1. Adam Treats Weight Matrices as Flat Arrays</h2>
+<p>For years, the deep learning community has relied on optimizers like Adam and AdamW. While effective, these methods suffer from a fundamental geometric blind spot: they view weight matrices as flat, one-dimensional arrays of parameters. By maintaining per-parameter moments, Adam scales each weight independently, completely ignoring the structural reality that these numbers are spatially arranged into matrices. It optimizes in “Flatland,” blind to the fact that these matrices operate on high-dimensional vector spaces.</p>
+</section>
+<section id="muon-steepest-descent-under-the-spectral-norm" class="level2">
+<h2 class="anchored" data-anchor-id="muon-steepest-descent-under-the-spectral-norm">2. Muon: Steepest Descent Under the Spectral Norm</h2>
+<p>The recently introduced Muon optimizer breaks free from Flatland by treating weight matrices as what they actually are: linear operators. Instead of scaling parameters individually, Muon operates on the spectrum of the matrix.</p>
+<p>Specifically, Muon computes the steepest descent step bounded by the spectral norm (<span class="math inline">\(\|\cdot\|_2\)</span>). Let <span class="math inline">\(\mathcal{L}\)</span> be the loss function and <span class="math inline">\(G = \nabla_W \mathcal{L}\)</span> be the gradient with respect to a linear operator <span class="math inline">\(W\)</span>. Muon solves:</p>
+<p><span id="eq-muon"><span class="math display">\[\min_{\Delta W} \langle G, \Delta W \rangle \quad \text{s.t.} \quad \|\Delta W\|_2 \le \epsilon \tag{1}\]</span></span></p>
+<p>The analytical solution to this problem is <span class="math inline">\(\Delta W = -\epsilon \cdot \text{Orth}(G)\)</span>, where <span class="math inline">\(\text{Orth}(G)\)</span> is the orthogonalized gradient, an operation that flattens all non-zero singular values of <span class="math inline">\(G\)</span> to exactly <span class="math inline">\(1\)</span>. By applying orthogonalization, Muon forces the update to be well-conditioned, making the learning process invariant to the dominant singular values of the gradient. Muon’s empirical track record suggests that respecting the geometry of linear operators yields faster, more stable training.</p>
+</section>
+<section id="attention-as-a-bilinear-form" class="level2">
+<h2 class="anchored" data-anchor-id="attention-as-a-bilinear-form">3. Attention as a Bilinear Form</h2>
+<p>However, we can take the Muon idea one step further when applying it to Transformer attention layers. In the pre-softmax attention mechanism, the query matrix (<span class="math inline">\(W_Q\)</span>) and key matrix (<span class="math inline">\(W_K\)</span>) do not evaluate data independently.</p>
+<p>Let <span class="math inline">\(x_i\)</span> and <span class="math inline">\(x_j\)</span> be the token embeddings (vectors in <span class="math inline">\(\mathbb{R}^d\)</span>) for tokens <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>. The attention mechanism evaluates their interaction not as isolated linear projections, but as a bilinear form. A bilinear form is a function <span class="math inline">\(B: \mathbb{R}^d \times \mathbb{R}^d \to \mathbb{R}\)</span> that is linear in both arguments. Every such bilinear form can be uniquely associated with a matrix <span class="math inline">\(M \in \mathbb{R}^{d \times d}\)</span> such that:</p>
+<p><span id="eq-bilinear"><span class="math display">\[B(x_i, x_j) = x_i M x_j^T \tag{2}\]</span></span></p>
+<p>In the case of self-attention, the associated matrix is <span class="math inline">\(W_{QK} = W_Q W_K^T\)</span>.</p>
+<p>The critical realization is that <strong>we are actually searching over the space of bilinear forms</strong>, not independent linear operators. This space has its own norms and structures that are fundamentally different from the ones we would get if we looked at each matrix individually.</p>
+<p>For instance, the supremum norm of a bilinear form measures its maximum possible output for bounded inputs:</p>
+<p><span id="eq-supnorm"><span class="math display">\[\|B\|_\infty = \sup_{\substack{\|x\|_2 \le 1 \\ \|y\|_2 \le 1}} |B(x, y)| \tag{3}\]</span></span></p>
+<p>When we translate this norm back to its associated matrix <span class="math inline">\(M\)</span>, it corresponds exactly to the spectral norm of the composite matrix (<span class="math inline">\(\|M\|_2\)</span>).</p>
+<p>Similarly, we can define the Euclidean energy of the bilinear form natively as the expected squared output under isotropic random inputs. If <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> are drawn from distributions with zero mean and identity covariance (<span class="math inline">\(\mathbb{E}[x^T x] = I\)</span>, <span class="math inline">\(\mathbb{E}[y^T y] = I\)</span>), the expected energy is:</p>
+<p><span class="math display">\[\mathbb{E}\left[|B(x, y)|^2\right]\]</span></p>
+<p>When mapped back to the associated matrix <span class="math inline">\(M\)</span>, this geometric expectation corresponds exactly to the squared Frobenius norm of the matrix (<span class="math inline">\(\|M\|_F^2\)</span>).</p>
+<p>By treating <span class="math inline">\(W_Q\)</span> and <span class="math inline">\(W_K\)</span> as completely independent linear operators, current optimizers are mathematically blind to the true norm and geometric structure of the bilinear form that actually dictates the forward pass. To optimize attention correctly, we must optimize natively in the space of bilinear forms.</p>
+</section>
+<section id="the-low-rank-constraint" class="level2">
+<h2 class="anchored" data-anchor-id="the-low-rank-constraint">4. The Low-Rank Constraint</h2>
+<p>In practice, we do not search over the entire ambient space of bilinear forms. Neural networks use bilinear forms of the structure <span class="math inline">\(x_i W_Q W_K^T x_j^T\)</span>, which correspond to a strictly low-rank subset. Specifically, the intermediate projection space has a dimension <span class="math inline">\(d_k\)</span> (the attention head dimension), which is typically much smaller than the hidden dimension <span class="math inline">\(d\)</span> (e.g., <span class="math inline">\(d_k = 128\)</span> while <span class="math inline">\(d = 4096\)</span>). This limits the rank of the associated matrix to at most <span class="math inline">\(d_k\)</span>.</p>
+<p>This architectural constraint is highly deliberate and provides three major benefits:</p>
+<ol type="1">
+<li><strong>Computation:</strong> It allows for significantly faster evaluation of the bilinear form in both the forward and backward passes due to matrix associativity (computing <span class="math inline">\((x_i W_Q) (x_j W_K)^T\)</span> is vastly cheaper than multiplying by a full <span class="math inline">\(d \times d\)</span> matrix).</li>
+<li><strong>Memory:</strong> It requires storing only <span class="math inline">\(2 d \cdot d_k\)</span> parameters instead of the <span class="math inline">\(d^2\)</span> parameters required for a full-rank bilinear form.</li>
+<li><strong>Generalization:</strong> By drastically reducing the parameter count, it restricts the hypothesis space, acting as an implicit regularization that promotes smoother, more generalizable representations.</li>
+</ol>
+<p>To optimize within this subset, our goal is to find an update <span class="math inline">\(\Delta W_{QK}\)</span> that maximizes descent along the composite gradient <span class="math inline">\(G_{QK}\)</span> (where <span class="math inline">\(G_{QK} = \nabla_{W_{QK}} \mathcal{L}\)</span>), subject to both a continuous norm bound and the strict structural constraint of the architecture.</p>
+<p>The steepest descent problem in its pure form is therefore:</p>
+<p><span id="eq-rank-sd"><span class="math display">\[
+\begin{aligned}
+\min_{\Delta W_{QK}} \quad &amp; \langle G_{QK}, \Delta W_{QK} \rangle \\
+\text{s.t.} \quad &amp; \|\Delta W_{QK}\| \le \epsilon \\
+&amp; \text{rank}(W_{QK} + \Delta W_{QK}) \le d_k
+\end{aligned}
+\tag{4}\]</span></span></p>
+<p>How do we actually enforce this rank constraint? By the mathematical definition of matrix rank, any <span class="math inline">\(d \times d\)</span> matrix has a rank of at most <span class="math inline">\(d_k\)</span> if and only if it can be perfectly factored into the product of two <span class="math inline">\(d \times d_k\)</span> matrices. Let us call these new ideal factors <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span>:</p>
+<p><span id="eq-factor"><span class="math display">\[W_{QK} + \Delta W_{QK} = A B^T \tag{5}\]</span></span></p>
+<p>Since our current weights <span class="math inline">\(W_Q\)</span> and <span class="math inline">\(W_K\)</span> are fixed, we can reparameterize our search. Instead of searching for the ambient step <span class="math inline">\(\Delta W_{QK}\)</span>, we search for the difference between these new ideal factors and our current weights:</p>
+<p><span id="eq-reparam"><span class="math display">\[
+\Delta W_Q = A - W_Q, \qquad \Delta W_K = B - W_K
+\tag{6}\]</span></span></p>
+<p>Substituting these back into our factorization gives:</p>
+<p><span class="math display">\[W_{QK} + \Delta W_{QK} = (W_Q + \Delta W_Q)(W_K + \Delta W_K)^T\]</span></p>
+<p>Expanding the right side yields:</p>
+<p><span id="eq-expand"><span class="math display">\[W_{QK} + \Delta W_{QK} = W_Q W_K^T + \Delta W_Q W_K^T + W_Q \Delta W_K^T + \Delta W_Q \Delta W_K^T \tag{7}\]</span></span></p>
+<p>Since we defined our current state as <span class="math inline">\(W_{QK} = W_Q W_K^T\)</span>, we can subtract it from both sides to isolate the exact step taken in the ambient space of bilinear forms:</p>
+<p><span id="eq-exact-step"><span class="math display">\[\Delta W_{QK} = \Delta W_Q W_K^T + W_Q \Delta W_K^T + \Delta W_Q \Delta W_K^T \tag{8}\]</span></span></p>
+<p>This is a useful geometric fact. Searching over the abstract, non-convex rank constraint of <a href="#eq-rank-sd" class="quarto-xref">Equation&nbsp;4</a> in the ambient space is <strong>mathematically identical</strong> to searching over the unconstrained factors <span class="math inline">\(\Delta W_Q\)</span> and <span class="math inline">\(\Delta W_K\)</span> and applying this exact polynomial expansion. There is no rank-<span class="math inline">\(d_k\)</span> matrix reachable in the ambient space that cannot be reached natively through the factors. The architectural constraint forces the algebraic form.</p>
+</section>
+<section id="the-tangent-approximation" class="level2">
+<h2 class="anchored" data-anchor-id="the-tangent-approximation">5. The Tangent Approximation</h2>
+<p>By moving to the factorized view, we have translated an abstract rank constraint into a concrete algebraic equation. By construction, any update applied via the factors trivially satisfies the rank <span class="math inline">\(d_k\)</span> constraint.</p>
+<p>However, substituting this exact <span class="math inline">\(\Delta W_{QK}\)</span> into our steepest descent objective introduces a significant mathematical hurdle: the quadratic term <span class="math inline">\(\Delta W_Q \Delta W_K^T\)</span>. Because this bilinear coupling transforms the norm constraint into a non-convex set, the quadratic term will prove exceptionally difficult to handle analytically in the coming sections. There are two approaches we can take here to move forward.</p>
+<p>The first approach is to keep the quadratic term and employ control-theoretic techniques, such as Linear Matrix Inequality (LMI) or Semidefinite Programming (SDP) relaxations, to bound the non-convex objective. While mathematically intriguing, these iterative solvers are not well-suited for the massive parallelism of modern GPUs, so we will not pursue them here.</p>
+<p>The second approach is to ignore the quadratic term in <a href="#eq-exact-step" class="quarto-xref">Equation&nbsp;8</a>. Assuming our step size bound <span class="math inline">\(\epsilon\)</span> is sufficiently small, the quadratic term <span class="math inline">\(\Delta W_Q \Delta W_K^T\)</span> (which scales with <span class="math inline">\(\epsilon^2\)</span>) is negligible compared to the linear terms. Dropping it yields the approximation:</p>
+<p><span id="eq-tangent"><span class="math display">\[\Delta W_{QK} \approx \Delta W_Q W_K^T + W_Q \Delta W_K^T \tag{9}\]</span></span></p>
+<p>Geometrically, this is the statement that our step lies strictly on the <em>tangent space</em> of the low-rank manifold at our current weights, a perspective we make precise, and then exploit, below.</p>
+<p>This first-order tangent approximation captures the optimal descent direction while converting the intractable non-convex constraint into a strictly linear operator, unlocking exact, hardware-friendly analytical solutions.</p>
+<section id="reducing-the-objective-to-the-factor-gradients" class="level3">
+<h3 class="anchored" data-anchor-id="reducing-the-objective-to-the-factor-gradients">Reducing the Objective to the Factor Gradients</h3>
+<p>Using this tangent approximation has a powerful implication for our objective function. If we substitute our linearized step into the descent objective <span class="math inline">\(\langle G_{QK}, \Delta W_{QK} \rangle\)</span>, we get:</p>
+<p><span class="math display">\[\langle G_{QK}, \Delta W_Q W_K^T + W_Q \Delta W_K^T \rangle = \langle G_{QK}, \Delta W_Q W_K^T \rangle + \langle G_{QK}, W_Q \Delta W_K^T \rangle\]</span></p>
+<p>Using the cyclic properties of the Frobenius inner product (trace), we can isolate the parameter updates:</p>
+<p><span class="math display">\[\langle G_{QK}, \Delta W_Q W_K^T \rangle = \text{tr}(G_{QK}^T \Delta W_Q W_K^T) = \text{tr}(W_K^T G_{QK}^T \Delta W_Q) = \text{tr}((G_{QK} W_K)^T \Delta W_Q) = \langle G_{QK} W_K, \Delta W_Q \rangle\]</span></p>
+<p>Similarly, for the second term:</p>
+<p><span class="math display">\[\langle G_{QK}, W_Q \Delta W_K^T \rangle = \text{tr}(G_{QK}^T W_Q \Delta W_K^T) = \text{tr}((G_{QK}^T W_Q)^T \Delta W_K) = \langle G_{QK}^T W_Q, \Delta W_K \rangle\]</span></p>
+<p>By the chain rule, <span class="math inline">\(G_Q = \nabla_{W_Q} \mathcal{L} = G_{QK} W_K\)</span> and <span class="math inline">\(G_K = \nabla_{W_K} \mathcal{L} = G_{QK}^T W_Q\)</span>. Substituting these gives us the simplified steepest descent rule:</p>
+<p><span id="eq-factor-sd"><span class="math display">\[
+\begin{aligned}
+\min_{\Delta W_Q, \Delta W_K} \quad &amp; \langle G_Q, \Delta W_Q \rangle + \langle G_K, \Delta W_K \rangle \\
+\text{s.t.} \quad &amp; \|\Delta W_Q W_K^T + W_Q \Delta W_K^T\| \le \epsilon
+\end{aligned}
+\tag{10}\]</span></span></p>
+<p>This is the key simplification. We don’t need to ever form the large <span class="math inline">\(d \times d\)</span> gradient <span class="math inline">\(G_{QK}\)</span>. The downstream gradients of <span class="math inline">\(W_Q\)</span> and <span class="math inline">\(W_K\)</span> (which we would effortlessly get from a naive PyTorch implementation) are sufficient to optimize natively in the space of bilinear forms.</p>
+</section>
+<section id="an-explicit-characterization-of-the-tangent-space" class="level3">
+<h3 class="anchored" data-anchor-id="an-explicit-characterization-of-the-tangent-space">An Explicit Characterization of the Tangent Space</h3>
+<p>There is a clean geometric reading of the linearized step. The tangent approximation <a href="#eq-tangent" class="quarto-xref">Equation&nbsp;9</a> says precisely that <span class="math inline">\(\Delta W_{QK}\)</span> is constrained to the <strong>tangent space</strong> of the rank-<span class="math inline">\(d_k\)</span> manifold at the current point <span class="math inline">\(W_{QK} = W_Q W_K^T\)</span>.</p>
+<p>This tangent space admits an equivalent characterization stated directly in the ambient step <span class="math inline">\(\Delta W_{QK}\)</span>, with no reference to the factors:<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p><span id="eq-tangent-space"><span class="math display">\[\mathcal{T} = \{\, \Delta W_Q W_K^T + W_Q \Delta W_K^T \,\} = \{\, Z : (I - P_Q)\, Z\, (I - P_K) = 0 \,\} \tag{11}\]</span></span></p>
+<p>where <span class="math inline">\(P_Q\)</span> and <span class="math inline">\(P_K\)</span> are the orthogonal projectors onto the column spaces of <span class="math inline">\(W_Q\)</span> and <span class="math inline">\(W_K\)</span>. Read as a bilinear form <span class="math inline">\(x_i\, Z\, x_j^T\)</span>, the constraint says the update may create <em>no</em> new interaction between a query direction invisible to <span class="math inline">\(W_Q\)</span> (<span class="math inline">\(x_i \perp \operatorname{col}(W_Q)\)</span>) and a key direction invisible to <span class="math inline">\(W_K\)</span> (<span class="math inline">\(x_j \perp \operatorname{col}(W_K)\)</span>). Reaching that doubly-invisible corner is precisely the second-order move carried by the quadratic term <span class="math inline">\(\Delta W_Q \Delta W_K^T\)</span> we dropped.</p>
+<p>This hands us a second, fully equivalent way to write the steepest-descent step, now in the single ambient variable <span class="math inline">\(\Delta W_{QK}\)</span>, with the tangent constraint stated explicitly:</p>
+<p><span id="eq-geom-sd"><span class="math display">\[\min_{\Delta W_{QK}} \;\langle G_{QK}, \Delta W_{QK} \rangle \quad \text{s.t.} \quad \|\Delta W_{QK}\| \le \epsilon, \quad (I - P_Q)\, \Delta W_{QK}\, (I - P_K) = 0 \tag{12}\]</span></span></p>
+<p>Although this uses the large <span class="math inline">\(d \times d\)</span> variable, the norm bound is now a clean norm of a <em>single</em> matrix rather than of a coupled sum of factor steps, which is what makes the upcoming derivations tractable. And despite being written with the ambient gradient <span class="math inline">\(G_{QK}\)</span>, the resulting update rules will need neither <span class="math inline">\(G_{QK}\)</span> nor any other <span class="math inline">\(d \times d\)</span> matrix: everything reduces to the cheap factor gradients <span class="math inline">\(G_Q\)</span>, <span class="math inline">\(G_K\)</span> and small <span class="math inline">\(d_k \times d_k\)</span> operations, as we will see.</p>
+<p>This tangent-space viewpoint is not just a convenience. Optimizing along the tangent space of a structured weight manifold is the organizing principle behind recent work on modular manifolds (see for example this <a href="https://thinkingmachines.ai/blog/modular-manifolds/">blog post</a> or the <a href="https://docs.modula.systems/">modula library</a>). Here it falls out automatically from considering the space of low-rank bilinear forms in attention.</p>
+</section>
+</section>
+<section id="the-l2-case-analytical-frobenius-optimization" class="level2">
+<h2 class="anchored" data-anchor-id="the-l2-case-analytical-frobenius-optimization">6. The <span class="math inline">\(L^2\)</span> Case: Analytical Frobenius Optimization</h2>
+<p>Now let’s commit to a norm and derive the update, starting with the <span class="math inline">\(L^2\)</span> (Frobenius) norm. Rather than the hard norm-ball constraint of <a href="#eq-factor-sd" class="quarto-xref">Equation&nbsp;10</a>, we use the equivalent <strong>penalty</strong> (Lagrangian) form: for a fixed norm the two share the same optimal <em>direction</em> and differ only in how the step is scaled, and the penalty form is far easier to differentiate. The natural first attempt is to optimize the factors directly:</p>
+<p><span id="eq-l2-factor"><span class="math display">\[\min_{\Delta W_Q, \Delta W_K} \quad \langle G_Q, \Delta W_Q \rangle + \langle G_K, \Delta W_K \rangle + \frac{1}{2\eta} \| \Delta W_Q W_K^T + W_Q \Delta W_K^T \|_F^2 \tag{13}\]</span></span></p>
+<p>Taking partial derivatives with respect to <span class="math inline">\(\Delta W_Q\)</span> and <span class="math inline">\(\Delta W_K\)</span> and setting them to zero yields the following coupled optimality conditions:</p>
+<ol type="1">
+<li><span class="math inline">\(\Delta W_Q (W_K^T W_K) + W_Q (\Delta W_K^T W_K) = -\eta G_Q\)</span></li>
+<li><span class="math inline">\(\Delta W_K (W_Q^T W_Q) + W_K (\Delta W_Q^T W_Q) = -\eta G_K\)</span></li>
+</ol>
+<p>This system consists of <span class="math inline">\(2 d \cdot d_k\)</span> unknowns defined by <span class="math inline">\(2 d \cdot d_k\)</span> linear equations. At first glance, this is a well-determined square system. However, the system is fundamentally underdetermined: it possesses a non-trivial null space. For any arbitrary <span class="math inline">\(d_k \times d_k\)</span> matrix <span class="math inline">\(S\)</span>, consider the update:</p>
+<p><span id="eq-gauge"><span class="math display">\[\Delta W_Q = W_Q S, \quad \Delta W_K = -W_K S^T \tag{14}\]</span></span></p>
+<p>If we substitute these into the homogeneous part of the first optimality condition, we get:</p>
+<p><span class="math display">\[(W_Q S)(W_K^T W_K) + W_Q ((-W_K S^T)^T W_K) = W_Q S (W_K^T W_K) + W_Q (S W_K^T W_K) = W_Q S W_K^T W_K - W_Q S W_K^T W_K = 0\]</span></p>
+<p>The same substitution holds for the second condition. This proves that there is an entire affine subspace of optimal solutions.</p>
+<section id="switching-to-the-gauge-free-variable" class="level3">
+<h3 class="anchored" data-anchor-id="switching-to-the-gauge-free-variable">Switching to the Gauge-Free Variable</h3>
+<p>While an under-determinacy is not in itself a problem (a linear solver handles it fine, for example by returning the minimum-norm solution), it often signals that a more insightful re-parameterization is available. That is the case here. The objective depends on the factors only through the tangent step <span class="math inline">\(\Delta W_Q W_K^T + W_Q \Delta W_K^T\)</span> (the penalty is its squared norm, and as shown above the linear part is <span class="math inline">\(\langle G_{QK}, \cdot\rangle\)</span> of it), so any direction that leaves this step fixed leaves the objective unchanged. And there are many: for any <span class="math inline">\(d_k \times d_k\)</span> matrix <span class="math inline">\(S\)</span>, substituting <span class="math inline">\(\Delta W_Q = W_Q S\)</span> and <span class="math inline">\(\Delta W_K = -W_K S^T\)</span> gives</p>
+<p><span class="math display">\[\Delta W_Q W_K^T + W_Q \Delta W_K^T = W_Q S W_K^T - W_Q S W_K^T = 0\]</span></p>
+<p>The non-uniqueness, then, is not in <em>what</em> step we take in the space of bilinear forms, only in <em>how we split</em> it between the two factors. The factors are simply the wrong variable to solve for.</p>
+<p>This is exactly why we built the geometric formulation <a href="#eq-geom-sd" class="quarto-xref">Equation&nbsp;12</a>: it is written directly in the one object that <em>is</em> pinned down, <span class="math inline">\(\Delta W_{QK}\)</span>, and never refers to the split. Committing to the <span class="math inline">\(L^2\)</span> norm, its penalty form reads:</p>
+<p><span id="eq-l2-geom"><span class="math display">\[\min_{\Delta W_{QK}} \;\langle G_{QK}, \Delta W_{QK} \rangle + \frac{1}{2\eta}\|\Delta W_{QK}\|_F^2 \quad \text{s.t.} \quad (I - P_Q)\, \Delta W_{QK}\, (I - P_K) = 0 \tag{15}\]</span></span></p>
+<p>This is no longer underdetermined: the objective is strictly convex on the tangent subspace, so it has a unique minimizer.</p>
+<p>Steepest descent with a Frobenius penalty over a linear subspace is nothing but the orthogonal projection of the unconstrained gradient step onto that subspace. The projector onto the tangent space is</p>
+<p><span id="eq-proj"><span class="math display">\[\mathcal{P}_{\mathcal{T}}(X) = P_Q X + X P_K - P_Q X P_K, \tag{16}\]</span></span></p>
+<p>so the solution is <span class="math inline">\(\Delta W_{QK} = -\eta\, \mathcal{P}_{\mathcal{T}}(G_{QK})\)</span>. Using the chain-rule identities <span class="math inline">\(G_{QK} W_K = G_Q\)</span> and <span class="math inline">\(W_Q^T G_{QK} = G_K^T\)</span> to eliminate every appearance of the ambient gradient, and writing <span class="math inline">\(W_Q^+, W_K^+\)</span> for the Moore-Penrose pseudo-inverses, this becomes:</p>
+<p><span id="eq-l2-sol"><span class="math display">\[\Delta W_{QK} = -\eta\left[\, (W_Q^+)^T G_K^T + G_Q W_K^+ - (W_Q^+)^T (W_Q^T G_Q)\, W_K^+ \,\right] \tag{17}\]</span></span></p>
+<p>Each pseudo-inverse hides only a tiny <span class="math inline">\(d_k \times d_k\)</span> inversion, and, just as promised, only the cheap factor gradients <span class="math inline">\(G_Q\)</span> and <span class="math inline">\(G_K\)</span> appear. The <span class="math inline">\(d \times d\)</span> gradient <span class="math inline">\(G_{QK}\)</span> never has to be formed.</p>
+<p>All that remains is to hand the optimizer <em>some</em> factorization of this step: a pair <span class="math inline">\((\Delta W_Q, \Delta W_K)\)</span> with <span class="math inline">\(\Delta W_Q W_K^T + W_Q \Delta W_K^T = \Delta W_{QK}\)</span>. This is precisely the gauge freedom we met earlier, the null space of the factor system, resurfacing exactly where it is harmless: any valid split produces the same <span class="math inline">\(\Delta W_{QK}\)</span>. A simple, immediate choice is:</p>
+<p><span id="eq-l2-split"><span class="math display">\[
+\Delta W_Q = -\eta\, G_Q (W_K^T W_K)^{-1}, \qquad \Delta W_K = -\eta\,(I - P_K)\, G_K (W_Q^T W_Q)^{-1}
+\tag{18}\]</span></span></p>
+<p>These rules deserve a name: we’ll call this update <strong>Bilinear SGD</strong>, the <span class="math inline">\(L^2\)</span> steepest-descent step in the bilinear geometry, the direct sibling of ordinary SGD in flat parameter space (which is itself nothing but <span class="math inline">\(L^2\)</span> steepest descent). It is worth pausing on what the rules say. Vanilla SGD would update each factor with its own gradient, <span class="math inline">\(\Delta W_Q = -\eta\, G_Q\)</span> and <span class="math inline">\(\Delta W_K = -\eta\, G_K\)</span>, treating the two matrices as independent. Our rules instead right-multiply each factor gradient by the inverse Gram matrix of the <em>other</em> factor: <span class="math inline">\((W_K^T W_K)^{-1}\)</span> for the query step, <span class="math inline">\((W_Q^T W_Q)^{-1}\)</span> for the key step. The bilinear geometry couples them: the natural scale of a step in <span class="math inline">\(W_Q\)</span> is set by the size of <span class="math inline">\(W_K\)</span>, and vice versa, so whichever factor currently carries more of the product’s magnitude moves proportionally less.</p>
+<p>This coupling is also what makes the step insensitive to the factorization’s scale ambiguity. The reparameterization <span class="math inline">\(W_Q \to W_Q R,\ W_K \to W_K R^{-T}\)</span> leaves the product <span class="math inline">\(W_{QK}\)</span>, and hence the loss, unchanged, yet it would alter the bare SGD step. Here the induced update <span class="math inline">\(\Delta W_{QK} = -\eta\, \mathcal{P}_{\mathcal{T}}(G_{QK})\)</span> depends on the factors only through their column spaces, which the gauge preserves, so it is invariant by construction. SGD descends on the two matrices, while this descends on the bilinear form they define.</p>
+<p>Stepping back: by linearizing onto the tangent space and solving for the gauge-invariant step <span class="math inline">\(\Delta W_{QK}\)</span> rather than the redundant factors, the entire <span class="math inline">\(L^2\)</span> derivation collapsed to a handful of <span class="math inline">\(d_k \times d_k\)</span> operations, with no ill-posed coupled solve and no <span class="math inline">\(d \times d\)</span> matrix ever formed.</p>
+<p>Frobenius was only the first norm we could have chosen. The geometric formulation, a linear objective minimized over the tangent space under a norm bound, is norm-agnostic, and only the inner solve changes. Next we take the norm the bilinear picture really calls for: the sup norm, which (as we saw earlier) is the spectral norm of the form. There the clean projection no longer applies, but the steepest-descent step still does, and it leads us back to Muon.</p>
+</section>
+</section>
+<section id="the-linfty-case-from-the-exact-problem-to-closed-form-restrictions" class="level2">
+<h2 class="anchored" data-anchor-id="the-linfty-case-from-the-exact-problem-to-closed-form-restrictions">7. The <span class="math inline">\(L^\infty\)</span> Case: From the Exact Problem to Closed-Form Restrictions</h2>
+<p>Under the sup norm the constraint bounds the spectral norm of the bilinear step, <span class="math inline">\(\|\Delta W_{QK}\|_2 \le \epsilon\)</span>, and the steepest-descent problem on the tangent space becomes</p>
+<p><span id="eq-linf"><span class="math display">\[\min_{\Delta W_Q,\, \Delta W_K} \;\langle G_Q, \Delta W_Q\rangle + \langle G_K, \Delta W_K\rangle \quad \text{s.t.}\quad \big\|\, \Delta W_Q W_K^T + W_Q \Delta W_K^T \,\big\|_2 \le \epsilon. \tag{19}\]</span></span></p>
+<p>This is still convex, a linear objective over a spectral-norm ball, but the two factors now sit inside a <em>single</em> spectral norm, with no inner product to diagonalize and no orthogonal projection to read off. Instead of one clean solution we get a frontier: a nested family of constraint sets</p>
+<p><span id="eq-nested"><span class="math display">\[\mathcal{F}_t^{\times} \;\subseteq\; \mathcal{F}_t \;\subseteq\; \mathcal{F}_\triangle \;\subseteq\; \mathcal{F} := \{(\Delta W_Q, \Delta W_K) : \|\Delta W_{QK}\|_2 \le \epsilon\}, \tag{20}\]</span></span></p>
+<p>each a strictly smaller (more conservative) <em>inner</em> approximation of the true feasible set <span class="math inline">\(\mathcal{F}\)</span>, and each cheaper to optimize over. Since every set sits inside <span class="math inline">\(\mathcal{F}\)</span>, any step we produce is automatically a valid <span class="math inline">\(\epsilon\)</span>-bounded step. We are only trading away some of the budget in return for a closed form.</p>
+<section id="i.-the-exact-convex-problem" class="level3">
+<h3 class="anchored" data-anchor-id="i.-the-exact-convex-problem">I. The exact convex problem</h3>
+<p>Problem <a href="#eq-linf" class="quarto-xref">Equation&nbsp;19</a> is convex, the exact, tightest step on the tangent space, but the two factors are locked inside a single spectral norm, so there is no closed form. To use it in practice we would need a GPU-friendly iterative solver, for example an ADMM scheme built on iterative singular-value-thresholding approximations rather than exact SVDs. Solving such a problem from scratch at every step and every head looks hopeless, with each inner iteration pure overhead. But there is a hand-wavy way around this that I find appealing. The weights barely move between optimizer steps, so the solution of <a href="#eq-linf" class="quarto-xref">Equation&nbsp;19</a> drifts only slowly; this is exactly the regime where a <em>warm-started</em> solver, initialized from the previous step’s solution, needs almost no work to catch up. Concretely, one could promote the solver’s auxiliary and dual variables to persistent optimizer state, right alongside the momentum buffers that every optimizer already carries per parameter, and advance them by a <em>single</em> ADMM iteration per step. The inner solve and the outer optimizer then co-evolve over training rather than nesting one inside the other, at a cost of one iteration per step. This single-loop, warm-started pattern is a recurring trick wherever an inner subproblem sits inside an outer optimization, and it seems like the most promising route to the exact step; I leave a real treatment to future work. The remaining restrictions instead give up this exactness in exchange for a closed form.</p>
+</section>
+<section id="ii.-the-triangle-inequality-restriction-preconditioned-muon" class="level3">
+<h3 class="anchored" data-anchor-id="ii.-the-triangle-inequality-restriction-preconditioned-muon">II. The triangle-inequality restriction: preconditioned Muon</h3>
+<p>Split the single spectral norm into two. For any budget share <span class="math inline">\(t \in [0,1]\)</span>,</p>
+<p><span id="eq-tri-sets"><span class="math display">\[\mathcal{F} \;\supseteq\; \underbrace{\{\|\Delta W_Q W_K^T\|_2 + \|W_Q \Delta W_K^T\|_2 \le \epsilon\}}_{\mathcal{F}_\triangle} \;\supseteq\; \underbrace{\{\|\Delta W_Q W_K^T\|_2 \le t\epsilon\} \cap \{\|W_Q \Delta W_K^T\|_2 \le (1-t)\epsilon\}}_{\mathcal{F}_t}, \tag{21}\]</span></span></p>
+<p>where the first inclusion is the triangle inequality, and the second holds because the two shares sum to <span class="math inline">\(\epsilon\)</span>. Over <span class="math inline">\(\mathcal{F}_t\)</span> the factors decouple, so we can solve for each separately. Take the query factor:</p>
+<p><span id="eq-tri-query"><span class="math display">\[\min_{\Delta W_Q}\;\langle G_Q, \Delta W_Q\rangle \quad \text{s.t.}\quad \|\Delta W_Q W_K^T\|_2 \le t\epsilon. \tag{22}\]</span></span></p>
+<p>This is almost the Muon problem <a href="#eq-muon" class="quarto-xref">Equation&nbsp;1</a>, a linear form minimized over a spectral ball, except the constraint bounds <span class="math inline">\(\Delta W_Q W_K^T\)</span>, a linear image of <span class="math inline">\(\Delta W_Q\)</span>, rather than <span class="math inline">\(\Delta W_Q\)</span> itself. To bring it into Muon form, change variables to <span class="math inline">\(Z = \Delta W_Q W_K^T\)</span>. Picking any left inverse <span class="math inline">\(L\)</span> of <span class="math inline">\(W_K\)</span>,<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> the problem becomes</p>
+<p><span id="eq-tri-z"><span class="math display">\[\min_{Z}\;\langle G_Q L, Z\rangle \quad \text{s.t.}\quad \|Z\|_2 \le t\epsilon,\quad Z P_K = Z. \tag{23}\]</span></span></p>
+<p>We have traded the linear term inside the norm for an ordinary spectral ball plus the column-space constraint <span class="math inline">\(Z P_K = Z\)</span>. Now let’s use the freedom in <span class="math inline">\(L\)</span>. Drop that constraint for a moment: minimizing <span class="math inline">\(\langle G_Q L, Z\rangle\)</span> over the bare ball is exactly Muon, with solution <span class="math inline">\(Z = -t\epsilon\,\mathrm{Orth}(G_Q L)\)</span>, which depends on <span class="math inline">\(L\)</span>. If we can pick <span class="math inline">\(L\)</span> so that this <span class="math inline">\(Z\)</span> already satisfies <span class="math inline">\(Z P_K = Z\)</span>, the dropped constraint cost us nothing and we are done. The pseudo-inverse <span class="math inline">\(L = W_K^+\)</span> does exactly that: the rows of <span class="math inline">\(W_K^+\)</span> lie in <span class="math inline">\(\operatorname{col}(W_K)\)</span>, so the rows of <span class="math inline">\(G_Q W_K^+\)</span> do too, and since <span class="math inline">\(\mathrm{Orth}\)</span> leaves the row space unchanged, <span class="math inline">\(\mathrm{Orth}(G_Q W_K^+)\,P_K = \mathrm{Orth}(G_Q W_K^+)\)</span>. Recovering <span class="math inline">\(\Delta W_Q = Z L^T\)</span> with <span class="math inline">\(L = W_K^+\)</span> then gives</p>
+<p><span id="eq-tri-sol"><span class="math display">\[\Delta W_Q = -\,t\epsilon\;\mathrm{Orth}\!\big(G_Q W_K^+\big)\,(W_K^T)^+, \tag{24}\]</span></span></p>
+<p>and symmetrically <span class="math inline">\(\Delta W_K = -(1-t)\epsilon\,\mathrm{Orth}(G_K W_Q^+)(W_Q^T)^+\)</span>. This is a Muon step sandwiched by pseudo-inverses of the <em>other</em> factor, the spectral analog of the Gram-matrix preconditioning from the Frobenius case. It is fully closed-form: a fixed number of orthogonalizations and small <span class="math inline">\(d_k \times d_k\)</span> inverses, with no inner loop.</p>
+<p>What should <span class="math inline">\(t\)</span> be? The natural answer is to pick the split that buys the most descent. A spectral-ball steepest step of radius <span class="math inline">\(r\)</span> against a gradient <span class="math inline">\(G\)</span> decreases the objective by <span class="math inline">\(r\,\|G\|_*\)</span>, where <span class="math inline">\(\|\cdot\|_*\)</span> is the nuclear norm (the sum of singular values, dual to the spectral norm). The query step has radius <span class="math inline">\(t\epsilon\)</span> against the preconditioned gradient <span class="math inline">\(G_Q W_K^+\)</span> and the key step radius <span class="math inline">\((1-t)\epsilon\)</span> against <span class="math inline">\(G_K W_Q^+\)</span>, so the total descent over <span class="math inline">\(\mathcal{F}_t\)</span> is</p>
+<p><span id="eq-tri-Dt"><span class="math display">\[D(t) = t\epsilon\,\|G_Q W_K^+\|_* \;+\; (1-t)\epsilon\,\|G_K W_Q^+\|_*. \tag{25}\]</span></span></p>
+<p>This is <em>linear</em> in <span class="math inline">\(t\)</span>, with slope <span class="math inline">\(\epsilon\big(\|G_Q W_K^+\|_* - \|G_K W_Q^+\|_*\big)\)</span>, so the maximum over <span class="math inline">\([0,1]\)</span> sits at an endpoint:</p>
+<p><span id="eq-tstar"><span class="math display">\[t^\star = \begin{cases} 1, &amp; \|G_Q W_K^+\|_* \ge \|G_K W_Q^+\|_*, \\[2pt] 0, &amp; \text{otherwise.} \end{cases} \tag{26}\]</span></span></p>
+<p>The optimal split is <strong>winner-take-all</strong>: it spends the entire budget on whichever factor has the larger preconditioned nuclear norm and leaves the other untouched. This is not just the best choice among our boxes <span class="math inline">\(\mathcal{F}_t\)</span>: it turns out to be optimal over the entire set we restricted to, the triangle superset <span class="math inline">\(\mathcal{F}_\triangle\)</span>.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>I find this surprising: taken literally, the rule says we should update only one of <span class="math inline">\(W_Q\)</span> and <span class="math inline">\(W_K\)</span> on each step. My intuition is that this won’t actually work well in practice (the inter-step dynamics of freezing a different factor each step seem likely to hurt), but I haven’t tested it, and it would be interesting to race this winner-take-all split against a plain <span class="math inline">\(t = \tfrac12\)</span> split that updates both factors evenly. For the rest of this post I’ll stick with the latter. I’ll call the two variants <strong>winner-take-all</strong> and <strong>symmetric preconditioned Muon</strong>.</p>
+</section>
+<section id="iii.-the-sub-multiplicative-restriction-cross-scaled-muon" class="level3">
+<h3 class="anchored" data-anchor-id="iii.-the-sub-multiplicative-restriction-cross-scaled-muon">III. The sub-multiplicative restriction: cross-scaled Muon</h3>
+<p>We can tighten the constraint once more using sub-multiplicativity, with <span class="math inline">\(\|\Delta W_Q W_K^T\|_2 \le \|\Delta W_Q\|_2\,\|W_K\|_2\)</span> and <span class="math inline">\(\|W_Q \Delta W_K^T\|_2 \le \|W_Q\|_2\,\|\Delta W_K\|_2\)</span>, and then split the budget as before:</p>
+<p><span id="eq-sub-sets"><span class="math display">\[\mathcal{F}_\triangle \;\supseteq\; \underbrace{\{\|\Delta W_Q\|_2\|W_K\|_2 + \|W_Q\|_2\|\Delta W_K\|_2 \le \epsilon\}}_{\mathcal{F}_\triangle^{\times}} \;\supseteq\; \underbrace{\{\|\Delta W_Q\|_2\|W_K\|_2 \le t\epsilon\} \cap \{\|W_Q\|_2\|\Delta W_K\|_2 \le (1-t)\epsilon\}}_{\mathcal{F}_t^{\times}}, \tag{27}\]</span></span></p>
+<p>with the same two reasons as in the triangle case: the first inclusion is sub-multiplicativity, the second holds because the two shares sum to <span class="math inline">\(\epsilon\)</span>.</p>
+<p>Over <span class="math inline">\(\mathcal{F}_t^{\times}\)</span> the factors decouple, and the query is now bounded through <span class="math inline">\(\|\Delta W_Q\|_2\)</span> directly. Contrast <a href="#eq-tri-query" class="quarto-xref">Equation&nbsp;22</a>, where the bound sat on the linear image <span class="math inline">\(\Delta W_Q W_K^T\)</span>:</p>
+<p><span id="eq-sub-query"><span class="math display">\[\min_{\Delta W_Q}\;\langle G_Q, \Delta W_Q\rangle \quad \text{s.t.}\quad \|\Delta W_Q\|_2 \le \frac{t\epsilon}{\|W_K\|_2}. \tag{28}\]</span></span></p>
+<p>This is exactly the Muon problem <a href="#eq-muon" class="quarto-xref">Equation&nbsp;1</a>, a linear form over a spectral ball of the factor itself, with no change of variables or pseudo-inverse. Its solution is a plain Muon step, rescaled by the partner’s spectral norm,</p>
+<p><span id="eq-cross"><span class="math display">\[\Delta W_Q = -\,\frac{t\epsilon}{\|W_K\|_2}\,\mathrm{Orth}(G_Q), \qquad \Delta W_K = -\,\frac{(1-t)\epsilon}{\|W_Q\|_2}\,\mathrm{Orth}(G_K). \tag{29}\]</span></span></p>
+<p>Set against plain Muon run separately on each factor, the only difference is the cross-scaling: the <span class="math inline">\(W_Q\)</span> step is divided by <span class="math inline">\(\|W_K\|_2\)</span> and the <span class="math inline">\(W_K\)</span> step by <span class="math inline">\(\|W_Q\|_2\)</span>. Read as a prescription, it suggests that a Muon update on attention factors should, at the very least, scale each factor’s step by the spectral norm of its partner.</p>
+<p>The split <span class="math inline">\(t\)</span> enters exactly as before. The achievable descent is</p>
+<p><span id="eq-sub-Dt"><span class="math display">\[D(t) = t\epsilon\,\frac{\|G_Q\|_*}{\|W_K\|_2} \;+\; (1-t)\epsilon\,\frac{\|G_K\|_*}{\|W_Q\|_2}, \tag{30}\]</span></span></p>
+<p>linear in <span class="math inline">\(t\)</span> once again, with only the per-factor rates changed from the triangle case <a href="#eq-tri-Dt" class="quarto-xref">Equation&nbsp;25</a>, from the preconditioned nuclear norms to the ratios <span class="math inline">\(\|G_Q\|_*/\|W_K\|_2\)</span> and <span class="math inline">\(\|G_K\|_*/\|W_Q\|_2\)</span>. So the same budget-split argument applies, and the optimum is again <strong>winner-take-all</strong>: the whole budget on whichever of <span class="math inline">\(W_Q\)</span>, <span class="math inline">\(W_K\)</span> has the larger ratio. As in the triangle case, this gives two variants, <strong>winner-take-all</strong> and <strong>symmetric cross-scaled Muon</strong>, where the symmetric <span class="math inline">\(t = \tfrac12\)</span> choice updates both factors with an ordinary Muon step, each damped by the spectral size of its partner.</p>
+<p>It is worth setting all three preconditioned steps side by side, because they share one skeleton: each factor’s gradient is reshaped by the geometry of its <em>partner</em>, never its own. Bilinear SGD, the Frobenius step of the previous section, multiplies <span class="math inline">\(G_Q\)</span> by the partner’s inverse Gram matrix <span class="math inline">\((W_K^T W_K)^{-1}\)</span>. Preconditioned Muon applies that exact same matrix, since <span class="math inline">\(W_K^+ (W_K^T)^+ = (W_K^T W_K)^{-1}\)</span>, but splits it apart and inserts an orthogonalization into the gap, giving <span class="math inline">\(\mathrm{Orth}(G_Q W_K^+)(W_K^T)^+\)</span>. That single inserted orthogonalization is all that separates the <span class="math inline">\(L^2\)</span> step from the <span class="math inline">\(L^\infty\)</span> one. Cross-scaled Muon then discards the matrix altogether and keeps only its scale, dividing a plain Muon step by the scalar <span class="math inline">\(\|W_K\|_2\)</span>. The cross-coupling that the bilinear geometry demands survives in every case, carried first by a full matrix metric, then by that metric wrapped around an orthogonalization, and finally by a single number.</p>
+</section>
+<section id="computing-the-norms" class="level3">
+<h3 class="anchored" data-anchor-id="computing-the-norms">Computing the norms</h3>
+<p>The update rules above require the spectral norm <span class="math inline">\(\|W\|_2\)</span> and the nuclear norm <span class="math inline">\(\|G\|_*\)</span>. Both would naively call for an SVD, but each can be computed cheaply, to reasonable accuracy, in a GPU-friendly way.</p>
+<p>The spectral norm is the largest singular value, which a few steps of <strong>power iteration</strong> recover to ample accuracy. Each step is just a couple of matrix-vector products.</p>
+<p>The nuclear norm is the sum of singular values, and it falls out of the orthogonalization Muon already performs. With <span class="math inline">\(\mathrm{Orth}(M) = UV^T\)</span> for the SVD <span class="math inline">\(M = U\Sigma V^T\)</span>,</p>
+<p><span id="eq-nuclear"><span class="math display">\[\|M\|_* = \operatorname{tr}(\Sigma) = \operatorname{tr}\!\big(\mathrm{Orth}(M)^T M\big) = \langle \mathrm{Orth}(M),\, M\rangle. \tag{31}\]</span></span></p>
+<p>So once the Newton-Schulz iteration has produced <span class="math inline">\(\mathrm{Orth}(M)\)</span>, the very step Muon computes anyway, the nuclear norm is one Frobenius inner product away.</p>
+</section>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">8. Summary</h2>
+<p>Each optimizer in this post comes down to a single steepest-descent step, fixed by three choices: the <em>space</em> it descends in, the <em>norm</em> that bounds the step, and the <em>approximations</em> that buy a closed form. <a href="#tbl-variants" class="quarto-xref">Table&nbsp;1</a> lines them up.</p>
+<div id="tbl-variants" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-variants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Every optimizer in this post as a single steepest-descent step. The <span class="math inline">\(L^2\)</span> rows are written in penalty (learning-rate <span class="math inline">\(\eta\)</span>) form, the <span class="math inline">\(L^\infty\)</span> rows in trust-region (radius <span class="math inline">\(\epsilon\)</span>) form, and <span class="math inline">\(W^+\)</span> denotes the Moore-Penrose pseudo-inverse.
+</figcaption>
+<div aria-describedby="tbl-variants-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Update rule</th>
+<th>Space</th>
+<th>Norm</th>
+<th>Approximations</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>SGD</td>
+<td><span class="math inline">\(\Delta W = -\eta\,G\)</span></td>
+<td>flattened params</td>
+<td><span class="math inline">\(L^2\)</span></td>
+<td>none</td>
+</tr>
+<tr class="even">
+<td>Muon</td>
+<td><span class="math inline">\(\Delta W = -\epsilon\,\mathrm{Orth}(G)\)</span></td>
+<td>linear operators</td>
+<td><span class="math inline">\(L^\infty\)</span></td>
+<td>none</td>
+</tr>
+<tr class="odd">
+<td>Bilinear SGD</td>
+<td><span class="math inline">\(\Delta W_Q = -\eta\,G_Q (W_K^T W_K)^{-1}\)</span><br><span class="math inline">\(\Delta W_K = -\eta\,(I-P_K)\,G_K (W_Q^T W_Q)^{-1}\)</span></td>
+<td>low-rank bilinear forms</td>
+<td><span class="math inline">\(L^2\)</span></td>
+<td>tangent space</td>
+</tr>
+<tr class="even">
+<td>Winner-take-all preconditioned Muon</td>
+<td>if <span class="math inline">\(\lVert G_Q W_K^+\rVert_* \ge \lVert G_K W_Q^+\rVert_*\)</span>:<br><span class="math inline">\(\Delta W_Q = -\epsilon\,\mathrm{Orth}(G_Q W_K^+)(W_K^T)^+\)</span><br><span class="math inline">\(\Delta W_K = 0\)</span><br>otherwise:<br><span class="math inline">\(\Delta W_Q = 0\)</span><br><span class="math inline">\(\Delta W_K = -\epsilon\,\mathrm{Orth}(G_K W_Q^+)(W_Q^T)^+\)</span></td>
+<td>low-rank bilinear forms</td>
+<td><span class="math inline">\(L^\infty\)</span></td>
+<td>tangent space, triangle inequality</td>
+</tr>
+<tr class="odd">
+<td>Symmetric preconditioned Muon</td>
+<td><span class="math inline">\(\Delta W_Q = -\tfrac{\epsilon}{2}\,\mathrm{Orth}(G_Q W_K^+)(W_K^T)^+\)</span><br><span class="math inline">\(\Delta W_K = -\tfrac{\epsilon}{2}\,\mathrm{Orth}(G_K W_Q^+)(W_Q^T)^+\)</span></td>
+<td>low-rank bilinear forms</td>
+<td><span class="math inline">\(L^\infty\)</span></td>
+<td>tangent space, triangle inequality, symmetric split (<span class="math inline">\(t=\tfrac12\)</span>)</td>
+</tr>
+<tr class="even">
+<td>Winner-take-all cross-scaled Muon</td>
+<td>if <span class="math inline">\(\lVert G_Q\rVert_*/\lVert W_K\rVert_2 \ge \lVert G_K\rVert_*/\lVert W_Q\rVert_2\)</span>:<br><span class="math inline">\(\Delta W_Q = -\epsilon\,\mathrm{Orth}(G_Q)/\lVert W_K\rVert_2\)</span><br><span class="math inline">\(\Delta W_K = 0\)</span><br>otherwise:<br><span class="math inline">\(\Delta W_Q = 0\)</span><br><span class="math inline">\(\Delta W_K = -\epsilon\,\mathrm{Orth}(G_K)/\lVert W_Q\rVert_2\)</span></td>
+<td>low-rank bilinear forms</td>
+<td><span class="math inline">\(L^\infty\)</span></td>
+<td>tangent space, triangle inequality, sub-multiplicative norm</td>
+</tr>
+<tr class="odd">
+<td>Symmetric cross-scaled Muon</td>
+<td><span class="math inline">\(\Delta W_Q = -\tfrac{\epsilon}{2}\,\mathrm{Orth}(G_Q)/\lVert W_K\rVert_2\)</span><br><span class="math inline">\(\Delta W_K = -\tfrac{\epsilon}{2}\,\mathrm{Orth}(G_K)/\lVert W_Q\rVert_2\)</span></td>
+<td>low-rank bilinear forms</td>
+<td><span class="math inline">\(L^\infty\)</span></td>
+<td>tangent space, triangle inequality, sub-multiplicative norm, symmetric split (<span class="math inline">\(t=\tfrac12\)</span>)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+<section id="related-work" class="level2">
+<h2 class="anchored" data-anchor-id="related-work">9. Related Work</h2>
+<p>A few days before I posted this, Tilde Research published <a href="https://blog.tilderesearch.com/blog/compositional-muon">Compositional Muon</a>, which arrives at the same central idea from a similar starting point: the loss sees <span class="math inline">\(W_Q\)</span> and <span class="math inline">\(W_K\)</span> only through their product, so steepest descent should be run on the composed map rather than on the two factors independently. I came across it only while writing this up, and the overlap is substantial enough that I want to be upfront about it.</p>
+<p>The correspondence runs deep. Their derivation passes through the same first-order expansion, the same observation that the achievable steps form the tangent space to the rank-<span class="math inline">\(d_k\)</span> manifold, and the same gauge freedom in how a step is split between the factors. More concretely, two of the practical rules I land on are theirs as well. My symmetric <em>preconditioned Muon</em>, <span class="math inline">\(\Delta W_Q = -\tfrac{\epsilon}{2}\,\mathrm{Orth}(G_Q W_K^+)(W_K^T)^+\)</span>, is algebraically identical to their half-split rule <span class="math inline">\(\Delta W_Q = -\tfrac{\epsilon}{2}\,\mathrm{msign}(G_Q C_K^{-1})\,C_K^{-1}\)</span> (with <span class="math inline">\(C_K = (W_K^T W_K)^{1/2}\)</span>, the two coincide because <span class="math inline">\(\mathrm{Orth}(G_Q W_K^+)(W_K^T)^+ = \mathrm{Orth}(G_Q C_K^{-1})\,C_K^{-1}\)</span>), and my <em>cross-scaled Muon</em> is their isotropic approximation up to whether the partner is measured by its spectral norm or its RMS scale. They also go further than I do here: they treat the <span class="math inline">\(W_O W_V\)</span> pathway, work out how the gauge interacts with momentum, and, most importantly, actually run the thing, reporting consistent gains over Muon at scale and a new state of the art on the nanoGPT speedrun.</p>
+<p>Two pieces of this post have no counterpart in theirs. The first is the <span class="math inline">\(L^2\)</span> side entirely: Compositional Muon works only under the spectral norm, so there is nothing there like <em>Bilinear SGD</em>, the closed-form Frobenius step I get from orthogonal projection onto the tangent space. The second is the budget split. Their half-split fixes the <span class="math inline">\(t=\tfrac12\)</span> allocation from the start and notes only that it is arbitrary; I keep <span class="math inline">\(t\)</span> free, show the achievable descent is linear in it, and conclude that the optimum is <strong>winner-take-all</strong>, spending the whole budget on a single factor each step. And this is not merely the best split among the boxes <span class="math inline">\(\mathcal{F}_t\)</span>: as I prove, it is optimal over the entire sum-of-norms set <span class="math inline">\(\mathcal{F}_\triangle\)</span> that the triangle inequality hands us, so no allocation of any kind does better under that relaxation. So their two rules sit inside my taxonomy as the symmetric <span class="math inline">\(L^\infty\)</span> entries, with the <span class="math inline">\(L^2\)</span> row and the winner-take-all row genuinely new here. The rest of what this post adds is framing: the explicit bilinear-form view, under which the two relevant norms (the sup norm as the spectral norm of the form, the energy as its Frobenius norm) fall out naturally, and the organization of the <span class="math inline">\(L^\infty\)</span> variants as a single nested chain of inner approximations (exact <span class="math inline">\(\subseteq\)</span> triangle <span class="math inline">\(\subseteq\)</span> sub-multiplicative), each trading approximation budget for GPU-friendliness.</p>
+</section>
+<section id="future-work" class="level2">
+<h2 class="anchored" data-anchor-id="future-work">10. Future Work</h2>
+<p>The most obvious next step is to actually run these optimizers and measure how they perform. The analysis here says nothing about which variant wins in practice, or whether the winner-take-all split really does hurt as much as I suspect.</p>
+<p>A second direction is to look for better solutions to the exact sup-norm problem on the tangent space (<a href="#eq-linf" class="quarto-xref">Equation&nbsp;19</a>). The closed-form variants in this post all lean on the triangle inequality, which is a fairly crude inner approximation. I suspect there is room for a method that stays GPU-friendly yet gives up far less of the budget, perhaps through a dual decomposition of the coupled spectral norm that keeps each inner step cheap, or through the single-loop, warm-started ADMM scheme sketched in <a href="#i-the-exact-convex-problem">section 7</a> that folds the solver state into the optimizer and takes one iteration per step. This is the direction I plan to explore next.</p>
+<p>A third direction is regularization. Decoupled weight decay (AdamW) is a near-universal improvement over plain Adam, which motivates adding a regularization term to the steepest-descent problems above. That turns each update into a proximal step, a shrinkage operation, but now one that acts on the bilinear form itself (say, Frobenius of <span class="math inline">\(W_{QK}\)</span>) rather than on the raw factor parameters, which is arguably the more natural object to penalize.</p>
+
+
+</section>
+
+
+<div id="quarto-appendix" class="default"><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>Proof. Here <span class="math inline">\(W_Q^+\)</span> and <span class="math inline">\(W_K^+\)</span> denote the Moore-Penrose pseudo-inverses, so that <span class="math inline">\(P_Q = W_Q W_Q^+\)</span> and <span class="math inline">\(P_K = W_K W_K^+\)</span>. Both inclusions are direct. For “<span class="math inline">\(\subseteq\)</span>”, note that <span class="math inline">\((I - P_Q) W_Q = 0\)</span> and <span class="math inline">\(W_K^T (I - P_K) = 0\)</span>, so applying the double projection to any factorized step annihilates both of its terms. For “<span class="math inline">\(\supseteq\)</span>”, take any <span class="math inline">\(Z\)</span> with <span class="math inline">\((I - P_Q)\, Z\, (I - P_K) = 0\)</span> and split it twice, once on the left by <span class="math inline">\(P_Q\)</span>, then the remainder on the right by <span class="math inline">\(P_K\)</span>:</p>
+<p><span class="math display">\[Z = P_Q Z + (I - P_Q) Z = P_Q Z + (I - P_Q) Z P_K + \underbrace{(I - P_Q)\, Z\, (I - P_K)}_{=\,0}\]</span></p>
+<p>The two surviving terms are each <em>already</em> in factorized form,</p>
+<p><span class="math display">\[P_Q Z = W_Q \underbrace{W_Q^+ Z}_{\Delta W_K^T}, \qquad (I - P_Q) Z P_K = \underbrace{(I - P_Q) Z\, (W_K^+)^T}_{\Delta W_Q}\, W_K^T,\]</span></p>
+<p>so <span class="math inline">\(Z = \Delta W_Q W_K^T + W_Q \Delta W_K^T \in \mathcal{T}\)</span>. Whenever the orthogonality condition holds, projecting onto the two factor subspaces hands you the factors directly.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>A left inverse exists exactly when <span class="math inline">\(W_K\)</span> has full column rank, which we assume throughout. While this typically holds for a thin <span class="math inline">\(d \times d_k\)</span> matrix with <span class="math inline">\(d \gg d_k\)</span>, the caveat hints that the method may become unstable for almost-low-rank weights, where the pseudo-inverse blows up. This is worth exploring in the future, perhaps with added regularization.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>This is one instance of a general fact about problems coupled only through a shared budget. For two blocks, <span class="math display">\[V = \min_{x,\,y}\ f(x) + g(y) \quad\text{s.t.}\quad a(x) + b(y) \le \epsilon \qquad (a, b \ge 0),\]</span> define each block’s <em>value function</em> (the best objective reachable on a given budget) as <span class="math inline">\(v_f(s) = \inf_{a(x) \le s} f(x)\)</span> and <span class="math inline">\(v_g(s) = \inf_{b(y) \le s} g(y)\)</span>. Then solving the coupled problem is the same as optimally splitting the budget: <span class="math display">\[V = \inf_{0 \le s \le \epsilon}\ v_f(s) + v_g(\epsilon - s).\]</span> Both directions are immediate: any split <span class="math inline">\(s\)</span> gives a feasible pair, so <span class="math inline">\(V \le v_f(s) + v_g(\epsilon - s)\)</span>. Conversely a feasible <span class="math inline">\((x, y)\)</span> has <span class="math inline">\(b(y) \le \epsilon - a(x)\)</span>, so taking <span class="math inline">\(s = a(x)\)</span> gives <span class="math inline">\(f(x) + g(y) \ge v_f(s) + v_g(\epsilon - s)\)</span>. Our share <span class="math inline">\(t\)</span> is just <span class="math inline">\(s = t\epsilon\)</span>, so optimizing <span class="math inline">\(t\)</span> optimizes over the entire set <span class="math inline">\(\mathcal{F}_\triangle\)</span>, not merely one box <span class="math inline">\(\mathcal{F}_t\)</span>. What makes the answer one-sided is that here the value functions are <em>linear</em>: spectral/nuclear duality gives <span class="math inline">\(v_f(s) = -s\,\|G_Q W_K^+\|_*\)</span> and <span class="math inline">\(v_g(s) = -s\,\|G_K W_Q^+\|_*\)</span>, so <span class="math inline">\(v_f(s) + v_g(\epsilon - s)\)</span> is linear in <span class="math inline">\(s\)</span> and minimized at an endpoint. The sub-multiplicative restriction (III) is the same problem with <span class="math inline">\(v_f(s) = -s\,\|G_Q\|_*/\|W_K\|_2\)</span> and <span class="math inline">\(v_g(s) = -s\,\|G_K\|_*/\|W_Q\|_2\)</span>, still linear, so the one-factor conclusion carries over unchanged.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/tomshlomo\.github\.io\/blog\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.4.543">
+<meta name="generator" content="quarto-1.9.38">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -10,8 +10,11 @@
 <meta name="dcterms.date" content="2024-03-30">
 <meta name="description" content="The non quadratic case">
 
-<title>Tom Shlomo’s Blog - Efficient leave one out cross validation - part 2</title>
+<title>Efficient leave one out cross validation - part 2 – Tom Shlomo’s Blog</title>
 <style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -24,8 +27,9 @@ ul.task-list li input[type="checkbox"] {
   vertical-align: middle;
 }
 /* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -60,22 +64,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="../../site_libs/quarto-nav/headroom.min.js"></script>
 <script src="../../site_libs/clipboard/clipboard.min.js"></script>
 <script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../site_libs/quarto-html/popper.min.js"></script>
 <script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-0a6b7249c26820e032cb0bd839ff02b1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-4360c678b5099ca041644eb02eaa1bfe.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
 <link href="../../site_libs/quarto-contrib/academicons-1.9.2/all.css" rel="stylesheet">
 <link href="../../site_libs/quarto-contrib/academicons-1.9.2/size.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
@@ -105,7 +110,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
         <script type="text/javascript">
@@ -130,8 +135,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         </script>
 
 
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -144,7 +149,7 @@ const typesetMath = (el) => {
     var macros = [];
     for (var i = 0; i < mathElements.length; i++) {
       var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
         window.katex.render(texText.data, mathElements[i], {
           displayMode: mathElements[i].classList.contains('display'),
           throwOnError: false,
@@ -163,7 +168,7 @@ window.Quarto = {
 <link rel="stylesheet" href="../../styles.css">
 </head>
 
-<body class="nav-fixed">
+<body class="nav-fixed quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top quarto-banner">
@@ -175,7 +180,7 @@ window.Quarto = {
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
   <span class="navbar-toggler-icon"></span>
 </button>
           <div class="collapse navbar-collapse" id="navbarCollapse">
@@ -201,7 +206,7 @@ window.Quarto = {
   </li>  
 </ul>
           </div> <!-- /navcollapse -->
-          <div class="quarto-navbar-tools">
+            <div class="quarto-navbar-tools">
 </div>
       </div> <!-- /container-fluid -->
     </nav>
@@ -322,7 +327,7 @@ H \theta^{(j)}
 <h1>Python implementation</h1>
 <p>Once more, we’ll turn to JAX, leveraging its automatic differentiation capabilities. Our estimator will take as inputs the loss and regularization functions, along with an optional “inverse link” function. This function can be employed to transform the predicted labels (e.g.&nbsp;a sigmoid to convert log-odds to probabilities in logistic regression, or an exponent to convert log-rate to rate in Poisson regression).</p>
 <div id="cell-5" class="cell" data-execution_count="4">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Callable</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Callable</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -375,14 +380,14 @@ H \theta^{(j)}
 <span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>            assume_a<span class="op">=</span><span class="st">"pos"</span>,</span>
 <span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>        )</span>
 <span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>        h <span class="op">=</span> np.einsum(<span class="st">"ij,ji-&gt;i"</span>, X, t)</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.inverse_link(y_hat <span class="op">+</span> (h <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> h <span class="op">*</span> l_prime_prime)) <span class="op">*</span> l_prime)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.inverse_link(y_hat <span class="op">+</span> (h <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> h <span class="op">*</span> l_prime_prime)) <span class="op">*</span> l_prime)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="example" class="level1">
 <h1>Example</h1>
 <p>To illustrate the concepts discussed above, we train a classifier on a dataset for predicting heart disease events. From a quick glance over Kaggle, it appears that achieving an AUC of approximately 0.9 is feasible.</p>
 <div id="cell-7" class="cell" data-execution_count="8">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.compose <span class="im">import</span> ColumnTransformer</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.pipeline <span class="im">import</span> Pipeline</span>
@@ -391,12 +396,12 @@ H \theta^{(j)}
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> roc_auc_score</span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="st">"data/heart.csv"</span>)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>df</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
 <div>
 
 
-<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
@@ -416,7 +421,7 @@ H \theta^{(j)}
 </thead>
 <tbody>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">0</td>
+<th data-quarto-table-cell-role="th">0</th>
 <td>40</td>
 <td>M</td>
 <td>ATA</td>
@@ -431,7 +436,7 @@ H \theta^{(j)}
 <td>0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">1</td>
+<th data-quarto-table-cell-role="th">1</th>
 <td>49</td>
 <td>F</td>
 <td>NAP</td>
@@ -446,7 +451,7 @@ H \theta^{(j)}
 <td>1</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">2</td>
+<th data-quarto-table-cell-role="th">2</th>
 <td>37</td>
 <td>M</td>
 <td>ATA</td>
@@ -461,7 +466,7 @@ H \theta^{(j)}
 <td>0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">3</td>
+<th data-quarto-table-cell-role="th">3</th>
 <td>48</td>
 <td>F</td>
 <td>ASY</td>
@@ -476,7 +481,7 @@ H \theta^{(j)}
 <td>1</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">4</td>
+<th data-quarto-table-cell-role="th">4</th>
 <td>54</td>
 <td>M</td>
 <td>NAP</td>
@@ -491,7 +496,7 @@ H \theta^{(j)}
 <td>0</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">...</td>
+<th data-quarto-table-cell-role="th">...</th>
 <td>...</td>
 <td>...</td>
 <td>...</td>
@@ -506,7 +511,7 @@ H \theta^{(j)}
 <td>...</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">913</td>
+<th data-quarto-table-cell-role="th">913</th>
 <td>45</td>
 <td>M</td>
 <td>TA</td>
@@ -521,7 +526,7 @@ H \theta^{(j)}
 <td>1</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">914</td>
+<th data-quarto-table-cell-role="th">914</th>
 <td>68</td>
 <td>M</td>
 <td>ASY</td>
@@ -536,7 +541,7 @@ H \theta^{(j)}
 <td>1</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">915</td>
+<th data-quarto-table-cell-role="th">915</th>
 <td>57</td>
 <td>M</td>
 <td>ASY</td>
@@ -551,7 +556,7 @@ H \theta^{(j)}
 <td>1</td>
 </tr>
 <tr class="even">
-<td data-quarto-table-cell-role="th">916</td>
+<th data-quarto-table-cell-role="th">916</th>
 <td>57</td>
 <td>F</td>
 <td>ATA</td>
@@ -566,7 +571,7 @@ H \theta^{(j)}
 <td>1</td>
 </tr>
 <tr class="odd">
-<td data-quarto-table-cell-role="th">917</td>
+<th data-quarto-table-cell-role="th">917</th>
 <td>38</td>
 <td>M</td>
 <td>NAP</td>
@@ -588,14 +593,14 @@ H \theta^{(j)}
 </div>
 </div>
 <div id="cell-8" class="cell" data-execution_count="9">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> df[<span class="st">"HeartDisease"</span>]</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> df[<span class="st">"HeartDisease"</span>]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> df.drop(columns<span class="op">=</span>[<span class="st">"HeartDisease"</span>])</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>X[<span class="st">"one"</span>] <span class="op">=</span> <span class="fl">1.0</span>  <span class="co"># an all-ones column to implicitly fit an intercept term</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>X <span class="op">=</span> pd.get_dummies(X, drop_first<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>x_train, x_test, y_train, y_test <span class="op">=</span> train_test_split(</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    X, y, test_size<span class="op">=</span><span class="fl">0.3</span>, random_state<span class="op">=</span><span class="dv">42</span></span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>x_train<span class="sc">.</span>shape<span class="op">=</span><span class="sc">}</span><span class="ss">, </span><span class="sc">{</span>x_test<span class="sc">.</span>shape<span class="op">=</span><span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>x_train<span class="sc">.</span>shape<span class="op">=</span><span class="sc">}</span><span class="ss">, </span><span class="sc">{</span>x_test<span class="sc">.</span>shape<span class="op">=</span><span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>x_train.shape=(642, 16), x_test.shape=(276, 16)</code></pre>
 </div>
@@ -603,7 +608,7 @@ H \theta^{(j)}
 <p>Our approach involves using stratified logistic regression with a combination of Laplacian and sum of squares regularization. While this may not be the optimal model for this specific problem, it serves well for demonstrating the concepts.</p>
 <p>In our model, we stratify over the sex of the patient, meaning we fit two coefficient vectors: one for males and one for females. The Laplacian regularization promotes similarity between the coefficient vectors for females and males. You can read more about stratified models with Laplacian regularization <a href="https://web.stanford.edu/~boyd/papers/pdf/strat_models.pdf">here</a>.</p>
 <div id="cell-10" class="cell" data-execution_count="16">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> stratify(X: Array) <span class="op">-&gt;</span> Array:</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> stratify(X: Array) <span class="op">-&gt;</span> Array:</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> X[<span class="st">"Sex_M"</span>].values[:, np.newaxis]</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> X.drop(columns<span class="op">=</span>[<span class="st">"Sex_M"</span>]).astype(<span class="bu">float</span>).values</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.hstack([X <span class="op">*</span> z, X <span class="op">*</span> <span class="op">~</span>z])</span>
@@ -630,21 +635,21 @@ H \theta^{(j)}
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>x_train <span class="op">=</span> transformer.fit_transform(x_train)</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>x_test <span class="op">=</span> transformer.transform(x_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>x_test <span class="op">=</span> transformer.transform(x_test)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Next we define the regularization matrices:</p>
 <div id="cell-12" class="cell" data-execution_count="5">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> x_train.shape[<span class="dv">1</span>]</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>m <span class="op">=</span> x_train.shape[<span class="dv">1</span>]</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>laplacian <span class="op">=</span> np.array([[<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>], [<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>]])</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>laplacian <span class="op">=</span> np.kron(laplacian, np.eye(m <span class="op">//</span> <span class="dv">2</span>))</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>ridge <span class="op">=</span> np.eye(m)</span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>ridge[<span class="dv">0</span>] <span class="op">=</span> <span class="dv">0</span>  <span class="co"># no penalty on the intercept</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>ridge[m <span class="op">//</span> <span class="dv">2</span>] <span class="op">=</span> <span class="dv">0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>ridge[m <span class="op">//</span> <span class="dv">2</span>] <span class="op">=</span> <span class="dv">0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We have two hyperparameters in our model: the strength of the sum of squares (ridge) regularization and the strength of the Laplacian regularization.</p>
 <p>For hyperparameter optimization, we utilize Optuna.</p>
 <div id="cell-14" class="cell" data-execution_count="6">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> optuna</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> optuna</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_factory(alpha: <span class="bu">float</span>, beta: <span class="bu">float</span>) <span class="op">-&gt;</span> GLMWithLOOCV:</span>
@@ -672,7 +677,7 @@ H \theta^{(j)}
 <span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>roc_auc_score(</span>
 <span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    y_test,</span>
 <span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    model.fit(x_train, y_train.values).predict(x_test),</span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>[I 2024-03-24 08:56:29,175] A new study created in memory with name: no-name-61410be4-4d1d-4a9b-8cc6-068004336d5c
 [I 2024-03-24 08:56:30,700] Trial 0 finished with value: -0.9092301389105666 and parameters: {'alpha': 0.012775258780126265, 'beta': 0.002191596541067304}. Best is trial 0 with value: -0.9092301389105666.
@@ -735,7 +740,7 @@ H \theta^{(j)}
 <h1>Verification of implementation</h1>
 <p>To assess the accuracy of our implementation, we compare the approximated leave-one-out predictions with the actual leave-one-out predictions:</p>
 <div id="cell-16" class="cell" data-execution_count="10">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> time <span class="im">import</span> time</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> time <span class="im">import</span> time</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.express <span class="im">as</span> px</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> plotly.io <span class="im">as</span> pio</span>
@@ -758,7 +763,7 @@ H \theta^{(j)}
 <span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>efficient_loocv_runtime <span class="op">=</span> time() <span class="op">-</span> t_start</span>
 <span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(y_tilde <span class="op">-</span> y_tilde_approx)<span class="sc">.</span>mean()<span class="op">=</span><span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>px.scatter(x<span class="op">=</span>y_tilde, y<span class="op">=</span>y_tilde_approx)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>px.scatter(x<span class="op">=</span>y_tilde, y<span class="op">=</span>y_tilde_approx)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>np.abs(y_tilde - y_tilde_approx).mean()=4.465176e-05</code></pre>
 </div>
@@ -791,7 +796,7 @@ if (outputEl) {{
 </div>
 </div>
 <div id="cell-17" class="cell" data-execution_count="11">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>px.histogram(y_tilde <span class="op">-</span> y_tilde_approx)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>px.histogram(y_tilde <span class="op">-</span> y_tilde_approx)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>                            <div id="0decf4eb-1ede-4fc3-8740-6aab6bd7bb1c" class="plotly-graph-div" style="height:525px; width:100%;"></div>            <script type="text/javascript">                require(["plotly"], function(Plotly) {                    window.PLOTLYENV=window.PLOTLYENV || {};                                    if (document.getElementById("0decf4eb-1ede-4fc3-8740-6aab6bd7bb1c")) {                    Plotly.newPlot(                        "0decf4eb-1ede-4fc3-8740-6aab6bd7bb1c",                        [{"alignmentgroup":"True","bingroup":"x","hovertemplate":"variable=0\u003cbr\u003evalue=%{x}\u003cbr\u003ecount=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"0","marker":{"color":"#636efa","pattern":{"shape":""}},"name":"0","offsetgroup":"0","orientation":"v","showlegend":true,"x":[-8.1673264503479e-05,-1.1026859283447266e-05,3.159046173095703e-06,6.139278411865234e-06,8.082389831542969e-05,1.0251998901367188e-05,-4.3548643589019775e-06,-2.516806125640869e-05,2.384185791015625e-07,6.377696990966797e-06,9.79304313659668e-05,-4.645437002182007e-05,-5.207955837249756e-05,-2.609938383102417e-05,-0.00013108551502227783,9.5367431640625e-06,-2.028048038482666e-05,-7.437914609909058e-05,-4.76837158203125e-07,-9.804964065551758e-05,-8.165836334228516e-06,5.4836273193359375e-06,-8.66129994392395e-05,-2.5622546672821045e-05,-0.0001176297664642334,-4.979968070983887e-05,-3.3795833587646484e-05,4.851818084716797e-05,-1.0102987289428711e-05,-5.340576171875e-05,-7.450580596923828e-06,-2.259761095046997e-05,-4.735216498374939e-05,-3.528594970703125e-05,5.4836273193359375e-06,-1.5527009963989258e-05,-4.1425228118896484e-06,-2.1219253540039062e-05,-0.0002646893262863159,-3.2007694244384766e-05,-2.7567148208618164e-05,-4.488229751586914e-05,-3.337860107421875e-05,3.2186508178710938e-06,1.430511474609375e-05,-8.32974910736084e-05,5.364418029785156e-06,3.325939178466797e-05,-0.0001640915870666504,-1.245737075805664e-05,-7.697939872741699e-05,-0.00010003149509429932,3.3736228942871094e-05,3.540515899658203e-05,-4.845857620239258e-05,-7.092952728271484e-06,-1.1175870895385742e-06,3.832578659057617e-05,-4.70280647277832e-05,4.2378902435302734e-05,3.612041473388672e-05,5.245208740234375e-05,-0.00016236305236816406,-2.428889274597168e-05,2.1338462829589844e-05,2.4497509002685547e-05,7.152557373046875e-06,-3.331899642944336e-05,-3.427267074584961e-07,-5.412101745605469e-05,-0.0001723766326904297,-6.51925802230835e-06,-1.055002212524414e-05,-6.67572021484375e-05,-1.093745231628418e-05,-2.384185791015625e-07,-5.821138620376587e-05,-4.176795482635498e-05,0.00017002224922180176,-1.35079026222229e-05,2.8014183044433594e-06,8.52346420288086e-06,1.7762184143066406e-05,-2.477318048477173e-06,1.0371208190917969e-05,-0.0004303455352783203,1.6093254089355469e-06,0.00014322996139526367,-9.59634780883789e-06,2.086162567138672e-05,-7.075071334838867e-05,-1.662224531173706e-05,-3.540515899658203e-05,6.020069122314453e-06,-9.611248970031738e-07,3.516674041748047e-06,-2.8014183044433594e-06,4.827976226806641e-06,-2.1755695343017578e-05,-9.227544069290161e-06,-5.900859832763672e-06,-3.926455974578857e-06,-7.742643356323242e-05,-8.169561624526978e-05,-1.3172626495361328e-05,-4.155188798904419e-05,-2.562999725341797e-05,1.6033649444580078e-05,0.00011152029037475586,-3.5293400287628174e-05,0.0001150369644165039,-4.61190938949585e-06,-5.602836608886719e-06,-2.5525689125061035e-05,4.872679710388184e-06,-3.788992762565613e-05,-3.981590270996094e-05,6.0677528381347656e-05,-1.0505318641662598e-05,-7.0892274379730225e-06,1.4901161193847656e-06,-3.30805778503418e-05,-4.649162292480469e-06,2.7954578399658203e-05,-1.1973083019256592e-05,-4.279613494873047e-05,-5.953013896942139e-06,8.344650268554688e-07,-8.535385131835938e-05,7.387995719909668e-05,-2.7135014533996582e-05,-4.7266483306884766e-05,-0.00013059377670288086,-1.7881393432617188e-07,-7.808208465576172e-05,-0.0001138448715209961,-1.496821641921997e-05,2.3245811462402344e-05,2.950429916381836e-05,-1.424551010131836e-05,-5.429983139038086e-05,2.0503997802734375e-05,-3.057718276977539e-05,-5.2381306886672974e-05,-2.022460103034973e-05,-5.4836273193359375e-06,4.369020462036133e-05,2.9206275939941406e-06,-1.55717134475708e-06,-0.00011493265628814697,1.8715858459472656e-05,-0.00013659149408340454,4.9591064453125e-05,1.1086463928222656e-05,-2.633035182952881e-05,-1.1920928955078125e-05,-5.863606929779053e-05,2.980232238769531e-07,-1.1444091796875e-05,1.9669532775878906e-06,-0.00021117925643920898,8.761882781982422e-06,-2.736598253250122e-05,9.417533874511719e-06,-9.98377799987793e-05,-9.104609489440918e-05,-7.987022399902344e-06,-2.405792474746704e-05,0.00013488531112670898,3.5762786865234375e-07,-8.106231689453125e-06,-5.4001808166503906e-05,0.000217437744140625,-1.0207295417785645e-06,-8.59573483467102e-05,-2.568960189819336e-05,-8.881092071533203e-06,1.7881393432617188e-07,-7.036328315734863e-05,2.1606683731079102e-07,-8.410215377807617e-05,4.297494888305664e-05,2.154707908630371e-05,5.960464477539062e-07,3.0994415283203125e-06,-1.3709068298339844e-06,-1.055002212524414e-05,0.00016456842422485352,-2.6479363441467285e-05,-6.635487079620361e-05,-2.2590160369873047e-05,7.152557373046875e-06,0.00012791156768798828,-3.948807716369629e-07,5.346536636352539e-05,-1.8104910850524902e-06,1.3232231140136719e-05,-1.2218952178955078e-06,-1.5676021575927734e-05,-1.9680708646774292e-05,1.5139579772949219e-05,6.67572021484375e-06,5.4836273193359375e-05,2.3484230041503906e-05,-3.2782554626464844e-05,-4.251301288604736e-05,0.00022304058074951172,-3.1113624572753906e-05,5.841255187988281e-06,1.9609928131103516e-05,-3.978610038757324e-06,2.3245811462402344e-06,-2.8442591428756714e-05,-0.00011053681373596191,-3.627687692642212e-05,-8.096545934677124e-05,-2.7418136596679688e-06,3.463029861450195e-05,-0.00013586878776550293,-3.5762786865234375e-07,-6.002187728881836e-05,-1.1354684829711914e-05,-1.7151236534118652e-05,-1.5676021575927734e-05,-1.4007091522216797e-05,-4.32431697845459e-05,1.5497207641601562e-06,0.00018596649169921875,-0.0001729428768157959,-6.961822509765625e-05,-6.571412086486816e-06,1.1086463928222656e-05,-3.5762786865234375e-07,-8.106231689453125e-06,-2.664327621459961e-05,-4.708021879196167e-05,-0.000141829252243042,-6.355345249176025e-06,9.134411811828613e-06,2.2411346435546875e-05,-0.00011259317398071289,2.682209014892578e-06,-4.8488378524780273e-05,1.0192394256591797e-05,-4.827976226806641e-06,-9.37730073928833e-05,7.748603820800781e-05,-2.9809772968292236e-05,0.00011903047561645508,1.4901161193847656e-06,3.0994415283203125e-06,-0.00012320280075073242,2.6524066925048828e-05,1.2993812561035156e-05,3.802776336669922e-05,-5.0067901611328125e-06,6.633996963500977e-05,4.2438507080078125e-05,-2.7604401111602783e-06,-3.100186586380005e-05,1.1920928955078125e-07,-7.033348083496094e-06,1.2814998626708984e-05,-8.225440979003906e-06,-7.203221321105957e-05,5.424022674560547e-06,-1.6689300537109375e-05,-7.68899917602539e-06,-1.8477439880371094e-05,-5.6624412536621094e-05,0.0002925395965576172,-7.450580596923828e-07,-5.391240119934082e-05,-3.898143768310547e-05,-2.6952475309371948e-05,2.5019049644470215e-05,0.00021839141845703125,-3.330409526824951e-06,3.281235694885254e-05,-1.3709068298339844e-06,-4.57763671875e-05,3.325939178466797e-05,-1.823902130126953e-05,-9.059906005859375e-06,-0.00010643899440765381,-3.641843795776367e-05,-1.2218952178955078e-06,-0.00032955408096313477,5.322694778442383e-05,2.3245811462402344e-05,-3.701448440551758e-05,-8.428096771240234e-05,9.936094284057617e-05,-9.59932804107666e-05,-2.3692846298217773e-06,-1.1682510375976562e-05,-3.7401914596557617e-06,3.2007694244384766e-05,5.781650543212891e-06,4.559755325317383e-06,-0.00010232627391815186,8.821487426757812e-06,0.00023156404495239258,-0.00010335445404052734,7.3909759521484375e-06,-4.628673195838928e-05,1.2934207916259766e-05,-4.208087921142578e-05,0.00011646747589111328,-7.253885269165039e-05,-5.424022674560547e-06,-9.998679161071777e-06,2.7000904083251953e-05,-0.00013375282287597656,-5.0362199544906616e-05,-1.6987323760986328e-05,-3.141164779663086e-05,9.822845458984375e-05,-2.3052096366882324e-05,1.9073486328125e-06,-2.6971101760864258e-06,-4.659965634346008e-05,-2.5078654289245605e-05,2.384185791015625e-07,-4.139542579650879e-05,1.5676021575927734e-05,-7.633864879608154e-05,6.9141387939453125e-06,3.5703182220458984e-05,-3.4868717193603516e-06,-2.4139881134033203e-06,-1.564621925354004e-07,6.93202018737793e-05,-4.246830940246582e-06,-0.00010207295417785645,-7.212162017822266e-06,-3.451108932495117e-05,0.0001646876335144043,7.18832015991211e-05,-7.289648056030273e-05,4.214048385620117e-05,-2.562999725341797e-06,0.00018072128295898438,-5.136430263519287e-05,-4.3354928493499756e-05,5.125999450683594e-06,-2.5212764739990234e-05,-0.00010603666305541992,8.404254913330078e-06,3.7223100662231445e-05,5.0067901611328125e-06,-3.501772880554199e-07,-1.8477439880371094e-06,6.4373016357421875e-06,-4.076957702636719e-05,2.8908252716064453e-05,-2.2530555725097656e-05,-2.2649765014648438e-06,-5.960464477539062e-07,-2.4616718292236328e-05,-8.493661880493164e-07,-3.4689903259277344e-05,-3.3795833587646484e-05,5.996227264404297e-05,4.291534423828125e-06,-2.2940337657928467e-05,-9.331107139587402e-05,-3.866851329803467e-06,-4.3898820877075195e-05,-9.518861770629883e-05,-3.653764724731445e-05,-9.365379810333252e-05,-2.0839273929595947e-05,-1.4677643775939941e-05,-7.510185241699219e-06,-1.8328428268432617e-05,-2.1383166313171387e-06,5.7220458984375e-06,-0.00011038780212402344,4.172325134277344e-06,-4.7869980335235596e-05,-0.0001386404037475586,-0.00012624263763427734,2.8014183044433594e-06,-1.5348196029663086e-06,6.854534149169922e-06,8.195638656616211e-08,-0.00010520219802856445,-7.779151201248169e-05,-2.0503997802734375e-05,-4.875659942626953e-05,-2.4572014808654785e-05,0.00013828277587890625,-3.14861536026001e-05,8.940696716308594e-06,4.500150680541992e-05,-9.393692016601562e-05,1.0132789611816406e-06,-0.00015306472778320312,9.679794311523438e-05,5.239248275756836e-05,-3.069639205932617e-05,-7.838010787963867e-05,-0.0003336891531944275,1.2516975402832031e-06,2.7194619178771973e-07,9.846687316894531e-05,-2.6151537895202637e-05,8.291006088256836e-05,-3.039836883544922e-06,6.300210952758789e-05,-2.3502856492996216e-05,1.2993812561035156e-05,1.1324882507324219e-06,3.55839729309082e-05,-0.00010132789611816406,-1.7061829566955566e-06,-6.318837404251099e-05,4.887580871582031e-06,0.00018835067749023438,6.99758529663086e-05,0.00010353326797485352,-4.351884126663208e-05,2.9146671295166016e-05,6.198883056640625e-06,-2.6226043701171875e-06,-1.1980533599853516e-05,-7.396936416625977e-05,-4.8726797103881836e-05,-3.1888484954833984e-05,8.702278137207031e-06,2.3066997528076172e-05,7.450580596923828e-06,-4.4345855712890625e-05,6.556510925292969e-07,-4.306435585021973e-06,-8.723139762878418e-05,9.357929229736328e-06,-0.00010936707258224487,-8.99285078048706e-06,2.586841583251953e-05,1.2785196304321289e-05,-2.2470951080322266e-05,-2.4259090423583984e-05,-9.074807167053223e-06,2.8014183044433594e-06,-7.537007331848145e-05,9.119510650634766e-06,-2.9206275939941406e-06,1.2636184692382812e-05,5.066394805908203e-06,3.135204315185547e-05,-3.6954879760742188e-06,-9.223818778991699e-05,-0.00017747282981872559,-0.00011453032493591309,-1.2576580047607422e-05,1.633167266845703e-05,0.00020444393157958984,2.086162567138672e-06,-5.066394805908203e-06,-1.0728836059570312e-06,4.410743713378906e-05,4.357099533081055e-05,-3.0182301998138428e-05,-5.336105823516846e-05,-9.387731552124023e-07,-3.337860107421875e-06,3.2372772693634033e-06,-1.399219036102295e-05,0.00010192394256591797,-0.0001875460147857666,-5.9604644775390625e-06,-0.0015995502471923828,-2.9206275939941406e-06,1.4662742614746094e-05,-2.387911081314087e-05,-0.0001595020294189453,3.814697265625e-06,3.159046173095703e-06,1.049041748046875e-05,7.450580596923828e-06,-4.798173904418945e-06,4.772096872329712e-06,-3.439188003540039e-05,1.9669532775878906e-06,9.715557098388672e-06,-3.481656312942505e-05,-4.947930574417114e-05,-3.670156002044678e-05,0.00022459030151367188,-1.4960765838623047e-05,-8.083879947662354e-05,0.00011092424392700195,-1.8894672393798828e-05,-1.806020736694336e-05,-8.38935375213623e-05,-0.0003657341003417969,1.1324882507324219e-06,-8.52346420288086e-06,6.198883056640625e-06,-1.856684684753418e-05,-1.621246337890625e-05,-1.971423625946045e-05,-1.2151896953582764e-05,0.00020581483840942383,-1.1101365089416504e-06,-3.8623809814453125e-05,-1.895427703857422e-05,1.430511474609375e-06,-5.647540092468262e-06,2.5033950805664062e-06,-7.104873657226562e-05,-6.854534149169922e-06,-1.0132789611816406e-05,-4.76837158203125e-07,-1.633167266845703e-05,1.245737075805664e-05,3.874301910400391e-06,-4.951655864715576e-05,-8.821487426757812e-06,-1.1626631021499634e-05,-3.11732292175293e-05,-5.4955482482910156e-05,-3.7550926208496094e-05,-5.675852298736572e-05,-2.248212695121765e-05,1.704692840576172e-05,-6.133317947387695e-05,8.046627044677734e-06,-3.039836883544922e-06,3.3855438232421875e-05,-4.09930944442749e-05,3.123283386230469e-05,5.364418029785156e-06,-1.722574234008789e-05,5.227327346801758e-05,-5.364418029785156e-06,4.649162292480469e-06,-0.00021716952323913574,1.7285346984863281e-06,-1.8015503883361816e-05,-2.6345252990722656e-05,-1.1406838893890381e-05,-2.4378299713134766e-05,5.6684017181396484e-05,7.033348083496094e-06,-4.357099533081055e-05,-3.165006637573242e-05,-1.4841556549072266e-05,4.470348358154297e-06,2.7477741241455078e-05,-9.01147723197937e-06,1.2218952178955078e-05,0.0002865791320800781,-4.947185516357422e-06,-8.124858140945435e-06,-3.4570693969726562e-06,-1.87605619430542e-05,-4.4226646423339844e-05,8.165836334228516e-06,-0.00024899840354919434,-0.00025266408920288086,-2.0772218704223633e-05,-1.5698373317718506e-05,-7.957220077514648e-06,-8.656084537506104e-05,7.492303848266602e-05,-8.165836334228516e-06,-5.185604095458984e-06,-2.980232238769531e-07,-1.8298625946044922e-05,-2.995133399963379e-05,1.1324882507324219e-06,2.5033950805664062e-06,-0.00010603666305541992,2.5033950805664062e-06,-2.199411392211914e-05,-6.67572021484375e-06,-4.6759843826293945e-05,7.545948028564453e-05,-1.3709068298339844e-06,-3.1210482120513916e-05,1.4424324035644531e-05,-3.072619438171387e-05,-2.0936131477355957e-06,-5.519390106201172e-05,-4.163384437561035e-05,-1.2755393981933594e-05,-6.1355531215667725e-06,1.2516975402832031e-06,-5.9388577938079834e-05,-5.5208802223205566e-05,8.71419906616211e-05,5.1975250244140625e-05,1.9818544387817383e-05,-4.708766937255859e-06,9.882450103759766e-05,4.965066909790039e-05,-1.3947486877441406e-05,-2.1189451217651367e-05,-2.950429916381836e-06,-3.4555792808532715e-05,-2.8401613235473633e-05,-2.180039882659912e-05,-3.6619603633880615e-06,-2.5764107704162598e-05,-9.009242057800293e-05,-6.854534149169922e-05,0.00014734268188476562,-4.6819448471069336e-05,1.6689300537109375e-06,-1.5497207641601562e-05,-3.3602118492126465e-05,-2.5153160095214844e-05,-6.079673767089844e-05,5.418062210083008e-05,1.7285346984863281e-06,9.655952453613281e-06,-5.082041025161743e-05,-3.6954879760742188e-06,-0.00012768805027008057,-2.014636993408203e-05,-1.519918441772461e-05,0.00015145540237426758,-1.3999640941619873e-05,-0.00014644861221313477,6.437301635742188e-05,-3.2186508178710938e-06,8.219480514526367e-05,-1.2993812561035156e-05,8.58306884765625e-06,-3.680586814880371e-06,-5.97834587097168e-05,-1.1589378118515015e-05,4.6737492084503174e-05,-2.2701919078826904e-05,-1.5243887901306152e-05,-4.427134990692139e-05,-2.6166439056396484e-05,-1.990795135498047e-05,-3.2782554626464844e-06],"xaxis":"x","yaxis":"y","type":"histogram"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmapgl":[{"type":"heatmapgl","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"value"}},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"count"}},"legend":{"title":{"text":"variable"},"tracegroupgap":0},"margin":{"t":60},"barmode":"relative"},                        {"responsive": true}                    ).then(function(){
                             
@@ -822,9 +827,9 @@ if (outputEl) {{
 </div>
 <p>The approximation demonstrates high accuracy in this instance. Now, let’s compare the runtimes:</p>
 <div id="cell-19" class="cell" data-execution_count="8">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>standard_loocv_runtime <span class="op">=</span> <span class="sc">:.1e}</span><span class="ss">"</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>standard_loocv_runtime <span class="op">=</span> <span class="sc">:.1e}</span><span class="ss">"</span>)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>efficient_loocv_runtime <span class="op">=</span> <span class="sc">:.1e}</span><span class="ss">"</span>)</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>standard_loocv_runtime<span class="op">/</span>efficient_loocv_runtime <span class="op">=</span> <span class="sc">:.0f}</span><span class="ss">."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>standard_loocv_runtime<span class="op">/</span>efficient_loocv_runtime <span class="op">=</span> <span class="sc">:.0f}</span><span class="ss">."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>standard_loocv_runtime = 4.7e+01
 efficient_loocv_runtime = 1.3e-01
@@ -843,43 +848,58 @@ standard_loocv_runtime/efficient_loocv_runtime = 357.</code></pre>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
-window.document.addEventListener("DOMContentLoaded", function (event) {
-  const toggleBodyColorMode = (bsSheetEl) => {
-    const mode = bsSheetEl.getAttribute("data-mode");
-    const bodyEl = window.document.querySelector("body");
-    if (mode === "dark") {
-      bodyEl.classList.add("quarto-dark");
-      bodyEl.classList.remove("quarto-light");
-    } else {
-      bodyEl.classList.add("quarto-light");
-      bodyEl.classList.remove("quarto-dark");
-    }
-  }
-  const toggleBodyColorPrimary = () => {
-    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-    if (bsSheetEl) {
-      toggleBodyColorMode(bsSheetEl);
-    }
-  }
-  toggleBodyColorPrimary();  
-  const icon = "";
-  const anchorJS = new window.AnchorJS();
-  anchorJS.options = {
-    placement: 'right',
-    icon: icon
-  };
-  anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
       }
+      return false;
     }
-    return false;
-  }
-  const clipboard = new window.ClipboardJS('.code-copy-button', {
-    text: function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
       for (const childEl of codeEl.children) {
         if (isCodeAnnotation(childEl)) {
           childEl.remove();
@@ -887,162 +907,184 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       }
       return codeEl.innerText;
     }
-  });
-  clipboard.on('success', function(e) {
-    // button target
-    const button = e.trigger;
-    // don't keep focus
-    button.blur();
-    // flash "checked"
-    button.classList.add('code-copy-button-checked');
-    var currentTitle = button.getAttribute("title");
-    button.setAttribute("title", "Copied!");
-    let tooltip;
-    if (window.bootstrap) {
-      button.setAttribute("data-bs-toggle", "tooltip");
-      button.setAttribute("data-bs-placement", "left");
-      button.setAttribute("data-bs-title", "Copied!");
-      tooltip = new bootstrap.Tooltip(button, 
-        { trigger: "manual", 
-          customClass: "code-copy-button-tooltip",
-          offset: [0, -8]});
-      tooltip.show();    
-    }
-    setTimeout(function() {
-      if (tooltip) {
-        tooltip.hide();
-        button.removeAttribute("data-bs-title");
-        button.removeAttribute("data-bs-toggle");
-        button.removeAttribute("data-bs-placement");
-      }
-      button.setAttribute("title", currentTitle);
-      button.classList.remove('code-copy-button-checked');
-    }, 1000);
-    // clear code selection
-    e.clearSelection();
-  });
-  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-    const config = {
-      allowHTML: true,
-      maxWidth: 500,
-      delay: 100,
-      arrow: false,
-      appendTo: function(el) {
-          return el.parentElement;
-      },
-      interactive: true,
-      interactiveBorder: 10,
-      theme: 'quarto',
-      placement: 'bottom-start',
-    };
-    if (contentFn) {
-      config.content = contentFn;
-    }
-    if (onTriggerFn) {
-      config.onTrigger = onTriggerFn;
-    }
-    if (onUntriggerFn) {
-      config.onUntrigger = onUntriggerFn;
-    }
-    window.tippy(el, config); 
-  }
-  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-  for (var i=0; i<noterefs.length; i++) {
-    const ref = noterefs[i];
-    tippyHover(ref, function() {
-      // use id or data attribute instead here
-      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-      try { href = new URL(href).hash; } catch {}
-      const id = href.replace(/^#\/?/, "");
-      const note = window.document.getElementById(id);
-      return note.innerHTML;
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
     });
-  }
-  const xrefs = window.document.querySelectorAll('a.quarto-xref');
-  const processXRef = (id, note) => {
-    // Strip column container classes
-    const stripColumnClz = (el) => {
-      el.classList.remove("page-full", "page-columns");
-      if (el.children) {
-        for (const child of el.children) {
-          stripColumnClz(child);
-        }
-      }
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
     }
-    stripColumnClz(note)
-    if (id === null || id.startsWith('sec-')) {
-      // Special case sections, only their first couple elements
-      const container = document.createElement("div");
-      if (note.children && note.children.length > 2) {
-        container.appendChild(note.children[0].cloneNode(true));
-        for (let i = 1; i < note.children.length; i++) {
-          const child = note.children[i];
-          if (child.tagName === "P" && child.innerText === "") {
-            continue;
-          } else {
-            container.appendChild(child.cloneNode(true));
-            break;
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/tomshlomo\.github\.io\/blog\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
           }
         }
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(container);
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
         }
-        return container.innerHTML
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
       } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
         if (window.Quarto?.typesetMath) {
           window.Quarto.typesetMath(note);
         }
-        return note.innerHTML;
-      }
-    } else {
-      // Remove any anchor links if they are present
-      const anchorLink = note.querySelector('a.anchorjs-link');
-      if (anchorLink) {
-        anchorLink.remove();
-      }
-      if (window.Quarto?.typesetMath) {
-        window.Quarto.typesetMath(note);
-      }
-      // TODO in 1.5, we should make sure this works without a callout special case
-      if (note.classList.contains("callout")) {
-        return note.outerHTML;
-      } else {
-        return note.innerHTML;
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
       }
     }
-  }
-  for (var i=0; i<xrefs.length; i++) {
-    const xref = xrefs[i];
-    tippyHover(xref, undefined, function(instance) {
-      instance.disable();
-      let url = xref.getAttribute('href');
-      let hash = undefined; 
-      if (url.startsWith('#')) {
-        hash = url;
-      } else {
-        try { hash = new URL(url).hash; } catch {}
-      }
-      if (hash) {
-        const id = hash.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note !== null) {
-          try {
-            const html = processXRef(id, note.cloneNode(true));
-            instance.setContent(html);
-          } finally {
-            instance.enable();
-            instance.show();
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
           }
         } else {
-          // See if we can fetch this
-          fetch(url.split('#')[0])
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
           .then(res => res.text())
           .then(html => {
             const parser = new DOMParser();
             const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.getElementById(id);
+            const note = htmlDoc.querySelector('main.content');
             if (note !== null) {
-              const html = processXRef(id, note);
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
               instance.setContent(html);
             } 
           }).finally(() => {
@@ -1050,185 +1092,161 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             instance.show();
           });
         }
-      } else {
-        // See if we can fetch a full url (with no hash to target)
-        // This is a special case and we should probably do some content thinning / targeting
-        fetch(url)
-        .then(res => res.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const htmlDoc = parser.parseFromString(html, "text/html");
-          const note = htmlDoc.querySelector('main.content');
-          if (note !== null) {
-            // This should only happen for chapter cross references
-            // (since there is no id in the URL)
-            // remove the first header
-            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-              note.children[0].remove();
-            }
-            const html = processXRef(null, note);
-            instance.setContent(html);
-          } 
-        }).finally(() => {
-          instance.enable();
-          instance.show();
-        });
-      }
-    }, function(instance) {
-    });
-  }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            div.style.left = 0;
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-        // Handle positioning of the toggle
-    window.addEventListener(
-      "resize",
-      throttle(() => {
-        elRect = undefined;
-        if (selectedAnnoteEl) {
-          selectCodeLines(selectedAnnoteEl);
-        }
-      }, 10)
-    );
-    function throttle(fn, ms) {
-    let throttle = false;
-    let timer;
-      return (...args) => {
-        if(!throttle) { // first call gets through
-            fn.apply(this, args);
-            throttle = true;
-        } else { // all the others get throttled
-            if(timer) clearTimeout(timer); // cancel #2
-            timer = setTimeout(() => {
-              fn.apply(this, args);
-              timer = throttle = false;
-            }, ms);
-        }
-      };
-    }
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
-  const findCites = (el) => {
-    const parentEl = el.parentElement;
-    if (parentEl) {
-      const cites = parentEl.dataset.cites;
-      if (cites) {
-        return {
-          el,
-          cites: cites.split(' ')
-        };
-      } else {
-        return findCites(el.parentElement)
-      }
-    } else {
-      return undefined;
-    }
-  };
-  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-  for (var i=0; i<bibliorefs.length; i++) {
-    const ref = bibliorefs[i];
-    const citeInfo = findCites(ref);
-    if (citeInfo) {
-      tippyHover(citeInfo.el, function() {
-        var popup = window.document.createElement('div');
-        citeInfo.cites.forEach(function(cite) {
-          var citeDiv = window.document.createElement('div');
-          citeDiv.classList.add('hanging-indent');
-          citeDiv.classList.add('csl-entry');
-          var biblioDiv = window.document.getElementById('ref-' + cite);
-          if (biblioDiv) {
-            citeDiv.innerHTML = biblioDiv.innerHTML;
-          }
-          popup.appendChild(citeDiv);
-        });
-        return popup.innerHTML;
+      }, function(instance) {
       });
     }
-  }
-});
-</script>
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
 </div> <!-- /content -->
 
 
