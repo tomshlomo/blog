@@ -50,10 +50,10 @@ The critical realization is that **we are actually searching over the space of b
 For instance, the induced $l_2$ norm of a bilinear form measures its maximum possible output for unit-norm inputs:
 
 
-$$\|B\|_{l_2} = \sup_{\substack{\|x\|_2 \le 1 \\ \|y\|_2 \le 1}} |B(x, y)|$$ {#eq-induced-l2}
+$$\|B\|_2 = \sup_{\substack{\|x\|_2 \le 1 \\ \|y\|_2 \le 1}} |B(x, y)|$$ {#eq-induced-l2}
 
 
-When we translate this norm back to its associated matrix $M$, it corresponds exactly to the spectral norm of the composite matrix ($\|M\|_2 = \|B\|_{l_2}$).
+When we translate this norm back to its associated matrix $M$, it corresponds exactly to the spectral norm of the composite matrix ($\|M\|_2 = \|B\|_2$).
 
 Similarly, we can define the Euclidean energy of the bilinear form natively as the expected squared output under isotropic random inputs. If $x$ and $y$ are drawn from distributions with zero mean and identity covariance ($\mathbb{E}[x^T x] = I$, $\mathbb{E}[y^T y] = I$), the expected energy is:
 

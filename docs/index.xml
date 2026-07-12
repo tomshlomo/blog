@@ -10,7 +10,7 @@
 <atom:link href="https://tomshlomo.github.io/blog/index.xml" rel="self" type="application/rss+xml"/>
 <description>Tom Shlomo&#39;s blog</description>
 <generator>quarto-1.9.38</generator>
-<lastBuildDate>Sun, 14 Jun 2026 00:00:00 GMT</lastBuildDate>
+<lastBuildDate>Sat, 13 Jun 2026 21:00:00 GMT</lastBuildDate>
 <item>
   <title>Bilinear Muon</title>
   <dc:creator>Tom Shlomo</dc:creator>
@@ -47,8 +47,8 @@
 <p>In the case of self-attention, the associated matrix is <img src="https://latex.codecogs.com/png.latex?W_%7BQK%7D%20=%20W_Q%20W_K%5ET">.</p>
 <p>The critical realization is that <strong>we are actually searching over the space of bilinear forms</strong>, not independent linear operators. This space has its own norms and structures that are fundamentally different from the ones we would get if we looked at each matrix individually.</p>
 <p>For instance, the induced <img src="https://latex.codecogs.com/png.latex?l_2"> norm of a bilinear form measures its maximum possible output for unit-norm inputs:</p>
-<p><span id="eq-induced-l2"><img src="https://latex.codecogs.com/png.latex?%5C%7CB%5C%7C_%7Bl_2%7D%20=%20%5Csup_%7B%5Csubstack%7B%5C%7Cx%5C%7C_2%20%5Cle%201%20%5C%5C%20%5C%7Cy%5C%7C_2%20%5Cle%201%7D%7D%20%7CB(x,%20y)%7C%20%5Ctag%7B3%7D"></span></p>
-<p>When we translate this norm back to its associated matrix <img src="https://latex.codecogs.com/png.latex?M">, it corresponds exactly to the spectral norm of the composite matrix (<img src="https://latex.codecogs.com/png.latex?%5C%7CM%5C%7C_2%20=%20%5C%7CB%5C%7C_%7Bl_2%7D">).</p>
+<p><span id="eq-induced-l2"><img src="https://latex.codecogs.com/png.latex?%5C%7CB%5C%7C_2%20=%20%5Csup_%7B%5Csubstack%7B%5C%7Cx%5C%7C_2%20%5Cle%201%20%5C%5C%20%5C%7Cy%5C%7C_2%20%5Cle%201%7D%7D%20%7CB(x,%20y)%7C%20%5Ctag%7B3%7D"></span></p>
+<p>When we translate this norm back to its associated matrix <img src="https://latex.codecogs.com/png.latex?M">, it corresponds exactly to the spectral norm of the composite matrix (<img src="https://latex.codecogs.com/png.latex?%5C%7CM%5C%7C_2%20=%20%5C%7CB%5C%7C_2">).</p>
 <p>Similarly, we can define the Euclidean energy of the bilinear form natively as the expected squared output under isotropic random inputs. If <img src="https://latex.codecogs.com/png.latex?x"> and <img src="https://latex.codecogs.com/png.latex?y"> are drawn from distributions with zero mean and identity covariance (<img src="https://latex.codecogs.com/png.latex?%5Cmathbb%7BE%7D%5Bx%5ET%20x%5D%20=%20I">, <img src="https://latex.codecogs.com/png.latex?%5Cmathbb%7BE%7D%5By%5ET%20y%5D%20=%20I">), the expected energy is:</p>
 <p><img src="https://latex.codecogs.com/png.latex?%5Cmathbb%7BE%7D%5Cleft%5B%7CB(x,%20y)%7C%5E2%5Cright%5D"></p>
 <p>When mapped back to the associated matrix <img src="https://latex.codecogs.com/png.latex?M">, this geometric expectation corresponds exactly to the squared Frobenius norm of the matrix (<img src="https://latex.codecogs.com/png.latex?%5C%7CM%5C%7C_F%5E2">).</p>
@@ -310,7 +310,7 @@ Table&nbsp;1: Every optimizer in this post as a single steepest-descent step. Th
 </ol>
 </section></div> ]]></description>
   <guid>https://tomshlomo.github.io/blog/posts/bilinear_muon/bilinear_muon.html</guid>
-  <pubDate>Sun, 14 Jun 2026 00:00:00 GMT</pubDate>
+  <pubDate>Sat, 13 Jun 2026 21:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Teaching Rust to Python Developers</title>
@@ -335,7 +335,7 @@ Most notably, we replaced some exercises and added a new section on using PyO3 t
 
  ]]></description>
   <guid>https://tomshlomo.github.io/blog/posts/rust_with_via/rust_with_via.html</guid>
-  <pubDate>Sat, 07 Dec 2024 00:00:00 GMT</pubDate>
+  <pubDate>Fri, 06 Dec 2024 22:00:00 GMT</pubDate>
 </item>
 <item>
   <title>The sparse approximation algorithm no one talks about</title>
@@ -1062,7 +1062,7 @@ if (outputEl) {{
 </ol>
 </section></div> ]]></description>
   <guid>https://tomshlomo.github.io/blog/posts/omp/omp.html</guid>
-  <pubDate>Fri, 06 Dec 2024 00:00:00 GMT</pubDate>
+  <pubDate>Thu, 05 Dec 2024 22:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Efficient leave one out cross validation - part 2</title>
@@ -2219,7 +2219,7 @@ standard_loocv_runtime/efficient_loocv_runtime = 357.</code></pre>
 
  ]]></description>
   <guid>https://tomshlomo.github.io/blog/posts/loocv_part2/loocv_part2.html</guid>
-  <pubDate>Sat, 30 Mar 2024 00:00:00 GMT</pubDate>
+  <pubDate>Fri, 29 Mar 2024 21:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Efficient leave one out cross validation - part 1</title>
@@ -2945,7 +2945,7 @@ font-style: inherit;">%</span>timeit standard_loocv(model, X, y)</span></code></
 </ol>
 </section></div> ]]></description>
   <guid>https://tomshlomo.github.io/blog/posts/loocv/loocv_part1.html</guid>
-  <pubDate>Tue, 27 Feb 2024 00:00:00 GMT</pubDate>
+  <pubDate>Mon, 26 Feb 2024 22:00:00 GMT</pubDate>
 </item>
 <item>
   <title>MUSIC as a sparse decomposition method</title>
@@ -3047,7 +3047,7 @@ First, we replace <img src="https://latex.codecogs.com/png.latex?Y"> with <img s
 </ol>
 </section></div> ]]></description>
   <guid>https://tomshlomo.github.io/blog/posts/music/music.html</guid>
-  <pubDate>Tue, 30 Jan 2024 00:00:00 GMT</pubDate>
+  <pubDate>Mon, 29 Jan 2024 22:00:00 GMT</pubDate>
 </item>
 <item>
   <title>A practical interpertation of the Pearson correlation coefficient</title>
@@ -3150,7 +3150,7 @@ $$ -->
 </ol>
 </section></div> ]]></description>
   <guid>https://tomshlomo.github.io/blog/posts/pearson_correlation/pearson_correlation.html</guid>
-  <pubDate>Sat, 20 Jan 2024 00:00:00 GMT</pubDate>
+  <pubDate>Fri, 19 Jan 2024 22:00:00 GMT</pubDate>
 </item>
 <item>
   <title>Augmentation is Regularization</title>
@@ -4585,7 +4585,7 @@ For example, for logistic regression we use the logistic loss <img src="https://
 
  ]]></description>
   <guid>https://tomshlomo.github.io/blog/posts/augmentation_is_regularization/augmentation_is_regularization.html</guid>
-  <pubDate>Mon, 15 Jan 2024 00:00:00 GMT</pubDate>
+  <pubDate>Sun, 14 Jan 2024 22:00:00 GMT</pubDate>
 </item>
 </channel>
 </rss>
